@@ -12,7 +12,7 @@ Kiểm tra các yêu cầu trong [SRS](01-srs.md), tập trung rủi ro bán tr�
 | API/integration | Auth/RBAC, validation, ownership, payment/hold/order/check-in | PostgreSQL test DB; mutation có assertion dữ liệu sau cùng |
 | Contract/OpenAPI | Cấu trúc OpenAPI và rule lint | `npm run lint:openapi` chạy trong CI; Redocly lint không warning. Đây là lint contract document, chưa phải runtime contract test cho mọi endpoint |
 | Concurrency | Nhiều request cùng ghế/suất | 100 request ở nhiều browser/context/process; tối đa 1 hold/sale active; conflict còn lại là 409 |
-| Browser E2E | Health → khám phá phim/suất → giữ ghế → thanh toán demo → vé → staff soát vé; thêm admin CRUD, bộ lọc phim/rạp/ngày, security headers và HTML injection rendering | Đạt 24/24: 12 case trên Chromium desktop và Pixel 7 mobile |
+| Browser E2E | Health → khám phá phim/suất → giữ ghế → thanh toán demo → vé → staff soát vé; thêm admin CRUD, bộ lọc phim/rạp/ngày, security headers và HTML injection rendering | Frozen baseline 24/24; follow-up clean clone 28/28: 14 case trên Chromium desktop và Pixel 7 mobile |
 | Accessibility | Axe discovery, seat map, checkout; tự động kiểm tra keyboard/focus đến checkout | Axe serious/critical = 0 trong các màn đã quét; TC-E2E-09 pass; review thủ công đầy đủ vẫn cần riêng |
 | Security | BOLA, RBAC, token, rate limit, lỗi không lộ stack, dependency và secret scan | ZAP không có Critical/High trong scope; local Gitleaks v8.30.1 pass với 1 commit/~706 KB, không có leak; GitHub Actions remote chưa chạy |
 | Hiệu năng | Đọc danh sách và hold ghế | k6 local baseline: 50 VU/5 phút; showtime p95 9.85ms, hold p95 265.35ms, lỗi ngoài conflict 0%; đạt ngưỡng đã đặt nhưng chưa phải staging |

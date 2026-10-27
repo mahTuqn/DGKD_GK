@@ -79,3 +79,7 @@ Tại thời điểm snapshot 27/10, clean clone và scan history trên delta m�
 | Hash manifest | Đạt | [Follow-up manifest](evidence/followup/2026-10-28-manifest.json) liệt kê SHA-256 của 20 artifact logs/reports |
 
 Đây là kiểm chứng local cho commit đã nêu. ZAP chưa chạy lại trên delta mới; worker soak/multi-instance, staging/production, manual WCAG review, backup schedule/PITR/RPO/RTO, gateway thật và exhaustive ASVS/BOLA review chưa được thực hiện.
+
+## Trạng thái Docker Desktop — 28/10/2026
+
+Trong lần thử chạy lại ZAP trên QA, active scan bị treo; sau khi dừng, Docker Desktop không khởi động lại được và báo Windows error 1920 khi mở các AF_UNIX socket tại `%LOCALAPPDATA%\Docker\run\sailor-ingest.sock` và `%LOCALAPPDATA%\docker-secrets-engine\engine.sock`. Engine hiện dừng, PostgreSQL port 5434 không lắng nghe nên trạng thái database demo chưa thể xác minh. Docker data disk VHDX còn tồn tại; không có lệnh xóa volume hoặc factory reset chạy. Các lần test pass ở trên vẫn là evidence hợp lệ tại thời điểm ghi trong manifest, nhưng không chứng minh container đang chạy sau sự cố.
