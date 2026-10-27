@@ -2,13 +2,13 @@
   "manifestVersion": "1.0",
   "project": "CinemaBooking QA",
   "runId": "2026-10-27-final-local-suite",
-  "status": "LOCAL_TESTS_SECRET_SCAN_TRACEABILITY_PASS_CLEAN_CLONE_PENDING",
-  "capturedAt": "2026-10-27T15:18:21+07:00",
+  "status": "FROZEN_COMMIT_CLEAN_CLONE_PASS_WITH_DOCUMENTED_LIMITATIONS",
+  "capturedAt": "2026-10-27T15:36:32+07:00",
   "date": "2026-10-27",
   "timezone": "Asia/Ho_Chi_Minh",
-  "commit": null,
+  "commit": "2be2d911c635cbdbe810bd4f77eca71b73928d1f",
   "parentBaseSha": "fbf0b65aa5dd8d6f11010ce9503a3c2501e78053",
-  "commitNote": "All local quality/browser gates recorded below pass. Frozen CinemaBooking commit and clean-clone run remain pending; parentBaseSha identifies only the surrounding repository.",
+  "commitNote": "Frozen CinemaBooking source commit verified from a fresh clone. Evidence artifacts and SHA-256 values are recorded below. Local verification does not establish staging or production readiness.",
   "environment": {
     "os": "Microsoft Windows 11 Pro 10.0.26200 (build 26200)",
     "node": "v26.7.0",
@@ -251,6 +251,22 @@
       "artifactLog": "reports/generated/final-gitleaks-results.log",
       "artifactReport": "reports/generated/final-gitleaks.json",
       "note": "Local repository-history scan only; clean-clone scan and remote GitHub Actions run remain pending."
+    },
+    {
+      "name": "Frozen commit clean-clone verification",
+      "command": "Fresh clone; npm ci, database setup, security/traceability gates, API/browser/build, coverage and mutation",
+      "result": "PASS",
+      "exitCode": 0,
+      "commit": "2be2d911c635cbdbe810bd4f77eca71b73928d1f",
+      "apiTests": "17/17",
+      "browserTests": "24/24",
+      "requirements": 24,
+      "traceabilityTestCases": 40,
+      "coverageLinesPercent": 100,
+      "coverageBranchesPercent": 100,
+      "mutationScorePercent": 81.82,
+      "thresholdPercent": 70,
+      "artifactDirectory": "reports/generated/clean-clone/"
     }
   ],
   "thresholdsAndTargets": {
@@ -310,146 +326,264 @@
     {
       "kind": "combined-test-log",
       "path": "reports/generated/final-test-results.log",
-      "sha256": null,
+      "sha256": "29FA1D743D6EDFFD1D6C6B8FEFBA39FCDC64AB0023973F6F3C6E506D19C09E92",
       "bytes": 13375,
       "summary": "npm test exit 0: API 17/17 and Playwright 24/24 (12 cases × two Chromium projects)"
     },
     {
       "kind": "playwright-json-report",
       "path": "reports/generated/playwright-results.json",
-      "sha256": null,
+      "sha256": "4B805E2B1D76142992DECF141578EBEABB4E4B3B49B3FC0E727D63E3B8540D36",
       "bytes": 31338,
       "summary": "24/24 passed; 12 E2E cases on Chromium desktop and Pixel 7"
     },
     {
       "kind": "playwright-html-report",
       "path": "reports/generated/playwright/index.html",
-      "sha256": null,
+      "sha256": "817B3AE47842D4775202692AB10DF5D07DBB5780030B48750B4D143FB974186A",
       "bytes": 563844,
       "summary": "HTML report for final 24-test Playwright run"
     },
     {
       "kind": "build-log",
       "path": "reports/generated/final-build-results.log",
-      "sha256": null,
+      "sha256": "62CC8F0C1896A3F867878CEBC36F2F218D5ADBD8BFF40D1B374B63E4F9858EDA",
       "bytes": 970,
       "summary": "Backend and frontend production build pass"
     },
     {
       "kind": "dependency-audit-log",
       "path": "reports/generated/audit-after-domain-tools.log",
-      "sha256": null,
+      "sha256": "4B02D4A3C23D969C46BD2041360F80BFCB1FE760D9DB864009ACDD710F9DE601",
       "bytes": 25,
       "summary": "npm audit moderate threshold; zero vulnerabilities"
     },
     {
       "kind": "coverage-log",
       "path": "reports/generated/coverage-results.log",
-      "sha256": null,
+      "sha256": "317B31826A7DB7161D8253109DBB28C4BCBCFA51A91C13BF4B1E3AEBBDD94568",
       "bytes": 1026,
       "summary": "13 domain tests; 100% lines, branches, functions"
     },
     {
       "kind": "coverage-json",
       "path": "reports/generated/coverage/coverage-final.json",
-      "sha256": null,
+      "sha256": "E28CF21C0C88B3B0CD30979F57DB1400EFC1415BE4ACA0C7C4A95D93A87734B0",
       "bytes": 14057,
       "summary": "Raw V8 domain coverage data"
     },
     {
       "kind": "mutation-log",
       "path": "reports/generated/mutation-results.log",
-      "sha256": null,
+      "sha256": "79BB1A0F3E0A3AAB3856072C5EF84620ACBDF880A0B8769996FE22ABE52521E4",
       "bytes": 22234,
       "summary": "Stryker mutation score 81.82%; no timeout/errors"
     },
     {
       "kind": "mutation-json",
       "path": "reports/generated/mutation/mutation.json",
-      "sha256": null,
+      "sha256": "962739D2ACF47E026534EA0F1DE2124AE6E03185ABBE3D2CFB0373E3619684AB",
       "bytes": 82940,
       "summary": "Raw Stryker report"
     },
     {
       "kind": "k6-json-summary",
       "path": "reports/generated/k6/baseline-20261027T141504.json",
-      "sha256": null,
+      "sha256": "F93DEC9B6068530F4257C351AB99A76AAC2700BF4A703684092E162BC90ABAA1",
       "bytes": 23858,
       "summary": "50 VUs for 5 minutes; local performance baseline"
     },
     {
       "kind": "k6-log",
       "path": "reports/generated/k6/baseline-20261027T141504.log",
-      "sha256": null,
+      "sha256": "3CF097D3353E9F1BDE470D3E1588866026DE9295C96C724B0FE99A2016B21389",
       "bytes": 42362,
       "summary": "Full k6 run log"
     },
     {
       "kind": "zap-unauthenticated-api-json",
       "path": "reports/generated/dast/unauthenticated-api-zap.json",
-      "sha256": null,
+      "sha256": "563CAE40FDD502B1683FE452E3864631CEC0E31127E95D81749F7F961B798CE9",
       "bytes": 2065,
       "summary": "No High/Medium/Low; one informational alert"
     },
     {
       "kind": "zap-authenticated-api-json",
       "path": "reports/generated/dast/authenticated-api-zap.json",
-      "sha256": null,
+      "sha256": "EF538C878486E26B5C0E02BC78A5C7FAB1A43D16037401CD70D4666BDC089BFF",
       "bytes": 8206,
       "summary": "One Low-confidence JSON alert remains under triage"
     },
     {
       "kind": "zap-frontend-preview-html",
       "path": "reports/generated/dast/frontend-preview-final-zap.html",
-      "sha256": null,
+      "sha256": "B9961952545DE7358A0FEBA6A1972BD66116908508A3FA2E36CB8F0F1B814E6B",
       "bytes": 22189,
       "summary": "No High/Medium/Low; one informational alert"
     },
     {
       "kind": "postgres-restore-rehearsal-json",
       "path": "reports/generated/recovery/restore-rehearsal.json",
-      "sha256": null,
+      "sha256": "4503D9ECC5982C0D13E074E0E70AC76D931A79E9042AC599EF170CC766EB98CD",
       "bytes": 872,
       "summary": "PostgreSQL 17 UTF8 restore rehearsal pass"
     },
     {
       "kind": "postgres-restore-dump",
       "path": "reports/generated/recovery/source-20261027_135523.dump",
-      "sha256": null,
+      "sha256": "52F8C1338865731183228D305491BBA5E40F15D75274C4F82256C827B8413089",
       "bytes": 68580,
       "summary": "Custom-format backup used in restore rehearsal"
     },
     {
       "kind": "dependency-audit-log",
       "path": "reports/generated/final-audit-results.log",
-      "sha256": null,
+      "sha256": "4B02D4A3C23D969C46BD2041360F80BFCB1FE760D9DB864009ACDD710F9DE601",
       "bytes": 25,
       "summary": "npm audit moderate threshold; zero vulnerabilities"
     },
     {
       "kind": "backend-start-smoke-log",
       "path": "reports/generated/start-smoke.log",
-      "sha256": null,
+      "sha256": "79C9E3D651BB565A17B2F790B4C017A59E051A2D8145CC1A28F1E7E95CC3EDD1",
       "bytes": 182,
       "summary": "Built backend started successfully and health check passed"
     },
     {
       "kind": "gitleaks-scan-log",
       "path": "reports/generated/final-gitleaks-results.log",
-      "sha256": null,
+      "sha256": "81D1779902EE18D68DB81084D3B12A1EA23B1F8EC0E19E99B74D710CB0EB529B",
       "bytes": 212,
       "summary": "Gitleaks v8.30.1 local history scan: one commit, 706189 bytes, no leaks"
     },
     {
       "kind": "gitleaks-redacted-json-report",
       "path": "reports/generated/final-gitleaks.json",
-      "sha256": null,
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
       "bytes": 3,
       "summary": "Redacted Gitleaks JSON report; no findings"
+    },
+    {
+      "kind": "clean-clone-clean-clone-install.log",
+      "path": "reports/generated/clean-clone/clean-clone-install.log",
+      "sha256": "753CE8EADB14F89444EF3522ECF6E719352047505E418AA7430A70A5F06025D3",
+      "bytes": 151,
+      "summary": "Evidence captured by verification from the frozen commit in a fresh clone."
+    },
+    {
+      "kind": "clean-clone-clean-clone-audit.log",
+      "path": "reports/generated/clean-clone/clean-clone-audit.log",
+      "sha256": "4B02D4A3C23D969C46BD2041360F80BFCB1FE760D9DB864009ACDD710F9DE601",
+      "bytes": 25,
+      "summary": "Evidence captured by verification from the frozen commit in a fresh clone."
+    },
+    {
+      "kind": "clean-clone-clean-clone-db-generate.log",
+      "path": "reports/generated/clean-clone/clean-clone-db-generate.log",
+      "sha256": "99003B4BFB8E183C8BA019A8C5B2A341EF2C458CB40D245F32A4954572948DC8",
+      "bytes": 542,
+      "summary": "Evidence captured by verification from the frozen commit in a fresh clone."
+    },
+    {
+      "kind": "clean-clone-clean-clone-db-deploy.log",
+      "path": "reports/generated/clean-clone/clean-clone-db-deploy.log",
+      "sha256": "DB761AE8F6DE4611CAC3A40400D3578C2290DF8A2DBA5B8254091E051E29BA59",
+      "bytes": 1629,
+      "summary": "Evidence captured by verification from the frozen commit in a fresh clone."
+    },
+    {
+      "kind": "clean-clone-clean-clone-db-seed.log",
+      "path": "reports/generated/clean-clone/clean-clone-db-seed.log",
+      "sha256": "0C82F9F3078B53FD4A3BEC3AFFA7C2CD2B391D39B80C87EBF5760B9BBC798DFA",
+      "bytes": 267,
+      "summary": "Evidence captured by verification from the frozen commit in a fresh clone."
+    },
+    {
+      "kind": "clean-clone-clean-clone-secrets.log",
+      "path": "reports/generated/clean-clone/clean-clone-secrets.log",
+      "sha256": "221AD84BAEBD03120E0E82BB0A65771989D8D3C2D151120CACE4DFE9E3A4575D",
+      "bytes": 297,
+      "summary": "Evidence captured by verification from the frozen commit in a fresh clone."
+    },
+    {
+      "kind": "clean-clone-clean-clone-openapi.log",
+      "path": "reports/generated/clean-clone/clean-clone-openapi.log",
+      "sha256": "A1AB8A47358F06BAE234524338EB48AE7245DF726015AF222CBEF67A79F6EB05",
+      "bytes": 253,
+      "summary": "Evidence captured by verification from the frozen commit in a fresh clone."
+    },
+    {
+      "kind": "clean-clone-clean-clone-trace.log",
+      "path": "reports/generated/clean-clone/clean-clone-trace.log",
+      "sha256": "56C55B87C8A227BAD1A39ADB22AC6C50CF8027F0EC1BF7FEBE516618988D0C77",
+      "bytes": 186,
+      "summary": "Evidence captured by verification from the frozen commit in a fresh clone."
+    },
+    {
+      "kind": "clean-clone-clean-clone-api.log",
+      "path": "reports/generated/clean-clone/clean-clone-api.log",
+      "sha256": "5D1C1E875E7C85FD6E2B23DF678EC8B2D9EBB7D3C48440A034F48ECFB12F4EBC",
+      "bytes": 8020,
+      "summary": "Evidence captured by verification from the frozen commit in a fresh clone."
+    },
+    {
+      "kind": "clean-clone-clean-clone-build.log",
+      "path": "reports/generated/clean-clone/clean-clone-build.log",
+      "sha256": "907648497058F388E8322CF64F64A9D9E1608936E26A868581432291D43CC807",
+      "bytes": 970,
+      "summary": "Evidence captured by verification from the frozen commit in a fresh clone."
+    },
+    {
+      "kind": "clean-clone-clean-clone-browser.log",
+      "path": "reports/generated/clean-clone/clean-clone-browser.log",
+      "sha256": "0BB5CA5E372F3BB953D22B1E8AA2B9942FBD04AC1913573930F8D5797870A26F",
+      "bytes": 5380,
+      "summary": "Evidence captured by verification from the frozen commit in a fresh clone."
+    },
+    {
+      "kind": "clean-clone-clean-clone-coverage.log",
+      "path": "reports/generated/clean-clone/clean-clone-coverage.log",
+      "sha256": "A1AE362B903903FABC0262A9B2500139D7DB2E36B3C1F2E3821727BC186CBD3C",
+      "bytes": 1078,
+      "summary": "Evidence captured by verification from the frozen commit in a fresh clone."
+    },
+    {
+      "kind": "clean-clone-clean-clone-mutation.log",
+      "path": "reports/generated/clean-clone/clean-clone-mutation.log",
+      "sha256": "FF8DEC2AC7E3CD138B288E4C2F9BF9F7C861346D6479BB34962AE31501399A91",
+      "bytes": 22196,
+      "summary": "Evidence captured by verification from the frozen commit in a fresh clone."
+    },
+    {
+      "kind": "clean-clone-playwright-results.json",
+      "path": "reports/generated/clean-clone/playwright-results.json",
+      "sha256": "F1229BBAB19131665C535BA67A2BDB5E2F33B8E3DED506506E2C68E1CA9B88D8",
+      "bytes": 32046,
+      "summary": "Evidence captured by verification from the frozen commit in a fresh clone."
+    },
+    {
+      "kind": "clean-clone-playwright-index.html",
+      "path": "reports/generated/clean-clone/playwright/index.html",
+      "sha256": "211DB6C1FB929A1C125FD9BD0EE2EC23E73EBBA703CA05D4691C71AA623989EF",
+      "bytes": 564032,
+      "summary": "Evidence captured by verification from the frozen commit in a fresh clone."
+    },
+    {
+      "kind": "clean-clone-coverage-coverage-final.json",
+      "path": "reports/generated/clean-clone/coverage/coverage-final.json",
+      "sha256": "62A1B286EA3D851D4D165729908281924E97B0A48F63F5CC01BC094B9E82555A",
+      "bytes": 14277,
+      "summary": "Evidence captured by verification from the frozen commit in a fresh clone."
+    },
+    {
+      "kind": "clean-clone-mutation-mutation.json",
+      "path": "reports/generated/clean-clone/mutation/mutation.json",
+      "sha256": "361708FC9D15FC64E4FB231619D26514CEFD8A22C9F2AF56521B0A9FEF6CCCA2",
+      "bytes": 84414,
+      "summary": "Evidence captured by verification from the frozen commit in a fresh clone."
     }
   ],
   "notMeasured": [
-    "Frozen CinemaBooking commit and clean-clone run",
     "Staging/production performance, soak, and multi-instance/worker reliability",
     "Manual WCAG 2.2 AA keyboard/focus/usability review; axe coverage of login, ticket, and admin pages",
     "Comprehensive ASVS/API Top 10 review, exhaustive BOLA/IDOR matrix, and verification of SEC-OBS-01 browser execution",
@@ -466,10 +600,38 @@
     "OpenAPI lint in CI validates the specification document; runtime contract conformance across all endpoints is not established.",
     "Payment remains a mock flow; no real card data or payment provider is involved.",
     "TC-E2E-11 passed in both browser projects: Admin-entered HTML-like content appeared as text and produced no img/script DOM node in the tested cinema row.",
-    "Frozen commit and clean-clone validation remain pending; manifest SHA-256 values will be refreshed after that run.",
     "Local npm run scan:secrets passed using pinned Gitleaks v8.30.1: 1 commit, 706189 bytes scanned, zero leaks; redacted JSON report is empty.",
     "Gitleaks Action v3 is pinned to version 8.30.1 in CI configuration; no remote GitHub Actions run has occurred.",
-    "npm run qa:trace passes on the current working tree with 40 test cases and 24 requirements; marker validation scans .ts/.js/.mjs/.yaml/.yml sources and supports the Automated prefix, including both ZAP configs.",
+    "The frozen source commit 2be2d911c635cbdbe810bd4f77eca71b73928d1f passed a fresh-clone verification. Traceability passed with 40 test cases and 24 requirements."
   ],
-  "artifactHashStatus": "SHA-256 values are intentionally pending until the clean-clone run and final artifact freeze."
+  "artifactHashStatus": "SHA-256 recorded for every artifact path listed in this manifest.",
+  "cleanClone": {
+    "result": "PASS",
+    "path": "C:\\Users\\leema\\AppData\\Local\\Temp\\cinema-booking-clean-clone-20261027-2be2d91",
+    "head": "2be2d911c635cbdbe810bd4f77eca71b73928d1f",
+    "gitStatusBeforeGeneratedReports": "clean",
+    "database": "Disposable cinema_clean_2be2d91 on isolated PostgreSQL 17 port 5434; connection string omitted",
+    "commands": [
+      "npm ci",
+      "npm audit --audit-level=moderate",
+      "npm run db:generate",
+      "npm run db:deploy",
+      "npm run db:seed",
+      "npm run scan:secrets",
+      "npm run lint:openapi",
+      "npm run qa:trace",
+      "npm run test:api",
+      "npm run build",
+      "npm run test:browser",
+      "npm run test:coverage --workspace backend",
+      "npm run test:mutation --workspace backend"
+    ],
+    "exitCodes": "0 for every listed command",
+    "api": "17/17 tests passed",
+    "browser": "24/24 tests passed across Chromium desktop and Pixel 7",
+    "traceability": "40 test cases / 24 requirements",
+    "coverage": "100% lines (35/35), branches (47/47), functions (14/14)",
+    "mutation": "81.82%; 153 killed, 34 survived, 0 timeout, 0 errors; threshold 70%",
+    "audit": "0 vulnerabilities at moderate threshold"
+  }
 }

@@ -19,8 +19,9 @@
 | Traceability | Đạt: 40 test cases/24 requirements | `npm run qa:trace` PASS. Validator kiểm tra test ID markers trên source `.ts/.js/.mjs/.yaml/.yml`, hỗ trợ prefix `Automated`; marker trong hai ZAP config được resolve |
 | Start smoke | Đạt | Khởi chạy production backend bằng `npm start --workspace backend` và xác nhận health; log `reports/generated/start-smoke.log` |
 | Secret scan | Đạt trong local scan scope | `npm run scan:secrets` bằng Gitleaks v8.30.1: 1 commit, ~706 KB, không có leak; log/JSON ở `reports/generated/final-gitleaks-results.log` và `final-gitleaks.json` |
+| Frozen clean-clone verification | Đạt | Commit `2be2d911c635cbdbe810bd4f77eca71b73928d1f`; clone sạch chạy install, DB generate/deploy/seed, secret scan, OpenAPI lint, traceability 40/24, API 17/17, build, browser 24/24, coverage 100% và mutation 81.82%; log ở `reports/generated/clean-clone/` |
 
-Các phép đo unit/coverage, hiệu năng, ZAP và Gitleaks dùng fixture/history local. Không suy rộng thành chứng nhận staging hoặc production. Traceability pass với 40 test cases/24 requirements sau khi validator quét marker trên source TypeScript/JavaScript/YAML, hỗ trợ prefix `Automated`. Manifest lưu environment, ngưỡng và artifact; SHA-256 đang để pending cho tới khi clean-clone run và frozen commit. GitHub Actions workflow đã được cấu hình nhưng chưa có remote run.
+Các phép đo unit/coverage, hiệu năng, ZAP và Gitleaks dùng fixture/history local. Không suy rộng thành chứng nhận staging hoặc production. Traceability pass với 40 test cases/24 requirements sau khi validator quét marker trên source TypeScript/JavaScript/YAML, hỗ trợ prefix `Automated`. Manifest ghi nhận commit đã kiểm tra, kết quả clone sạch và SHA-256 cho các artifact được liệt kê. GitHub Actions workflow đã được cấu hình nhưng chưa có remote run.
 
 ## Test đã triển khai
 
@@ -40,8 +41,6 @@ Các phép đo unit/coverage, hiệu năng, ZAP và Gitleaks dùng fixture/histo
 
 ## Còn thiếu so với kế hoạch
 
-- Chưa đóng băng project commit hoặc chạy clean clone; `parentBaseSha` không nhận diện riêng mã CinemaBooking.
-- Frozen project commit và clean-clone run còn pending; traceability hiện đạt 40/24 trên working tree hiện tại.
 - k6 mới là baseline local, chưa chạy staging, soak, hoặc reliability test đa instance/worker restart.
 - Browser suite chưa bao phủ riêng lost-seat contention, payment failure và chờ TTL năm phút; các nhánh API/policy có test nhưng không thay cho journey trình duyệt.
 - ZAP scan scope hữu hạn; cần xác minh `SEC-OBS-01`, review BOLA/IDOR theo ma trận object/role và checklist ASVS/API Top 10. Một ZAP pass không chứng minh ứng dụng an toàn toàn diện.
