@@ -1,0 +1,58 @@
+# TC-PLAN-07: unauthenticated ZAP API scan release gate.
+env:
+  contexts:
+    - name: cinema-api-unauthenticated
+      urls:
+        - http://127.0.0.1:4000
+      includePaths:
+        - http://127.0.0.1:4000/api/.*
+      excludePaths: []
+  parameters:
+    failOnError: true
+    failOnWarning: false
+    continueOnFailure: false
+    progressToStdout: true
+
+jobs:
+  - type: openapi
+    parameters:
+      apiFile: ../../../docs/openapi.yaml
+      context: cinema-api-unauthenticated
+      targetUrl: http://127.0.0.1:4000
+
+  - type: requestor
+    requests:
+      - url: http://127.0.0.1:4000/api/auth/me
+        name: Verify API scan is unauthenticated
+        method: GET
+        responseCode: 401
+
+  - type: activeScan-config
+    parameters:
+      maxRuleDurationInMins: 1
+      maxScanDurationInMins: 5
+      maxAlertsPerRule: 10
+      defaultPolicy: Default Policy
+
+  - type: activeScan
+    parameters:
+      context: cinema-api-unauthenticated
+      maxScanDurationInMins: 5
+
+  - type: passiveScan-wait
+    parameters:
+      maxDuration: 2
+
+  - type: report
+    parameters:
+      template: traditional-json
+      reportDir: ../../../reports/generated/dast
+      reportFile: unauthenticated-api-zap.json
+      reportTitle: CinemaBooking unauthenticated API scan
+      reportDescription: ZAP OpenAPI import and active scan against the disposable local DAST database.
+    sites:
+      - http://127.0.0.1:4000
+
+  - type: exitStatus
+    parameters:
+      errorLevel: High

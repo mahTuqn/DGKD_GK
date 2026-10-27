@@ -1,0 +1,58 @@
+# TC-PLAN-07: authenticated ZAP API scan release gate.
+env:
+  contexts:
+    - name: cinema-api-authenticated
+      urls:
+        - http://127.0.0.1:4000
+      includePaths:
+        - http://127.0.0.1:4000/api/.*
+      excludePaths: []
+  parameters:
+    failOnError: true
+    failOnWarning: false
+    continueOnFailure: false
+    progressToStdout: true
+
+jobs:
+  - type: openapi
+    parameters:
+      apiFile: ../../../docs/openapi.yaml
+      context: cinema-api-authenticated
+      targetUrl: http://127.0.0.1:4000
+
+  - type: requestor
+    requests:
+      - url: http://127.0.0.1:4000/api/admin/summary
+        name: Verify API scan uses the seeded Admin token
+        method: GET
+        responseCode: 200
+
+  - type: activeScan-config
+    parameters:
+      maxRuleDurationInMins: 1
+      maxScanDurationInMins: 5
+      maxAlertsPerRule: 10
+      defaultPolicy: Default Policy
+
+  - type: activeScan
+    parameters:
+      context: cinema-api-authenticated
+      maxScanDurationInMins: 5
+
+  - type: passiveScan-wait
+    parameters:
+      maxDuration: 2
+
+  - type: report
+    parameters:
+      template: traditional-json
+      reportDir: ../../../reports/generated/dast
+      reportFile: authenticated-api-zap.json
+      reportTitle: CinemaBooking authenticated API scan
+      reportDescription: ZAP OpenAPI import and active scan using the disposable seeded Admin account.
+    sites:
+      - http://127.0.0.1:4000
+
+  - type: exitStatus
+    parameters:
+      errorLevel: High

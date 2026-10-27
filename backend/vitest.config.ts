@@ -1,0 +1,18 @@
+import { defineConfig } from "vitest/config";
+
+export default defineConfig({
+  test: {
+    include: ["tests/**/*.test.ts"],
+    coverage: {
+      provider: "v8",
+      include: ["src/domain/**/*.ts"],
+      exclude: ["src/domain/**/*.d.ts"],
+      reportsDirectory: "../reports/generated/coverage",
+      reporter: ["text", "json", "lcov", "html"],
+      thresholds: {
+        lines: 90,
+        branches: 80
+      }
+    }
+  }
+});

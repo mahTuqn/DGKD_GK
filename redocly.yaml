@@ -1,0 +1,11 @@
+extends:
+  - recommended
+apis:
+  cinema:
+    root: docs/openapi.yaml
+rules:
+  # This demo documents a local server URL and intentionally has no published license.
+  info-license: off
+  "no-server-example.com": off
+  # Public read-only endpoints have no client error response; structural OpenAPI validation remains enabled.
+  operation-4xx-response: off

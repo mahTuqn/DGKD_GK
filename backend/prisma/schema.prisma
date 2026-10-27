@@ -1,0 +1,252 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  STAFF
+  ADMIN
+}
+
+enum RecordStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum SeatType {
+  STANDARD
+  PREMIUM
+  ACCESSIBLE
+}
+
+enum ClaimStatus {
+  HELD
+  SOLD
+  RELEASED
+  EXPIRED
+}
+
+enum HoldStatus {
+  HELD
+  PAYMENT_PENDING
+  CONFIRMED
+  RELEASED
+  EXPIRED
+}
+
+enum OrderStatus {
+  PAYMENT_PENDING
+  CONFIRMED
+  PAYMENT_FAILED
+  EXPIRED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+model User {
+  id           String       @id @default(cuid())
+  name         String
+  email        String       @unique
+  passwordHash String
+  role         Role         @default(CUSTOMER)
+  assignedCinemaId String?
+  authVersion  Int          @default(0)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  holds        SeatHold[]
+  orders       CinemaOrder[]
+  auditLogs    AuditLog[]
+  assignedCinema Cinema?   @relation("StaffAssignedCinema", fields: [assignedCinemaId], references: [id], onDelete: Restrict)
+  @@index([assignedCinemaId])
+}
+
+model Cinema {
+  id          String        @id @default(cuid())
+  name        String
+  city        String
+  address     String
+  status      RecordStatus  @default(ACTIVE)
+  auditoriums Auditorium[]
+  staff       User[]        @relation("StaffAssignedCinema")
+  createdAt   DateTime      @default(now())
+}
+
+model Auditorium {
+  id          String     @id @default(cuid())
+  cinemaId    String
+  name        String
+  screenType  String     @default("STANDARD")
+  cinema      Cinema     @relation(fields: [cinemaId], references: [id], onDelete: Restrict)
+  seats       Seat[]
+  showtimes   Showtime[]
+  @@unique([cinemaId, name])
+}
+
+model Seat {
+  id             String      @id @default(cuid())
+  auditoriumId   String
+  label          String
+  row            String
+  column         Int
+  type           SeatType    @default(STANDARD)
+  isAccessible   Boolean     @default(false)
+  auditorium     Auditorium  @relation(fields: [auditoriumId], references: [id], onDelete: Restrict)
+  claims         SeatClaim[]
+  @@unique([auditoriumId, label])
+  @@unique([auditoriumId, row, column])
+}
+
+model Movie {
+  id             String       @id @default(cuid())
+  slug           String       @unique
+  title          String
+  genre          String
+  synopsis       String
+  runtimeMinutes Int
+  ageRating      String
+  posterUrl      String?
+  releaseDate    DateTime?
+  status         RecordStatus @default(ACTIVE)
+  showtimes      Showtime[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model Showtime {
+  id                    String         @id @default(cuid())
+  movieId               String
+  auditoriumId          String
+  startAt               DateTime
+  endAt                 DateTime
+  priceVnd              Int
+  premiumSurchargeVnd   Int            @default(30000)
+  status                RecordStatus   @default(ACTIVE)
+  movie                 Movie          @relation(fields: [movieId], references: [id], onDelete: Restrict)
+  auditorium            Auditorium     @relation(fields: [auditoriumId], references: [id], onDelete: Restrict)
+  claims                SeatClaim[]
+  holds                 SeatHold[]
+  orders                CinemaOrder[]
+  createdAt             DateTime       @default(now())
+  @@unique([auditoriumId, startAt])
+  @@index([movieId, startAt])
+  @@index([auditoriumId, startAt, endAt])
+}
+
+model SeatHold {
+  id          String      @id @default(cuid())
+  userId      String
+  showtimeId  String
+  status      HoldStatus  @default(HELD)
+  expiresAt   DateTime
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  user        User        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  showtime    Showtime    @relation(fields: [showtimeId], references: [id], onDelete: Restrict)
+  claims      SeatClaim[]
+  order       CinemaOrder?
+  @@index([userId, createdAt])
+  @@index([status, expiresAt])
+}
+
+model CinemaOrder {
+  id          String       @id @default(cuid())
+  userId      String
+  showtimeId  String
+  holdId      String       @unique
+  status      OrderStatus  @default(PAYMENT_PENDING)
+  totalVnd    Int
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  user        User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  showtime    Showtime     @relation(fields: [showtimeId], references: [id], onDelete: Restrict)
+  hold        SeatHold     @relation(fields: [holdId], references: [id], onDelete: Restrict)
+  claims      SeatClaim[]
+  payment     Payment?
+  tickets     Ticket[]
+  @@index([userId, createdAt])
+}
+
+model SeatClaim {
+  id          String       @id @default(cuid())
+  showtimeId  String
+  seatId      String
+  holdId      String?
+  orderId     String?
+  status      ClaimStatus
+  expiresAt   DateTime?
+  priceVnd    Int
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  showtime    Showtime     @relation(fields: [showtimeId], references: [id], onDelete: Restrict)
+  seat        Seat         @relation(fields: [seatId], references: [id], onDelete: Restrict)
+  hold        SeatHold?    @relation(fields: [holdId], references: [id], onDelete: Restrict)
+  order       CinemaOrder? @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  ticket      Ticket?
+  @@unique([showtimeId, seatId])
+  @@index([holdId])
+  @@index([orderId])
+  @@index([status, expiresAt])
+}
+
+model Payment {
+  id                String        @id @default(cuid())
+  orderId           String        @unique
+  provider          String        @default("MOCK")
+  providerEventId   String?       @unique
+  status            PaymentStatus @default(PENDING)
+  amountVnd         Int
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  order             CinemaOrder   @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  events            PaymentEvent[]
+}
+
+model PaymentEvent {
+  id                String        @id @default(cuid())
+  providerEventId   String        @unique
+  orderId           String
+  status            PaymentStatus
+  amountVnd         Int
+  currency          String        @default("VND")
+  payloadHash       String
+  outcome           String
+  createdAt         DateTime      @default(now())
+  payment           Payment       @relation(fields: [orderId], references: [orderId], onDelete: Restrict)
+  @@index([orderId, createdAt])
+}
+
+model Ticket {
+  id            String      @id @default(cuid())
+  orderId       String
+  seatClaimId   String      @unique
+  qrToken       String      @unique
+  checkedInAt   DateTime?
+  createdAt     DateTime    @default(now())
+  order         CinemaOrder @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  seatClaim     SeatClaim   @relation(fields: [seatClaimId], references: [id], onDelete: Restrict)
+  @@index([orderId])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorId     String?
+  action      String
+  entity      String
+  entityId    String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  actor       User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  @@index([entity, entityId, createdAt])
+}

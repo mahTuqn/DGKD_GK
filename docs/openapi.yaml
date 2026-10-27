@@ -1,0 +1,1305 @@
+openapi: 3.1.0
+info:
+  title: CinemaBooking Demo API
+  version: 1.0.0
+  description: >-
+    OpenAPI mô tả các route đang được triển khai trong backend/src/app.ts.
+    Đây là API demo dùng PostgreSQL và thanh toán mô phỏng; không có cổng thanh
+    toán thật, hủy đơn/hoàn tiền, refresh token hay endpoint xóa bản ghi.
+servers:
+  - url: http://localhost:4000
+    description: Backend local mặc định (có thể đổi bằng PORT)
+tags:
+  - name: Health
+    description: Health check
+  - name: Auth
+    description: Đăng nhập và quản lý hồ sơ hiện tại
+  - name: Catalog
+    description: Tra cứu phim, rạp, suất chiếu và ghế
+  - name: Booking
+    description: Giữ ghế, đơn hàng và lịch sử đặt vé
+  - name: Payments
+    description: Thanh toán mô phỏng và callback có chữ ký
+  - name: Tickets
+    description: Check-in vé cho nhân viên rạp
+  - name: Admin
+    description: Quản trị dữ liệu và báo cáo; chỉ ADMIN
+security:
+  - bearerAuth: []
+paths:
+  /api/health:
+    get:
+      tags: [Health]
+      operationId: getHealth
+      security: []
+      summary: Kiểm tra API đang hoạt động
+      responses:
+        '200':
+          description: API sẵn sàng
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, service]
+                properties:
+                  status: { const: ok }
+                  service: { const: cinema-booking-api }
+
+  /api/auth/register:
+    post:
+      tags: [Auth]
+      operationId: registerCustomer
+      security: []
+      summary: Tạo tài khoản khách hàng
+      description: Tài khoản mới có role CUSTOMER; email được chuẩn hóa chữ thường.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterRequest' }
+      responses:
+        '201':
+          description: Tạo tài khoản thành công
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      operationId: login
+      security: []
+      summary: Đăng nhập
+      description: Token bearer có thời hạn 8 giờ. Có giới hạn 10 lần đăng nhập sai trong 15 phút.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: Đăng nhập thành công
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /api/auth/me:
+    get:
+      tags: [Auth]
+      operationId: getCurrentUser
+      summary: Lấy tài khoản đang đăng nhập
+      responses:
+        '200':
+          description: Thông tin tài khoản
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    patch:
+      tags: [Auth]
+      operationId: updateCurrentUser
+      summary: Cập nhật tên hoặc email của tài khoản
+      description: Cần truyền ít nhất một trường; không thể cập nhật role hoặc rạp được phân công ở route này.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateProfileRequest' }
+      responses:
+        '200':
+          description: Hồ sơ đã cập nhật
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
+  /api/movies:
+    get:
+      tags: [Catalog]
+      operationId: listMovies
+      security: []
+      summary: Danh sách phim đang hoạt động
+      parameters:
+        - name: q
+          in: query
+          description: Tìm không phân biệt hoa thường trong tên phim và thể loại.
+          schema: { type: string }
+      responses:
+        '200':
+          description: Danh sách phim, sắp xếp theo ngày phát hành mới rồi tên
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Movie' }
+
+  /api/cinemas:
+    get:
+      tags: [Catalog]
+      operationId: listCinemas
+      security: []
+      summary: Danh sách rạp đang hoạt động
+      responses:
+        '200':
+          description: Rạp kèm số phòng chiếu
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/PublicCinema' }
+
+  /api/showtimes:
+    get:
+      tags: [Catalog]
+      operationId: listShowtimes
+      security: []
+      summary: Tra cứu suất chiếu
+      description: Ngày nghiệp vụ theo Asia/Ho_Chi_Minh; mặc định là ngày hiện tại tại múi giờ này.
+      parameters:
+        - name: date
+          in: query
+          description: Ngày lịch YYYY-MM-DD.
+          schema: { type: string, format: date }
+        - name: movieId
+          in: query
+          schema: { type: string }
+        - name: cinemaId
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Suất chiếu đang hoạt động theo giờ bắt đầu tăng dần
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Showtime' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
+  /api/showtimes/{id}/seats:
+    get:
+      tags: [Catalog]
+      operationId: getShowtimeSeats
+      security: []
+      summary: Lấy sơ đồ và trạng thái ghế của suất chiếu
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Suất chiếu cùng danh sách ghế và giá tính theo loại ghế
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ShowtimeSeats' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/holds:
+    post:
+      tags: [Booking]
+      operationId: createSeatHold
+      summary: Giữ từ 1 đến 8 ghế trong 5 phút
+      description: Giá được tính ở server; mỗi tài khoản chỉ có thể có một lượt giữ ghế đang hoạt động.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateHoldRequest' }
+      responses:
+        '201':
+          description: Ghế đã được giữ
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Hold' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
+  /api/orders:
+    post:
+      tags: [Booking]
+      operationId: createOrderFromHold
+      summary: Tạo đơn chờ thanh toán từ lượt giữ ghế
+      description: Lượt giữ ghế phải thuộc người dùng hiện tại và còn hạn. Gọi lại với holdId đã có đơn trả lại đơn đó.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [holdId]
+              properties:
+                holdId: { type: string, minLength: 1 }
+      responses:
+        '201':
+          description: Đơn PAYMENT_PENDING
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Order' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
+  /api/orders/me:
+    get:
+      tags: [Booking]
+      operationId: listMyOrders
+      summary: Lịch sử đơn của tài khoản hiện tại
+      responses:
+        '200':
+          description: Đơn mới nhất trước, bao gồm ghế và vé nếu đã xác nhận
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Order' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/orders/{id}:
+    get:
+      tags: [Booking]
+      operationId: getMyOrder
+      summary: Lấy chi tiết đơn của chính tài khoản hiện tại
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Chi tiết đơn
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Order' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/payments/mock/complete:
+    post:
+      tags: [Payments]
+      operationId: completeMockPayment
+      summary: Hoàn tất thanh toán mô phỏng cho đơn của người dùng
+      description: >-
+        Endpoint demo tự ký và áp dụng một sự kiện thành công hoặc thất bại.
+        Không xử lý dữ liệu thẻ và không kết nối nhà cung cấp thanh toán thật.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [orderId]
+              properties:
+                orderId: { type: string, minLength: 1 }
+                outcome: { type: string, enum: [SUCCEEDED, FAILED], default: SUCCEEDED }
+      responses:
+        '200':
+          description: Kết quả thanh toán; vé chỉ có khi trạng thái CONFIRMED
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MockPaymentCompleteResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '402': { $ref: '#/components/responses/PaymentFailed' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
+  /api/payments/mock/webhook:
+    post:
+      tags: [Payments]
+      operationId: receiveMockPaymentWebhook
+      security: []
+      summary: Nhận callback thanh toán mô phỏng có chữ ký HMAC
+      description: >-
+        Chữ ký x-mock-signature là HMAC-SHA256 của JSON canonical theo thứ tự
+        eventId, orderId, status, amountVnd, currency, sử dụng MOCK_PAYMENT_SECRET.
+        Sự kiện lặp cùng payload là idempotent; dùng lại eventId cho payload khác bị từ chối.
+        Callback thành công đến sau khi hết hạn trả PAYMENT_TOO_LATE, không tạo vé và giải phóng claim.
+      parameters:
+        - name: x-mock-signature
+          in: header
+          required: true
+          schema: { type: string, minLength: 64, maxLength: 64, pattern: '^[a-fA-F0-9]{64}$' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MockPaymentWebhookRequest' }
+      responses:
+        '200':
+          description: Callback được chấp nhận
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MockWebhookResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '402': { $ref: '#/components/responses/PaymentFailed' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
+  /api/tickets/{ticketId}/check-in:
+    post:
+      tags: [Tickets]
+      operationId: checkInTicketById
+      summary: Check-in vé bằng ID
+      description: Chỉ STAFF hoặc ADMIN. STAFF chỉ check-in vé tại rạp được phân công; ADMIN không bị giới hạn rạp.
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Vé đã được sử dụng một lần
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CheckInResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
+  /api/tickets/scan:
+    post:
+      tags: [Tickets]
+      operationId: scanTicketQr
+      summary: Quét mã vé và check-in một lần
+      description: Quyền STAFF hoặc ADMIN; STAFF bị giới hạn vào rạp được phân công.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [qrToken]
+              properties:
+                qrToken: { type: string, minLength: 20, maxLength: 128 }
+      responses:
+        '200':
+          description: Check-in thành công
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CheckInResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
+  /api/admin/summary:
+    get:
+      tags: [Admin]
+      operationId: getAdminSummary
+      summary: Tổng quan vận hành
+      description: Chỉ ADMIN. Doanh thu lấy từ payment SUCCEEDED; occupancy tính suất ACTIVE chưa bắt đầu.
+      responses:
+        '200':
+          description: Các số đếm tổng quan và lấp đầy
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminSummary' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/admin/reports/occupancy:
+    get:
+      tags: [Admin]
+      operationId: getOccupancyReport
+      summary: Báo cáo lấp đầy theo khoảng ngày
+      description: Chỉ ADMIN. Truyền from và to cùng nhau; ngày to được tính trọn ngày theo múi giờ nghiệp vụ.
+      parameters:
+        - name: from
+          in: query
+          schema: { type: string, format: date }
+        - name: to
+          in: query
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Số suất, ghế đã bán, sức chứa, tỷ lệ và khoảng tính
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OccupancyReport' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
+  /api/admin/cinemas:
+    get:
+      tags: [Admin]
+      operationId: listAdminCinemas
+      summary: Danh sách rạp và phòng chiếu
+      description: Chỉ ADMIN.
+      responses:
+        '200':
+          description: Các rạp kèm phòng và số ghế
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/AdminCinema' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Admin]
+      operationId: createCinema
+      summary: Tạo rạp
+      description: Chỉ ADMIN.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateCinemaRequest' }
+      responses:
+        '201':
+          description: Rạp mới tạo
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Cinema' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /api/admin/cinemas/{id}:
+    patch:
+      tags: [Admin]
+      operationId: updateCinema
+      summary: Cập nhật thông tin hoặc trạng thái rạp
+      description: Chỉ ADMIN; cần ít nhất một trường.
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateCinemaRequest' }
+      responses:
+        '200':
+          description: Rạp đã cập nhật
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Cinema' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
+  /api/admin/movies:
+    get:
+      tags: [Admin]
+      operationId: listAdminMovies
+      summary: Danh sách toàn bộ phim
+      description: Chỉ ADMIN; bao gồm phim không hoạt động.
+      responses:
+        '200':
+          description: Danh sách phim
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Movie' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Admin]
+      operationId: createMovie
+      summary: Tạo phim
+      description: Chỉ ADMIN.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateMovieRequest' }
+      responses:
+        '201':
+          description: Phim mới tạo
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Movie' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /api/admin/movies/{id}:
+    patch:
+      tags: [Admin]
+      operationId: updateMovie
+      summary: Cập nhật phim hoặc trạng thái
+      description: Chỉ ADMIN; cần ít nhất một trường.
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateMovieRequest' }
+      responses:
+        '200':
+          description: Phim đã cập nhật
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Movie' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
+  /api/admin/auditoriums:
+    get:
+      tags: [Admin]
+      operationId: listAuditoriums
+      summary: Danh sách phòng chiếu và ghế
+      description: Chỉ ADMIN.
+      responses:
+        '200':
+          description: Phòng chiếu kèm danh sách ghế
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/AdminAuditorium' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Admin]
+      operationId: createAuditorium
+      summary: Tạo phòng chiếu cùng danh sách ghế
+      description: Chỉ ADMIN; từ 1 đến 300 ghế, nhãn và vị trí trong phòng phải duy nhất.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateAuditoriumRequest' }
+      responses:
+        '201':
+          description: Phòng chiếu đã tạo
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CreatedAuditorium' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /api/admin/auditoriums/{id}:
+    patch:
+      tags: [Admin]
+      operationId: updateAuditorium
+      summary: Cập nhật tên hoặc loại màn hình phòng chiếu
+      description: Chỉ ADMIN; cần ít nhất một trường.
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateAuditoriumRequest' }
+      responses:
+        '200':
+          description: Phòng chiếu đã cập nhật
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuditoriumSummary' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
+  /api/admin/seats/{id}:
+    patch:
+      tags: [Admin]
+      operationId: updateSeat
+      summary: Cập nhật ghế
+      description: Chỉ ADMIN; không thể cập nhật ghế đang được giữ hoặc đã bán; cần ít nhất một trường.
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateSeatRequest' }
+      responses:
+        '200':
+          description: Ghế đã cập nhật
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Seat' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
+  /api/admin/showtimes:
+    get:
+      tags: [Admin]
+      operationId: listAdminShowtimes
+      summary: Danh sách tối đa 100 suất chiếu gần nhất
+      description: Chỉ ADMIN; sắp xếp startAt giảm dần.
+      responses:
+        '200':
+          description: Danh sách suất chiếu
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Showtime' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Admin]
+      operationId: createShowtime
+      summary: Tạo suất chiếu
+      description: Chỉ ADMIN; hệ thống tính endAt từ thời lượng phim và từ chối lịch trong cùng auditorium nếu thời lượng chiếu cộng buffer vệ sinh 20 phút chồng lấn. Khoảng trống đúng 20 phút được chấp nhận.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateShowtimeRequest' }
+      responses:
+        '201':
+          description: Suất chiếu đã tạo
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Showtime' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /api/admin/showtimes/{id}:
+    patch:
+      tags: [Admin]
+      operationId: updateShowtime
+      summary: Cập nhật suất chiếu hoặc trạng thái
+      description: Chỉ ADMIN; cần ít nhất một trường. Không thể đổi phim, phòng hoặc giờ nếu đã có ghế giữ/bán. Lịch cùng auditorium cần cách nhau tối thiểu 20 phút sau endAt.
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateShowtimeRequest' }
+      responses:
+        '200':
+          description: Suất chiếu đã cập nhật
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Showtime' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
+  /api/admin/users:
+    get:
+      tags: [Admin]
+      operationId: listUsers
+      summary: Danh sách người dùng và rạp được phân công
+      description: Chỉ ADMIN.
+      responses:
+        '200':
+          description: Danh sách người dùng
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/AdminUser' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/admin/users/{id}/role:
+    patch:
+      tags: [Admin]
+      operationId: updateUserRole
+      summary: Đổi role người dùng
+      description: Chỉ ADMIN; người dùng không thể tự hạ quyền ADMIN. Đổi role làm mất hiệu lực token hiện tại.
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [role]
+              properties:
+                role: { $ref: '#/components/schemas/Role' }
+      responses:
+        '200':
+          description: Người dùng đã cập nhật role
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
+  /api/admin/users/{id}/assigned-cinema:
+    patch:
+      tags: [Admin]
+      operationId: assignStaffCinema
+      summary: Phân công hoặc bỏ phân công rạp cho STAFF
+      description: Chỉ ADMIN; tài khoản đích phải có role STAFF; cinemaId null dùng để bỏ phân công. Staff chưa phân công hoặc thao tác ngoài rạp được phân công sẽ nhận 403 trên cả hai route check-in; ADMIN không bị giới hạn theo rạp.
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [cinemaId]
+              properties:
+                cinemaId:
+                  type: [string, 'null']
+                  minLength: 1
+      responses:
+        '200':
+          description: Tài khoản STAFF và rạp được phân công
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AssignedStaff' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+  responses:
+    Unauthorized:
+      description: Thiếu, sai hoặc hết hạn token; một số callback trả lỗi chữ ký.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ApiError' }
+    Forbidden:
+      description: Không đủ role hoặc STAFF thao tác ngoài rạp được phân công.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ApiError' }
+    NotFound:
+      description: Không tìm thấy tài nguyên hoặc tài nguyên không thuộc người dùng.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ApiError' }
+    Conflict:
+      description: Xung đột ghế, trạng thái, callback replay, hoặc dữ liệu trùng.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ApiError' }
+    ValidationError:
+      description: JSON hợp lệ nhưng không thỏa schema/luật nghiệp vụ.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ValidationError' }
+    PaymentFailed:
+      description: Thanh toán demo thất bại hoặc callback báo FAILED.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ApiError' }
+    RateLimited:
+      description: Tạm giới hạn đăng nhập sau nhiều lần sai.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ApiError' }
+    ServerError:
+      description: Lỗi hệ thống không dự kiến.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ApiError' }
+  schemas:
+    Role:
+      type: string
+      enum: [CUSTOMER, STAFF, ADMIN]
+    RecordStatus:
+      type: string
+      enum: [ACTIVE, INACTIVE]
+    SeatType:
+      type: string
+      enum: [STANDARD, PREMIUM, ACCESSIBLE]
+    SeatStatus:
+      type: string
+      enum: [AVAILABLE, HELD, SOLD]
+    HoldStatus:
+      type: string
+      enum: [HELD, PAYMENT_PENDING, CONFIRMED, RELEASED, EXPIRED]
+    OrderStatus:
+      type: string
+      enum: [PAYMENT_PENDING, CONFIRMED, PAYMENT_FAILED, EXPIRED, CANCELLED, REFUNDED]
+    ApiError:
+      type: object
+      required: [error, message]
+      properties:
+        error: { type: string, description: Mã lỗi máy đọc được. }
+        message: { type: string }
+        details:
+          type: object
+          description: Chi tiết lỗi validation theo cấu trúc flatten của Zod.
+          additionalProperties: true
+      additionalProperties: true
+    ValidationError:
+      type: object
+      required: [error, message]
+      properties:
+        error: { const: VALIDATION_ERROR }
+        message: { type: string }
+        details:
+          type: object
+          properties:
+            formErrors:
+              type: array
+              items: { type: string }
+            fieldErrors:
+              type: object
+              additionalProperties:
+                type: array
+                items: { type: string }
+          additionalProperties: true
+    RegisterRequest:
+      type: object
+      additionalProperties: false
+      required: [name, email, password]
+      properties:
+        name: { type: string, minLength: 2, maxLength: 80 }
+        email: { type: string, format: email, maxLength: 254 }
+        password: { type: string, minLength: 8, maxLength: 72 }
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 1, maxLength: 72 }
+    UpdateProfileRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        name: { type: string, minLength: 2, maxLength: 80 }
+        email: { type: string, format: email, maxLength: 254 }
+    User:
+      type: object
+      required: [id, name, email, role, assignedCinemaId]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        email: { type: string, format: email }
+        role: { $ref: '#/components/schemas/Role' }
+        assignedCinemaId: { type: [string, 'null'] }
+    AuthResponse:
+      type: object
+      required: [token, user]
+      properties:
+        token: { type: string, description: 'JWT bearer token, expires in 8 hours.' }
+        user: { $ref: '#/components/schemas/User' }
+    Movie:
+      type: object
+      required: [id, title, slug, genre, synopsis, runtimeMinutes, ageRating, posterUrl, releaseDate]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        slug: { type: string }
+        genre: { type: string }
+        synopsis: { type: string }
+        runtimeMinutes: { type: integer }
+        ageRating: { type: string }
+        posterUrl: { type: [string, 'null'], format: uri }
+        releaseDate: { type: [string, 'null'], format: date }
+    Cinema:
+      type: object
+      required: [id, name, city, address, status, createdAt]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        city: { type: string }
+        address: { type: string }
+        status: { $ref: '#/components/schemas/RecordStatus' }
+        createdAt: { type: string, format: date-time }
+    PublicCinema:
+      allOf:
+        - { $ref: '#/components/schemas/Cinema' }
+        - type: object
+          required: [_count]
+          properties:
+            _count:
+              type: object
+              required: [auditoriums]
+              properties:
+                auditoriums: { type: integer }
+    AdminCinema:
+      type: object
+      required: [id, name, city, address, status, auditoriums]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        city: { type: string }
+        address: { type: string }
+        status: { $ref: '#/components/schemas/RecordStatus' }
+        auditoriums:
+          type: array
+          items: { $ref: '#/components/schemas/AuditoriumSummary' }
+    CreateCinemaRequest:
+      type: object
+      additionalProperties: false
+      required: [name, city, address]
+      properties:
+        name: { type: string, minLength: 2, maxLength: 120 }
+        city: { type: string, minLength: 2, maxLength: 120 }
+        address: { type: string, minLength: 5, maxLength: 300 }
+    UpdateCinemaRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        name: { type: string, minLength: 2, maxLength: 120 }
+        city: { type: string, minLength: 2, maxLength: 120 }
+        address: { type: string, minLength: 5, maxLength: 300 }
+        status: { $ref: '#/components/schemas/RecordStatus' }
+    CreateMovieRequest:
+      type: object
+      additionalProperties: false
+      required: [title, slug, genre, synopsis, runtimeMinutes, ageRating]
+      properties:
+        title: { type: string, minLength: 2, maxLength: 160 }
+        slug: { type: string, minLength: 2, maxLength: 180, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+        genre: { type: string, minLength: 2, maxLength: 80 }
+        synopsis: { type: string, minLength: 10, maxLength: 3000 }
+        runtimeMinutes: { type: integer, minimum: 30, maximum: 300 }
+        ageRating: { type: string, minLength: 1, maxLength: 12 }
+        posterUrl: { type: string, format: uri }
+        releaseDate: { type: string, format: date }
+    UpdateMovieRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        title: { type: string, minLength: 2, maxLength: 160 }
+        slug: { type: string, minLength: 2, maxLength: 180, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+        genre: { type: string, minLength: 2, maxLength: 80 }
+        synopsis: { type: string, minLength: 10, maxLength: 3000 }
+        runtimeMinutes: { type: integer, minimum: 30, maximum: 300 }
+        ageRating: { type: string, minLength: 1, maxLength: 12 }
+        posterUrl: { type: [string, 'null'], format: uri }
+        releaseDate: { type: [string, 'null'], format: date }
+        status: { $ref: '#/components/schemas/RecordStatus' }
+    Showtime:
+      type: object
+      required: [id, movieId, movieTitle, cinemaId, cinemaName, city, auditoriumName, startAt, endAt, date, priceVnd, premiumSurchargeVnd, status, screenType]
+      properties:
+        id: { type: string }
+        movieId: { type: string }
+        movieTitle: { type: string }
+        cinemaId: { type: string }
+        cinemaName: { type: string }
+        city: { type: string }
+        auditoriumName: { type: string }
+        startAt: { type: string, format: date-time }
+        endAt: { type: string, format: date-time }
+        date: { type: string, format: date, description: Ngày nghiệp vụ Asia/Ho_Chi_Minh. }
+        priceVnd: { type: integer, description: 'Giá ghế STANDARD cơ sở, VND.' }
+        premiumSurchargeVnd: { type: integer, description: 'Phụ thu ghế PREMIUM, VND.' }
+        status: { $ref: '#/components/schemas/RecordStatus' }
+        screenType: { type: string }
+    Seat:
+      type: object
+      required: [id, auditoriumId, label, row, column, type, isAccessible]
+      properties:
+        id: { type: string }
+        auditoriumId: { type: string }
+        label: { type: string }
+        row: { type: string }
+        column: { type: integer }
+        type: { $ref: '#/components/schemas/SeatType' }
+        isAccessible: { type: boolean }
+    ShowtimeSeat:
+      allOf:
+        - { $ref: '#/components/schemas/Seat' }
+        - type: object
+          required: [status, priceVnd]
+          properties:
+            status: { $ref: '#/components/schemas/SeatStatus' }
+            priceVnd: { type: integer }
+    ShowtimeSeats:
+      type: object
+      required: [showtime, seats]
+      properties:
+        showtime: { $ref: '#/components/schemas/Showtime' }
+        seats:
+          type: array
+          items: { $ref: '#/components/schemas/ShowtimeSeat' }
+    CreateHoldRequest:
+      type: object
+      additionalProperties: false
+      required: [showtimeId, seatIds]
+      properties:
+        showtimeId: { type: string, minLength: 1 }
+        seatIds:
+          type: array
+          minItems: 1
+          maxItems: 8
+          items: { type: string, minLength: 1 }
+    Hold:
+      type: object
+      required: [id, showtimeId, seatIds, expiresAt, totalVnd, status]
+      properties:
+        id: { type: string }
+        showtimeId: { type: string }
+        seatIds:
+          type: array
+          items: { type: string }
+        expiresAt: { type: string, format: date-time }
+        totalVnd: { type: integer }
+        status: { $ref: '#/components/schemas/HoldStatus' }
+    OrderSeat:
+      type: object
+      required: [seatId, label, row, column, type, priceVnd]
+      properties:
+        seatId: { type: string }
+        label: { type: string }
+        row: { type: string }
+        column: { type: integer }
+        type: { $ref: '#/components/schemas/SeatType' }
+        priceVnd: { type: integer }
+    Ticket:
+      type: object
+      required: [id, qrToken, checkedInAt]
+      properties:
+        id: { type: string }
+        qrToken: { type: string }
+        checkedInAt: { type: [string, 'null'], format: date-time }
+    Order:
+      type: object
+      required: [id, status, totalVnd, createdAt, showtime, seats, tickets]
+      properties:
+        id: { type: string }
+        status: { $ref: '#/components/schemas/OrderStatus' }
+        totalVnd: { type: integer }
+        createdAt: { type: string, format: date-time }
+        showtime: { $ref: '#/components/schemas/Showtime' }
+        seats:
+          type: array
+          items: { $ref: '#/components/schemas/OrderSeat' }
+        tickets:
+          type: array
+          items: { $ref: '#/components/schemas/Ticket' }
+    MockPaymentWebhookRequest:
+      type: object
+      additionalProperties: false
+      required: [eventId, orderId, status, amountVnd, currency]
+      properties:
+        eventId: { type: string, minLength: 8, maxLength: 128 }
+        orderId: { type: string, minLength: 1 }
+        status: { type: string, enum: [SUCCEEDED, FAILED] }
+        amountVnd: { type: integer, minimum: 1, maximum: 100000000 }
+        currency: { const: VND }
+    MockPaymentCompleteResponse:
+      type: object
+      required: [orderId, status, totalVnd, tickets]
+      properties:
+        orderId: { type: string }
+        status: { $ref: '#/components/schemas/OrderStatus' }
+        totalVnd: { type: integer }
+        tickets:
+          type: array
+          items: { $ref: '#/components/schemas/Ticket' }
+    MockWebhookResponse:
+      type: object
+      required: [accepted, idempotent, orderId, status, totalVnd, tickets]
+      properties:
+        accepted: { const: true }
+        idempotent: { type: boolean }
+        orderId: { type: string }
+        status: { $ref: '#/components/schemas/OrderStatus' }
+        totalVnd: { type: integer }
+        tickets:
+          type: array
+          items: { $ref: '#/components/schemas/Ticket' }
+    CheckInResponse:
+      type: object
+      required: [ticketId, checkedInAt, seat, movieTitle, cinemaName]
+      properties:
+        ticketId: { type: string }
+        checkedInAt: { type: string, format: date-time }
+        seat: { type: string }
+        movieTitle: { type: string }
+        cinemaName: { type: string }
+    Occupancy:
+      type: object
+      required: [showtimeCount, soldSeats, capacitySeats, fillRatePercent, definition]
+      properties:
+        showtimeCount: { type: integer }
+        soldSeats: { type: integer }
+        capacitySeats: { type: integer }
+        fillRatePercent: { type: number }
+        definition: { type: string }
+    OccupancyReport:
+      allOf:
+        - { $ref: '#/components/schemas/Occupancy' }
+        - type: object
+          required: [periodStart, periodEnd]
+          properties:
+            periodStart: { type: string, format: date-time }
+            periodEnd: { type: [string, 'null'], format: date-time }
+    AdminSummary:
+      type: object
+      required: [movies, showtimes, orders, tickets, confirmedRevenueVnd, occupancy]
+      properties:
+        movies: { type: integer }
+        showtimes: { type: integer }
+        orders: { type: integer }
+        tickets: { type: integer }
+        confirmedRevenueVnd: { type: integer }
+        occupancy:
+          allOf:
+            - { $ref: '#/components/schemas/Occupancy' }
+            - type: object
+              required: [periodStart, periodEnd]
+              properties:
+                periodStart: { type: string, format: date-time }
+                periodEnd: { type: 'null' }
+    AuditoriumSummary:
+      type: object
+      required: [id, name, screenType, seatCount]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        screenType: { type: string }
+        seatCount: { type: integer }
+    AdminAuditorium:
+      allOf:
+        - { $ref: '#/components/schemas/AuditoriumSummary' }
+        - type: object
+          required: [cinemaId, cinemaName, seats]
+          properties:
+            cinemaId: { type: string }
+            cinemaName: { type: string }
+            seats:
+              type: array
+              items: { $ref: '#/components/schemas/Seat' }
+    CreateAuditoriumSeat:
+      type: object
+      additionalProperties: false
+      required: [label, row, column]
+      properties:
+        label: { type: string, minLength: 1, maxLength: 12 }
+        row: { type: string, minLength: 1, maxLength: 3 }
+        column: { type: integer, minimum: 1, maximum: 100 }
+        type: { allOf: [{ $ref: '#/components/schemas/SeatType' }], default: STANDARD }
+        isAccessible: { type: boolean }
+    CreateAuditoriumRequest:
+      type: object
+      additionalProperties: false
+      required: [cinemaId, name, seats]
+      properties:
+        cinemaId: { type: string, minLength: 1 }
+        name: { type: string, minLength: 1, maxLength: 80 }
+        screenType: { type: string, minLength: 1, maxLength: 40, default: STANDARD }
+        seats:
+          type: array
+          minItems: 1
+          maxItems: 300
+          items: { $ref: '#/components/schemas/CreateAuditoriumSeat' }
+    CreatedAuditorium:
+      type: object
+      required: [id, cinemaId, name, screenType, seats]
+      properties:
+        id: { type: string }
+        cinemaId: { type: string }
+        name: { type: string }
+        screenType: { type: string }
+        seats:
+          type: array
+          items: { $ref: '#/components/schemas/Seat' }
+    UpdateAuditoriumRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        name: { type: string, minLength: 1, maxLength: 80 }
+        screenType: { type: string, minLength: 1, maxLength: 40 }
+    UpdateSeatRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        label: { type: string, minLength: 1, maxLength: 12 }
+        row: { type: string, minLength: 1, maxLength: 3 }
+        column: { type: integer, minimum: 1, maximum: 100 }
+        type: { $ref: '#/components/schemas/SeatType' }
+        isAccessible: { type: boolean }
+    CreateShowtimeRequest:
+      type: object
+      additionalProperties: false
+      required: [movieId, auditoriumId, startAt, priceVnd]
+      properties:
+        movieId: { type: string, minLength: 1 }
+        auditoriumId: { type: string, minLength: 1 }
+        startAt: { type: string, format: date-time, description: Must include timezone offset. }
+        priceVnd: { type: integer, minimum: 1000, maximum: 1000000 }
+        premiumSurchargeVnd: { type: integer, minimum: 0, maximum: 500000, default: 30000 }
+    UpdateShowtimeRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        movieId: { type: string, minLength: 1 }
+        auditoriumId: { type: string, minLength: 1 }
+        startAt: { type: string, format: date-time, description: Must include timezone offset. }
+        priceVnd: { type: integer, minimum: 1000, maximum: 1000000 }
+        premiumSurchargeVnd: { type: integer, minimum: 0, maximum: 500000 }
+        status: { $ref: '#/components/schemas/RecordStatus' }
+    AdminUser:
+      allOf:
+        - { $ref: '#/components/schemas/User' }
+        - type: object
+          required: [createdAt, assignedCinema]
+          properties:
+            createdAt: { type: string, format: date-time }
+            assignedCinema:
+              oneOf:
+                - { $ref: '#/components/schemas/AssignedCinemaSummary' }
+                - { type: 'null' }
+    AssignedCinemaSummary:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: string }
+        name: { type: string }
+    AssignedStaff:
+      allOf:
+        - { $ref: '#/components/schemas/User' }
+        - type: object
+          required: [assignedCinema]
+          properties:
+            assignedCinema:
+              oneOf:
+                - { $ref: '#/components/schemas/AssignedCinemaSummary' }
+                - { type: 'null' }

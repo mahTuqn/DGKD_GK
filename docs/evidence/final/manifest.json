@@ -1,0 +1,475 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "runId": "2026-10-27-final-local-suite",
+  "status": "LOCAL_TESTS_SECRET_SCAN_TRACEABILITY_PASS_CLEAN_CLONE_PENDING",
+  "capturedAt": "2026-10-27T15:18:21+07:00",
+  "date": "2026-10-27",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "commit": null,
+  "parentBaseSha": "fbf0b65aa5dd8d6f11010ce9503a3c2501e78053",
+  "commitNote": "All local quality/browser gates recorded below pass. Frozen CinemaBooking commit and clean-clone run remain pending; parentBaseSha identifies only the surrounding repository.",
+  "environment": {
+    "os": "Microsoft Windows 11 Pro 10.0.26200 (build 26200)",
+    "node": "v26.7.0",
+    "npm": "12.0.2",
+    "postgresql": "17",
+    "playwright": "1.64.1",
+    "browser": "Chromium 156.0.8078.4",
+    "browserProjects": [
+      "chromium-desktop",
+      "chromium-mobile"
+    ],
+    "apiTestDatabase": "Disposable cinema_dast on PostgreSQL 17 port 5434; connection string omitted",
+    "reproducibleSeedCommand": "npm run db:deploy && npm run db:seed on isolated test database"
+  },
+  "overall": {
+    "command": "npm test",
+    "exitCode": 0,
+    "result": "PASS_LOCAL_BASELINE",
+    "api": {
+      "result": "PASS",
+      "testsPassed": 17,
+      "testsFailed": 0,
+      "testFilesPassed": 4,
+      "suiteStart": "Final local rerun; see reports/generated/final-test-results.log",
+      "sourceFiles": [
+        "backend/tests/api.integration.test.ts",
+        "backend/tests/staff-scope.integration.test.ts",
+        "backend/tests/domain.test.ts",
+        "backend/tests/database.integration.test.ts"
+      ]
+    },
+    "playwright": {
+      "result": "PASS",
+      "testsPassed": 24,
+      "testsFailed": 0,
+      "caseCount": 12,
+      "projects": [
+        "chromium-desktop",
+        "chromium-mobile"
+      ],
+      "testIds": [
+        "TC-E2E-00",
+        "TC-E2E-01",
+        "TC-E2E-02",
+        "TC-E2E-03",
+        "TC-E2E-04",
+        "TC-E2E-05",
+        "TC-E2E-06",
+        "TC-E2E-07",
+        "TC-E2E-08",
+        "TC-E2E-09",
+        "TC-E2E-10",
+        "TC-E2E-11"
+      ],
+      "testsExpected": 24
+    }
+  },
+  "gates": [
+    {
+      "name": "production build",
+      "command": "npm run build",
+      "result": "PASS",
+      "exitCode": 0,
+      "artifact": "reports/generated/final-build-results.log"
+    },
+    {
+      "name": "dependency audit",
+      "command": "npm audit --audit-level=moderate",
+      "result": "PASS",
+      "exitCode": 0,
+      "vulnerabilities": 0,
+      "artifact": "reports/generated/final-audit-results.log"
+    },
+    {
+      "name": "traceability validation",
+      "command": "npm run qa:trace",
+      "result": "PASS",
+      "testCases": 40,
+      "requirements": 24,
+      "artifact": null,
+      "exitCode": 0,
+      "details": "PASS on the current working tree: 40 test cases and 24 requirements. Validator scans all .ts/.js/.mjs/.yaml/.yml source files for test ID markers, supports the Automated prefix, and resolves the markers in both ZAP configs. Frozen commit and clean-clone validation remain pending."
+    },
+    {
+      "name": "PostgreSQL backup/restore rehearsal",
+      "result": "PASS",
+      "startedAt": "2026-10-27T13:55:23.3700952+07:00",
+      "finishedAt": "2026-10-27T13:55:26.2827953+07:00",
+      "postgresVersion": "17",
+      "dumpFormat": "custom",
+      "sourceEncoding": "UTF8",
+      "restoreEncoding": "UTF8",
+      "restoreTarget": "UTF8 database created from template0",
+      "verificationCounts": {
+        "cinemas": 8,
+        "movies": 3,
+        "users": 153,
+        "showtimes": 4
+      },
+      "exitCodes": {
+        "pg_dump": 0,
+        "createdb": 0,
+        "pg_restore": 0,
+        "verification": 0
+      },
+      "artifact": "reports/generated/recovery/restore-rehearsal.json",
+      "artifactSha256": "4503D9ECC5982C0D13E074E0E70AC76D931A79E9042AC599EF170CC766EB98CD",
+      "dumpArtifact": "reports/generated/recovery/source-20261027_135523.dump",
+      "dumpSha256": "52F8C1338865731183228D305491BBA5E40F15D75274C4F82256C827B8413089",
+      "notes": [
+        "Lượt thử ban đầu dùng encoding đích mặc định WIN1258 nên không khôi phục được dump UTF8.",
+        "Lượt pass tạo đích UTF8 rõ ràng; database restore đã được xóa sau khi xác minh, dump được giữ trong thư mục gitignored reports/generated/recovery."
+      ]
+    },
+    {
+      "name": "OpenAPI lint and CI gate",
+      "command": "npm run lint:openapi",
+      "result": "PASS",
+      "exitCode": 0,
+      "warnings": 0,
+      "localEvidence": "npm run lint:openapi completed without warnings; .github/workflows/ci.yml runs the gate.",
+      "runtimeContractCoverage": "Not equivalent to runtime contract tests for every endpoint"
+    },
+    {
+      "name": "Domain coverage",
+      "command": "npm run test:coverage --workspace backend",
+      "result": "PASS",
+      "exitCode": 0,
+      "testsPassed": 13,
+      "linesPercent": 100,
+      "branchesPercent": 100,
+      "functionsPercent": 100,
+      "lineThreshold": 90,
+      "branchThreshold": 80,
+      "artifact": "reports/generated/coverage-results.log"
+    },
+    {
+      "name": "Domain mutation",
+      "command": "npm run test:mutation --workspace backend",
+      "result": "PASS",
+      "exitCode": 0,
+      "scorePercent": 81.82,
+      "thresholdPercent": 70,
+      "killed": 153,
+      "survived": 34,
+      "timeout": 0,
+      "errors": 0,
+      "artifact": "reports/generated/mutation-results.log"
+    },
+    {
+      "name": "k6 local performance baseline",
+      "command": "k6 run tests/non-functional/k6/cinema-booking.js",
+      "result": "PASS_LOCAL_BASELINE",
+      "exitCode": 0,
+      "vus": 50,
+      "duration": "5m",
+      "showtimeP95Ms": 27.57,
+      "showtimeP95TargetMs": 500,
+      "holdP95Ms": 349.7,
+      "holdP95TargetMs": 800,
+      "unexpectedErrorPercent": 0,
+      "unexpectedErrorTargetPercent": 1,
+      "environment": "Windows local; isolated PostgreSQL 17; built API; not staging",
+      "artifact": "reports/generated/k6/baseline-20261027T141504.json"
+    },
+    {
+      "name": "ZAP unauthenticated API scan",
+      "command": "ZAP Automation Framework with OpenAPI import and active scan",
+      "result": "PASS_WITHIN_SCAN_SCOPE",
+      "exitCode": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0,
+      "informational": 1,
+      "artifact": "reports/generated/dast/unauthenticated-api-zap.json"
+    },
+    {
+      "name": "ZAP authenticated API scan",
+      "command": "ZAP Automation Framework with seeded Admin context",
+      "result": "PASS_WITH_RESIDUAL_LOW",
+      "exitCode": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 1,
+      "informational": 1,
+      "residual": "Low-confidence persistent script content in JSON response; stored in disposable fixture, not confirmed browser execution; see SEC-OBS-01",
+      "artifact": "reports/generated/dast/authenticated-api-zap.json"
+    },
+    {
+      "name": "ZAP frontend production-preview scan",
+      "command": "ZAP active scan against built preview",
+      "result": "PASS_WITHIN_SCAN_SCOPE",
+      "exitCode": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0,
+      "informational": 1,
+      "artifact": "reports/generated/dast/frontend-preview-final-zap.html"
+    },
+    {
+      "name": "backend start smoke",
+      "command": "npm start --workspace backend",
+      "result": "PASS",
+      "exitCode": 0,
+      "verification": "Built API process started and /api/health returned ready",
+      "artifact": "reports/generated/start-smoke.log"
+    },
+    {
+      "name": "CI workflow configuration",
+      "command": "GitHub Actions workflow .github/workflows/ci.yml",
+      "result": "CONFIGURED_NOT_EXECUTED",
+      "exitCode": null,
+      "nodeVersion": 24,
+      "gitleaksAction": "gitleaks/gitleaks-action@v3",
+      "gitleaksCommentsEnabled": false,
+      "gitleaksArtifactUploadEnabled": false,
+      "auditLevel": "moderate",
+      "qualitySteps": [
+        "OpenAPI lint",
+        "traceability",
+        "API tests",
+        "build",
+        "browser tests",
+        "artifact upload"
+      ],
+      "note": "Gitleaks Action v3 is configured with Gitleaks 8.30.1, matching the local pinned container. Local scan passed; no remote GitHub Actions run is available.",
+      "gitleaksVersion": "8.30.1",
+      "localGitleaksResult": "PASS: 1 commit, 706189 bytes, no leaks"
+    },
+    {
+      "name": "Gitleaks history scan",
+      "command": "npm run scan:secrets",
+      "result": "PASS_LOCAL_SCAN_SCOPE",
+      "exitCode": 0,
+      "version": "8.30.1",
+      "image": "ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:b109bc5f8f76a38196a3e413704fc5b9e3c32360bce4e4b603bd6f45b3721dbb",
+      "commitsScanned": 1,
+      "bytesScanned": 706189,
+      "leaksFound": 0,
+      "artifactLog": "reports/generated/final-gitleaks-results.log",
+      "artifactReport": "reports/generated/final-gitleaks.json",
+      "note": "Local repository-history scan only; clean-clone scan and remote GitHub Actions run remain pending."
+    }
+  ],
+  "thresholdsAndTargets": {
+    "holdRace": {
+      "target": "At most one successful claim; all other simultaneous requests conflict",
+      "measured": "100 requests: 1 success, 99 conflicts"
+    },
+    "booking": {
+      "maxSeatsPerHold": 8,
+      "holdTtlMinutes": 5,
+      "auditoriumBufferMinutes": 20
+    },
+    "accessibility": {
+      "target": "0 serious/critical axe violations on scanned pages",
+      "measured": "0 in discovery, seat map, and checkout across desktop/mobile"
+    },
+    "dependencyAudit": {
+      "target": "0 vulnerabilities at high threshold",
+      "measured": 0
+    },
+    "lineCoverage": {
+      "targetPercent": 90,
+      "measuredPercent": 100,
+      "result": "PASS"
+    },
+    "branchCoverage": {
+      "targetPercent": 80,
+      "measuredPercent": 100,
+      "result": "PASS"
+    },
+    "mutationScore": {
+      "targetPercent": 70,
+      "measuredPercent": 81.82,
+      "result": "PASS"
+    },
+    "showtimeLookupP95": {
+      "targetMs": 500,
+      "measuredMs": 27.57,
+      "result": "PASS_LOCAL_BASELINE"
+    },
+    "holdP95": {
+      "targetMs": 800,
+      "measuredMs": 349.7,
+      "result": "PASS_LOCAL_BASELINE"
+    },
+    "unexpectedErrorRate": {
+      "targetPercent": 1,
+      "measuredPercent": 0,
+      "result": "PASS_LOCAL_BASELINE"
+    },
+    "security": {
+      "target": "0 unresolved Critical/High in scan scope",
+      "measured": "0 Critical/High across listed ZAP scans; 1 authenticated Low-confidence alert remains for triage"
+    }
+  },
+  "artifacts": [
+    {
+      "kind": "combined-test-log",
+      "path": "reports/generated/final-test-results.log",
+      "sha256": null,
+      "bytes": 13375,
+      "summary": "npm test exit 0: API 17/17 and Playwright 24/24 (12 cases × two Chromium projects)"
+    },
+    {
+      "kind": "playwright-json-report",
+      "path": "reports/generated/playwright-results.json",
+      "sha256": null,
+      "bytes": 31338,
+      "summary": "24/24 passed; 12 E2E cases on Chromium desktop and Pixel 7"
+    },
+    {
+      "kind": "playwright-html-report",
+      "path": "reports/generated/playwright/index.html",
+      "sha256": null,
+      "bytes": 563844,
+      "summary": "HTML report for final 24-test Playwright run"
+    },
+    {
+      "kind": "build-log",
+      "path": "reports/generated/final-build-results.log",
+      "sha256": null,
+      "bytes": 970,
+      "summary": "Backend and frontend production build pass"
+    },
+    {
+      "kind": "dependency-audit-log",
+      "path": "reports/generated/audit-after-domain-tools.log",
+      "sha256": null,
+      "bytes": 25,
+      "summary": "npm audit moderate threshold; zero vulnerabilities"
+    },
+    {
+      "kind": "coverage-log",
+      "path": "reports/generated/coverage-results.log",
+      "sha256": null,
+      "bytes": 1026,
+      "summary": "13 domain tests; 100% lines, branches, functions"
+    },
+    {
+      "kind": "coverage-json",
+      "path": "reports/generated/coverage/coverage-final.json",
+      "sha256": null,
+      "bytes": 14057,
+      "summary": "Raw V8 domain coverage data"
+    },
+    {
+      "kind": "mutation-log",
+      "path": "reports/generated/mutation-results.log",
+      "sha256": null,
+      "bytes": 22234,
+      "summary": "Stryker mutation score 81.82%; no timeout/errors"
+    },
+    {
+      "kind": "mutation-json",
+      "path": "reports/generated/mutation/mutation.json",
+      "sha256": null,
+      "bytes": 82940,
+      "summary": "Raw Stryker report"
+    },
+    {
+      "kind": "k6-json-summary",
+      "path": "reports/generated/k6/baseline-20261027T141504.json",
+      "sha256": null,
+      "bytes": 23858,
+      "summary": "50 VUs for 5 minutes; local performance baseline"
+    },
+    {
+      "kind": "k6-log",
+      "path": "reports/generated/k6/baseline-20261027T141504.log",
+      "sha256": null,
+      "bytes": 42362,
+      "summary": "Full k6 run log"
+    },
+    {
+      "kind": "zap-unauthenticated-api-json",
+      "path": "reports/generated/dast/unauthenticated-api-zap.json",
+      "sha256": null,
+      "bytes": 2065,
+      "summary": "No High/Medium/Low; one informational alert"
+    },
+    {
+      "kind": "zap-authenticated-api-json",
+      "path": "reports/generated/dast/authenticated-api-zap.json",
+      "sha256": null,
+      "bytes": 8206,
+      "summary": "One Low-confidence JSON alert remains under triage"
+    },
+    {
+      "kind": "zap-frontend-preview-html",
+      "path": "reports/generated/dast/frontend-preview-final-zap.html",
+      "sha256": null,
+      "bytes": 22189,
+      "summary": "No High/Medium/Low; one informational alert"
+    },
+    {
+      "kind": "postgres-restore-rehearsal-json",
+      "path": "reports/generated/recovery/restore-rehearsal.json",
+      "sha256": null,
+      "bytes": 872,
+      "summary": "PostgreSQL 17 UTF8 restore rehearsal pass"
+    },
+    {
+      "kind": "postgres-restore-dump",
+      "path": "reports/generated/recovery/source-20261027_135523.dump",
+      "sha256": null,
+      "bytes": 68580,
+      "summary": "Custom-format backup used in restore rehearsal"
+    },
+    {
+      "kind": "dependency-audit-log",
+      "path": "reports/generated/final-audit-results.log",
+      "sha256": null,
+      "bytes": 25,
+      "summary": "npm audit moderate threshold; zero vulnerabilities"
+    },
+    {
+      "kind": "backend-start-smoke-log",
+      "path": "reports/generated/start-smoke.log",
+      "sha256": null,
+      "bytes": 182,
+      "summary": "Built backend started successfully and health check passed"
+    },
+    {
+      "kind": "gitleaks-scan-log",
+      "path": "reports/generated/final-gitleaks-results.log",
+      "sha256": null,
+      "bytes": 212,
+      "summary": "Gitleaks v8.30.1 local history scan: one commit, 706189 bytes, no leaks"
+    },
+    {
+      "kind": "gitleaks-redacted-json-report",
+      "path": "reports/generated/final-gitleaks.json",
+      "sha256": null,
+      "bytes": 3,
+      "summary": "Redacted Gitleaks JSON report; no findings"
+    }
+  ],
+  "notMeasured": [
+    "Frozen CinemaBooking commit and clean-clone run",
+    "Staging/production performance, soak, and multi-instance/worker reliability",
+    "Manual WCAG 2.2 AA keyboard/focus/usability review; axe coverage of login, ticket, and admin pages",
+    "Comprehensive ASVS/API Top 10 review, exhaustive BOLA/IDOR matrix, and verification of SEC-OBS-01 browser execution",
+    "Production backup schedule, PITR, RPO/RTO, worker restart, reconciliation, gateway timeout, and production restore",
+    "Live integration immediately before/after the five-minute hold deadline",
+    "Production deployment, real payment gateway, and refund/cancellation workflows",
+    "Remote GitHub Actions workflow execution"
+  ],
+  "scopeNotes": [
+    "Axe checks cover discovery, seat map, and checkout; login, ticket, and admin pages were not scanned separately.",
+    "Keyboard E2E verifies focus/navigation through checkout and stops before creating an order.",
+    "k6 performance figures are local Windows baseline results on a disposable PostgreSQL 17 database; they are not staging capacity evidence.",
+    "Authenticated ZAP generated a low-confidence persistent-in-JSON alert from controlled content in disposable DAST data; script execution was not confirmed.",
+    "OpenAPI lint in CI validates the specification document; runtime contract conformance across all endpoints is not established.",
+    "Payment remains a mock flow; no real card data or payment provider is involved.",
+    "TC-E2E-11 passed in both browser projects: Admin-entered HTML-like content appeared as text and produced no img/script DOM node in the tested cinema row.",
+    "Frozen commit and clean-clone validation remain pending; manifest SHA-256 values will be refreshed after that run.",
+    "Local npm run scan:secrets passed using pinned Gitleaks v8.30.1: 1 commit, 706189 bytes scanned, zero leaks; redacted JSON report is empty.",
+    "Gitleaks Action v3 is pinned to version 8.30.1 in CI configuration; no remote GitHub Actions run has occurred.",
+    "npm run qa:trace passes on the current working tree with 40 test cases and 24 requirements; marker validation scans .ts/.js/.mjs/.yaml/.yml sources and supports the Automated prefix, including both ZAP configs.",
+  ],
+  "artifactHashStatus": "SHA-256 values are intentionally pending until the clean-clone run and final artifact freeze."
+}
