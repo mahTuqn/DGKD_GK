@@ -10,6 +10,7 @@ import { createToken, hashPassword, requireAuth, requireRole, verifyPassword } f
 import { prisma } from "./db.js";
 import { calculateFillRatePercent, calendarDateAtTime, computeSeatPrice, DomainError, formatBusinessDate, HOLD_TTL_SECONDS, isHoldActive, uniqueSeatIds } from "./domain/booking-policy.js";
 import { mockPaymentPayloadHash, signMockPaymentEvent, verifyMockPaymentSignature, type MockPaymentEvent } from "./domain/mock-payment-signature.js";
+import { enqueueOutboxEvent } from "./worker.js";
 
 const asyncRoute = (handler: express.RequestHandler): express.RequestHandler => (req, res, next) => Promise.resolve(handler(req, res, next)).catch(next);
 const businessDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
@@ -65,6 +66,26 @@ export async function applyMockPaymentEvent(event: MockPaymentEvent, actorId?: s
       await tx.paymentEvent.create({ data: { providerEventId: event.eventId, orderId: order.id, status: PaymentStatus.SUCCEEDED, amountVnd: event.amountVnd, currency: event.currency, payloadHash, outcome: "CONFIRMED" } });
       return { orderId: order.id, outcome: "CONFIRMED", idempotent: true };
     }
+    if (order.status === OrderStatus.EXPIRED) {
+      const reconciliationRequired = event.status === "SUCCEEDED";
+      const paymentStatus = reconciliationRequired ? PaymentStatus.RECONCILIATION_REQUIRED : PaymentStatus.FAILED;
+      await tx.payment.upsert({
+        where: { orderId: order.id },
+        create: { orderId: order.id, providerEventId: event.eventId, amountVnd: order.totalVnd, status: paymentStatus },
+        update: { providerEventId: event.eventId, amountVnd: order.totalVnd, status: paymentStatus }
+      });
+      await tx.paymentEvent.create({ data: { providerEventId: event.eventId, orderId: order.id, status: event.status === "SUCCEEDED" ? PaymentStatus.SUCCEEDED : PaymentStatus.FAILED, amountVnd: event.amountVnd, currency: event.currency, payloadHash, outcome: "EXPIRED" } });
+      if (reconciliationRequired) {
+        await enqueueOutboxEvent(tx, {
+          eventKey: `payment-reconciliation:${event.eventId}`,
+          eventType: "PAYMENT_RECONCILIATION_REQUIRED",
+          aggregateId: order.id,
+          payload: { providerEventId: event.eventId, orderId: order.id, amountVnd: event.amountVnd, currency: event.currency, reason: "PAYMENT_AFTER_EXPIRY" }
+        });
+      }
+      await audit(tx, actorId, "PAYMENT_EVENT_EXPIRED", "CinemaOrder", order.id, { providerEventId: event.eventId, amountVnd: event.amountVnd, reconciliationRequired });
+      return { orderId: order.id, outcome: "EXPIRED", idempotent: false };
+    }
     if (order.status !== OrderStatus.PAYMENT_PENDING) throw new DomainError("INVALID_ORDER_STATE", "Đơn hàng không còn chờ thanh toán.", 409);
 
     const now = new Date();
@@ -73,9 +94,18 @@ export async function applyMockPaymentEvent(event: MockPaymentEvent, actorId?: s
       await tx.cinemaOrder.update({ where: { id: order.id }, data: { status: OrderStatus.EXPIRED } });
       await tx.seatHold.update({ where: { id: order.holdId }, data: { status: HoldStatus.EXPIRED } });
       await tx.seatClaim.updateMany({ where: { orderId: order.id, status: ClaimStatus.HELD }, data: { status: ClaimStatus.EXPIRED, holdId: null, orderId: null, expiresAt: null } });
-      await tx.payment.upsert({ where: { orderId: order.id }, create: { orderId: order.id, providerEventId: event.eventId, amountVnd: order.totalVnd, status: PaymentStatus.FAILED }, update: { providerEventId: event.eventId, status: PaymentStatus.FAILED } });
+      const reconciliationRequired = event.status === "SUCCEEDED";
+      await tx.payment.upsert({ where: { orderId: order.id }, create: { orderId: order.id, providerEventId: event.eventId, amountVnd: order.totalVnd, status: reconciliationRequired ? PaymentStatus.RECONCILIATION_REQUIRED : PaymentStatus.FAILED }, update: { providerEventId: event.eventId, amountVnd: order.totalVnd, status: reconciliationRequired ? PaymentStatus.RECONCILIATION_REQUIRED : PaymentStatus.FAILED } });
       await tx.paymentEvent.create({ data: { providerEventId: event.eventId, orderId: order.id, status: event.status === "SUCCEEDED" ? PaymentStatus.SUCCEEDED : PaymentStatus.FAILED, amountVnd: event.amountVnd, currency: event.currency, payloadHash, outcome: "EXPIRED" } });
-      await audit(tx, actorId, "PAYMENT_EVENT_EXPIRED", "CinemaOrder", order.id, { providerEventId: event.eventId, amountVnd: event.amountVnd });
+      if (reconciliationRequired) {
+        await enqueueOutboxEvent(tx, {
+          eventKey: `payment-reconciliation:${event.eventId}`,
+          eventType: "PAYMENT_RECONCILIATION_REQUIRED",
+          aggregateId: order.id,
+          payload: { providerEventId: event.eventId, orderId: order.id, amountVnd: event.amountVnd, currency: event.currency, reason: "PAYMENT_AFTER_EXPIRY" }
+        });
+      }
+      await audit(tx, actorId, "PAYMENT_EVENT_EXPIRED", "CinemaOrder", order.id, { providerEventId: event.eventId, amountVnd: event.amountVnd, reconciliationRequired });
       return { orderId: order.id, outcome: "EXPIRED", idempotent: false };
     }
 

@@ -53,6 +53,23 @@ enum PaymentStatus {
   SUCCEEDED
   FAILED
   REFUNDED
+  RECONCILIATION_REQUIRED
+}
+
+enum OutboxEventType {
+  PAYMENT_RECONCILIATION_REQUIRED
+}
+
+enum OutboxEventStatus {
+  PENDING
+  PROCESSED
+  DEAD
+}
+
+enum ReconciliationCaseStatus {
+  OPEN
+  RESOLVED
+  DISMISSED
 }
 
 model User {
@@ -175,6 +192,7 @@ model CinemaOrder {
   claims      SeatClaim[]
   payment     Payment?
   tickets     Ticket[]
+  reconciliationCases ReconciliationCase[]
   @@index([userId, createdAt])
 }
 
@@ -249,4 +267,39 @@ model AuditLog {
   createdAt   DateTime @default(now())
   actor       User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
   @@index([entity, entityId, createdAt])
+}
+
+model OutboxEvent {
+  id          String           @id @default(cuid())
+  eventKey    String           @unique
+  eventType   OutboxEventType
+  aggregateId String
+  payload     Json
+  status      OutboxEventStatus @default(PENDING)
+  attempts    Int              @default(0)
+  availableAt DateTime         @default(now())
+  processedAt DateTime?
+  lastError   String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  reconciliationCase ReconciliationCase?
+  @@index([status, availableAt, createdAt])
+  @@index([aggregateId, createdAt])
+}
+
+model ReconciliationCase {
+  id              String                  @id @default(cuid())
+  providerEventId String                  @unique
+  orderId         String
+  outboxEventId   String                  @unique
+  amountVnd       Int
+  currency        String
+  reason          String
+  status          ReconciliationCaseStatus @default(OPEN)
+  payload         Json
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+  order           CinemaOrder             @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  outboxEvent     OutboxEvent             @relation(fields: [outboxEventId], references: [id], onDelete: Restrict)
+  @@index([orderId, status, createdAt])
 }

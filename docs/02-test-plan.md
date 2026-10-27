@@ -15,7 +15,7 @@ Kiểm tra các yêu cầu trong [SRS](01-srs.md), tập trung rủi ro bán tr�
 | Browser E2E | Health → khám phá phim/suất → giữ ghế → thanh toán demo → vé → staff soát vé; thêm admin CRUD, bộ lọc phim/rạp/ngày, security headers và HTML injection rendering | Đạt 24/24: 12 case trên Chromium desktop và Pixel 7 mobile |
 | Accessibility | Axe discovery, seat map, checkout; tự động kiểm tra keyboard/focus đến checkout | Axe serious/critical = 0 trong các màn đã quét; TC-E2E-09 pass; review thủ công đầy đủ vẫn cần riêng |
 | Security | BOLA, RBAC, token, rate limit, lỗi không lộ stack, dependency và secret scan | ZAP không có Critical/High trong scope; local Gitleaks v8.30.1 pass với 1 commit/~706 KB, không có leak; GitHub Actions remote chưa chạy |
-| Hiệu năng | Đọc danh sách và hold ghế | k6 local baseline: 50 VU/5 phút; showtime p95 27.57ms, hold p95 349.70ms, lỗi ngoài conflict 0%; đạt ngưỡng đã đặt nhưng chưa phải staging |
+| Hiệu năng | Đọc danh sách và hold ghế | k6 local baseline: 50 VU/5 phút; showtime p95 9.85ms, hold p95 265.35ms, lỗi ngoài conflict 0%; đạt ngưỡng đã đặt nhưng chưa phải staging |
 | Backup/restore | PostgreSQL custom-format dump, restore vào database mới và kiểm tra record counts | Rehearsal đã đạt trên PostgreSQL 17 với source/target UTF8; chưa thay thế backup schedule/PITR/RPO/RTO/production restore |
 
 ## Quy tắc test
@@ -31,13 +31,19 @@ Kiểm tra các yêu cầu trong [SRS](01-srs.md), tập trung rủi ro bán tr�
 - Mỗi bug có steps, expected/actual, severity, commit fix và retest.
 - Browser test dùng Playwright; evidence gồm report, trace/screenshot nếu fail. Không lấy pass của browser thay cho kiểm tra invariant database.
 
-## Evidence final — 27/10/2026
+## Frozen-baseline evidence — 27/10/2026
 
 `npm test` exit 0: API 17/17 trên 4 Vitest files; Playwright 24/24 (12 case × 2 project), có TC-E2E-11 kiểm tra payload markup hiển thị an toàn như text. `npm run qa:trace` PASS: 40 test cases/24 requirements; validator kiểm tra test ID markers trên mọi source `.ts/.js/.mjs/.yaml/.yml`, hỗ trợ prefix `Automated`, gồm markers trong hai ZAP config. Redocly OpenAPI lint pass không warning; build, dependency audit và start smoke đều đạt. Local Gitleaks v8.30.1 pass: 1 commit/~706 KB, không có leak. Coverage domain 100% line/branch/function; mutation 81.82%; k6 local baseline 50 VU/5 phút (showtime p95 27.57ms, hold p95 349.70ms, lỗi ngoài conflict 0%). ZAP API unauthenticated có 0 High/Medium/Low và 1 Info; authenticated có 0 High/Medium, 1 Low-confidence alert và 1 Info; built preview có 0 High/Medium/Low và 1 Info. TC-E2E-11 xác nhận Admin UI render markup nhập vào như text và không tạo node `img`/`script`; ZAP alert vẫn chỉ áp dụng cho JSON response và consumers khác cần escape dữ liệu.
 
 Các kết quả trên là baseline local trên Windows/PostgreSQL 17, không phải chứng nhận staging/production. Backup/restore rehearsal UTF8 vẫn đạt lúc 13:55 +07. Chi tiết artifact và hash được ghi trong [evidence manifest](evidence/final/manifest.json); tóm tắt phạm vi ở [test summary](07-test-summary.md).
 
 Rehearsal ban đầu dùng encoding đích mặc định WIN1258 nên không restore được source UTF8; lượt đạt tạo database đích UTF8 từ `template0`.
+
+## Follow-up trên working tree — 27/10/2026
+
+Sau frozen baseline, dự án bổ sung Compose cho PostgreSQL/API/worker/web, worker hết hạn hold và đơn chờ, outbox cho callback thành công đến muộn, BOLA ownership tests và hai browser journeys cho payment failure/lost-seat conflict. Kết quả đã xác nhận trên working tree: API/PostgreSQL integration 20/20 ở 6 Vitest files; browser 28/28 (14 case × Chromium desktop + Pixel 7) chạy với web/API trong Docker QA; `npm run qa:trace` PASS với 45 test cases/25 requirements. Docker demo đang chạy tại `http://localhost:8080`, PostgreSQL port 5434; Docker QA dùng database/volume riêng tại web 8081 và PostgreSQL 5435. Worker expiry và catch-up sau restart đã được smoke test trên Docker QA; soak hoặc multi-instance rehearsal vẫn còn thiếu.
+
+Kết quả này xác nhận delta của working tree ở các cổng API, browser, traceability, build/OpenAPI, coverage, mutation, dependency audit, backup/restore và k6. Restore rehearsal sau migrations mới đạt trên PostgreSQL 17/UTF8; artifact và counts tại `reports/generated/recovery/followup-20261027.json`. Mutation đạt 81.82% (153 killed/34 survived/0 timeout). K6 local Docker QA đạt 50 VU/5 phút: showtime p95 9.85ms, hold p95 265.35ms, unexpected error 0%; artifact tại `reports/generated/k6/followup-20261027-metadata.json`. Chưa chạy lại clean-clone verification, ZAP hoặc Gitleaks-history scan; security scan tương ứng phía trên thuộc frozen commit cũ. Staging/production, manual WCAG review, gateway thật, worker soak/multi-instance, PITR/RPO/RTO và exhaustive ASVS/BOLA review vẫn là cổng còn lại.
 
 ## Lệnh thực thi
 

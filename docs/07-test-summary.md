@@ -1,6 +1,8 @@
 # Báo cáo tổng hợp kiểm thử
 
-## Baseline local — 27/10/2026
+## Frozen baseline — commit `2be2d911c635cbdbe810bd4f77eca71b73928d1f`
+
+Các số liệu dưới đây thuộc commit frozen baseline và clean clone của commit đó. Chúng không bao gồm các thay đổi worker/Docker/browser bổ sung sau này.
 
 | Cổng | Kết quả | Phạm vi/evidence |
 |---|---|---|
@@ -41,9 +43,26 @@ Các phép đo unit/coverage, hiệu năng, ZAP và Gitleaks dùng fixture/histo
 
 ## Còn thiếu so với kế hoạch
 
-- k6 mới là baseline local, chưa chạy staging, soak, hoặc reliability test đa instance/worker restart.
-- Browser suite chưa bao phủ riêng lost-seat contention, payment failure và chờ TTL năm phút; các nhánh API/policy có test nhưng không thay cho journey trình duyệt.
-- ZAP scan scope hữu hạn; cần xác minh `SEC-OBS-01`, review BOLA/IDOR theo ma trận object/role và checklist ASVS/API Top 10. Một ZAP pass không chứng minh ứng dụng an toàn toàn diện.
+- k6 local Docker QA 50 VU/5 phút đã đạt; chưa chạy staging, soak hoặc reliability test đa instance.
+- Browser suite hiện bao phủ payment failure và lost-seat conflict; vẫn chưa chờ integration thực quanh TTL năm phút.
+- ZAP scan scope hữu hạn; cần xác minh `SEC-OBS-01`, mở rộng review BOLA/IDOR ra mọi object/role và checklist ASVS/API Top 10. Một ZAP pass không chứng minh ứng dụng an toàn toàn diện.
 - Accessibility chưa có manual WCAG 2.2 AA review; axe chưa quét riêng login, ticket, admin.
-- Restore rehearsal không đánh giá lịch backup, PITR, RPO/RTO hay production restore. Cũng chưa thử worker/job restart, reconciliation và gateway timeout.
+- Restore rehearsal không đánh giá lịch backup, PITR, RPO/RTO hay production restore. Reconciliation có integration test; Docker worker expiry/restart catch-up smoke pass; soak và gateway timeout còn thiếu.
 - Không có hazard analysis; safety chưa đánh giá. Payment vẫn là mock, không phải cổng thanh toán thật.
+
+## Follow-up trên working tree — 27/10/2026
+
+| Cổng bổ sung | Kết quả mới nhất | Phạm vi/evidence |
+|---|---|---|
+| API/PostgreSQL integration | Đạt: 20/20 trên 6 Vitest files | `reports/generated/followup-api-docker.log`; gồm ma trận BOLA ownership và worker/outbox tests |
+| Browser E2E trên Docker | Đạt: 28/28 | `reports/generated/followup-browser-docker-rerun.log`; 14 case × Chromium desktop + Pixel 7, có payment failure và lost-seat conflict |
+| Traceability | Đạt: 45 test cases/25 requirements | `reports/generated/followup-traceability.log`; mọi marker và liên kết RTM đã được kiểm tra |
+| Docker demo | Đạt: PostgreSQL, API, web và worker đang chạy | Web `http://localhost:8080`, API `/api/health`, PostgreSQL port 5434; QA stack dùng port 8081/5435 và volume riêng |
+| Worker/outbox | Đạt integration và Docker smoke | Worker hết hạn hold/đơn chờ idempotently; service expiry và catch-up sau restart được kiểm tra; callback late success tạo payment reconciliation status và một hồ sơ `OPEN`; log tại `reports/generated/followup-worker-smoke.log` và `followup-worker-restart-smoke.log` |
+| Build/OpenAPI/dependency audit | Đạt | `reports/generated/followup-build.log`, `followup-openapi.log`, `followup-audit.log`; build pass, Redocly không warning, 0 dependency vulnerabilities |
+| Domain coverage | Đạt: 100% | `reports/generated/followup-coverage.log`; 35/35 lines, 47/47 branches, 14/14 functions |
+| Mutation | Đạt: 81.82% | `reports/generated/followup-mutation.log`; 153 killed, 34 survived, 0 timeout/error; threshold 70% |
+| Performance trên Docker QA | Đạt local: 50 VU/5 phút | Showtime p95 9.85ms, hold p95 265.35ms, unexpected errors 0%, 50/50 holds; `reports/generated/k6/followup-20261027-metadata.json`; chưa phải staging |
+| Backup/restore với migrations mới | Đạt | PostgreSQL 17 custom-format dump → restore database UTF8; Cinema/Movie/User/Showtime/OutboxEvent/ReconciliationCase counts khớp; `reports/generated/recovery/followup-20261027.json` |
+
+Lượt này xác nhận API, browser, traceability, build, OpenAPI, audit, domain coverage, mutation, k6, restore rehearsal và Docker worker expiry/restart smoke trên working tree. Chưa chạy clean clone cho delta mới, ZAP hoặc Gitleaks-history scan. Worker restart được kiểm tra một lần; soak/multi-instance chưa chạy. Do đó evidence frozen baseline vẫn hữu ích cho commit cũ, không được xem là kết quả mới của toàn bộ working tree.

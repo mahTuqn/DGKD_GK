@@ -7,14 +7,33 @@
 - Node.js 22 trở lên và npm
 - Docker Desktop đang chạy
 
-## Cài đặt và chạy
+## Chạy toàn bộ ứng dụng bằng Docker Compose
+
+Docker Desktop phải đang chạy. Từ thư mục gốc:
 
 ```powershell
-Copy-Item backend/.env.example backend/.env
+docker compose up --build -d
+docker compose --profile seed run --rm seed
+```
+
+Compose khởi chạy PostgreSQL, áp dụng migrations trước khi API và worker chạy, rồi phục vụ frontend qua Nginx. Worker dọn hold hết hạn và đưa callback thanh toán thành công đến muộn vào hàng đối soát thủ công. Lệnh seed tạo tài khoản demo, phim, rạp, phòng và suất chiếu mẫu.
+
+- Web: `http://localhost:8080`
+- API health: `http://localhost:8080/api/health`
+- PostgreSQL: `localhost:5434` (database `cinema`, user `cinema`, mật khẩu demo `cinema_dev`)
+
+Kiểm tra trạng thái bằng `docker compose ps`; xem log bằng `docker compose logs -f api worker web`. PostgreSQL lưu dữ liệu trong volume `cinema_postgres_data`. Các secret mặc định trong Compose chỉ dành cho demo local; hãy thay bằng secret riêng trước khi triển khai.
+
+## Chạy ở chế độ phát triển trên máy host
+
+```powershell
+if (-not (Test-Path backend/.env)) { Copy-Item backend/.env.example backend/.env }
 npm install
 npm run db:setup
 npm run dev
 ```
+
+Chế độ này chỉ chạy PostgreSQL trong Docker; API và frontend chạy bằng Node/Vite trên host.
 
 - Web: `http://localhost:5173`
 - API: `http://localhost:4000/api/health`
@@ -45,7 +64,7 @@ npm run build
 
 `npm test` chạy liền API/integration và browser E2E trên Chromium desktop + mobile. Trước khi chạy, hãy dựng database theo bước `npm run db:setup` ở trên; API integration cần `DATABASE_URL_TEST` trỏ tới database test đã migrate.
 
-Test browser chạy qua Playwright trên Chromium và tự khởi động web/API theo cấu hình E2E. Chạy `npm run test:browser:ui` để mở Playwright UI. Các test PostgreSQL trong API suite chỉ chạy khi đặt `DATABASE_URL_TEST` tới một database test đã migrate; nếu bỏ trống, Vitest sẽ skip các ca cần DB.
+Test browser chạy qua Playwright trên Chromium và tự khởi động web/API development server theo cấu hình E2E. Chạy `npm run test:browser:ui` để mở Playwright UI. Các test PostgreSQL trong API suite chỉ chạy khi đặt `DATABASE_URL_TEST` tới một database test đã migrate; nếu bỏ trống, Vitest sẽ skip các ca cần DB.
 
 ```powershell
 $env:DATABASE_URL_TEST = "postgresql://cinema:cinema_dev@localhost:5434/cinema?schema=public"

@@ -38,6 +38,7 @@ CinemaBooking là ứng dụng web responsive đặt vé cho một cụm rạp, 
 | REQ-BOOK-01 | Tạo hold | Hold thành công trả thời hạn, ghế và tổng giá; quá 8 ghế hoặc ghế không khả dụng bị từ chối |
 | REQ-BOOK-02 | Chống bán trùng | Nhiều yêu cầu đồng thời cùng ghế cho tối đa một hold/sale; phần còn lại `409` |
 | REQ-BOOK-03 | Hết hạn hold | Sau 5 phút ghế giải phóng theo đồng hồ backend; hold hết hạn không thể checkout |
+| REQ-OPS-01 | Thu hồi hold và đối soát callback muộn | Worker định kỳ hết hạn hold/đơn đang chờ và giải phóng claim an toàn, có thể chạy lặp; callback thanh toán thành công hợp lệ đến sau hạn tạo outbox idempotent và hồ sơ đối soát thủ công, không tự xác nhận đơn hoặc hoàn tiền |
 | REQ-BOOK-04 | Tạo đơn | Đơn tham chiếu hold còn hiệu lực; tổng tiền khớp giá server; thao tác idempotent |
 | REQ-PAY-01 | Thanh toán demo | Thành công xác nhận đơn và phát vé; thất bại không phát vé; không có dữ liệu thẻ |
 | REQ-PAY-02 | Xử lý lặp | Retry thanh toán cùng đơn không tạo vé/giao dịch logic trùng |
@@ -55,7 +56,7 @@ CinemaBooking là ứng dụng web responsive đặt vé cho một cụm rạp, 
 
 ## 5. Trạng thái đặt vé
 
-`HELD → PAYMENT_PENDING → CONFIRMED`; hold có thể chuyển `EXPIRED`, payment có thể `PAYMENT_FAILED`; vé thuộc đơn xác nhận chuyển trạng thái `CHECKED_IN` sau lần soát đầu. Không cho phép trạng thái cuối quay lại `HELD`.
+`HELD → PAYMENT_PENDING → CONFIRMED`; hold/đơn có thể chuyển `EXPIRED`, payment có thể `PAYMENT_FAILED` hoặc `RECONCILIATION_REQUIRED`. Callback thành công hợp lệ đến sau khi đơn hết hạn không phát vé hay chiếm ghế; sự kiện được ghi vào outbox và tạo hồ sơ đối soát thủ công. Vé thuộc đơn xác nhận chuyển trạng thái `CHECKED_IN` sau lần soát đầu. Không cho phép trạng thái cuối quay lại `HELD`.
 
 ## 6. API bản demo
 

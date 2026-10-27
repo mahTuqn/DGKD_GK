@@ -153,7 +153,13 @@ function SeatDialog({ showtime, session, onClose, onRequireAuth, onHoldCreated }
     if (!session) { onRequireAuth(showtime.id, selected); return; }
     setBusy(true); setError("");
     try { const hold = await api.createHold(session.token, showtime.id, selected); if (!seatMap) return; onHoldCreated(hold, seatMap); }
-    catch (reason) { setError(humanError(reason)); if (reason instanceof ApiError && reason.status === 409) await refresh(); }
+    catch (reason) {
+      const message = humanError(reason);
+      if (reason instanceof ApiError && reason.status === 409) {
+        await refresh();
+        setError(message);
+      } else setError(message);
+    }
     finally { setBusy(false); }
   }
   return <div className="overlay booking-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
@@ -330,7 +336,7 @@ export default function App() {
     {view === "discover" && <main id="top">
       {featured && <section className="hero"><div className="hero-backdrop" aria-hidden="true" /><div className="hero-content"><span className="eyebrow"><i className="live-dot" /> TRẢI NGHIỆM ĐIỆN ẢNH</span><h1>Chọn phim hay.<br /><em>Giữ chỗ đẹp.</em></h1><p>Đêm nay dành cho những câu chuyện xứng đáng được xem trên màn ảnh lớn.</p><div className="hero-actions"><button className="button button-primary" onClick={() => { setActiveMovieId(featured.id); document.getElementById("movies")?.scrollIntoView({ behavior: "smooth" }); }}>Khám phá phim <span aria-hidden="true">↓</span></button><span className="hero-note">Đặt vé trong vài bước đơn giản</span></div></div><div className="hero-poster-wrap"><Poster movie={featured} large /><div className="hero-poster-caption"><span>ĐANG ĐƯỢC QUAN TÂM</span><b>{featured.title}</b></div></div><div className="hero-vertical">CINEMA · 01 / 05</div></section>}
       <section className="movie-section" id="movies"><div className="section-heading"><div><span className="eyebrow">ĐANG CHIẾU TẠI RẠP</span><h2>Chọn câu chuyện của bạn</h2><p className="muted">Những bộ phim đang được khán giả yêu thích.</p></div><div className="section-decoration" aria-hidden="true">✳</div></div>
-        {error && <p role="alert" className="alert alert-error">{error}<button className="text-button" onClick={() => setError("")}>Đóng</button></p>}
+        {error && bookingStep === "seats" && <p role="alert" className="alert alert-error">{error}<button className="text-button" onClick={() => setError("")}>Đóng</button></p>}
         {loading ? <div className="loading-grid">{Array.from({ length: 5 }, (_, i) => <div key={i} className="skeleton-card" />)}</div> : movies.length ? <div className="movie-rail">{movies.map((movie, index) => <article className={`movie-card ${movie.id === activeMovie?.id ? "movie-card-active" : ""}`} key={movie.id} data-testid="movie-card"><button className="movie-poster-button" aria-label={`Chọn phim ${movie.title} ${String(index + 1).padStart(2, "0")}`} onClick={() => setActiveMovieId(movie.id)}><Poster movie={movie} /><span className="movie-index">{String(index + 1).padStart(2, "0")}</span></button><div className="movie-info"><div className="movie-tags"><span className="rating-tag">{movie.ageRating || "P"}</span><span>{movie.genre}</span><span>{movie.runtimeMinutes} phút</span></div><h3>{movie.title}</h3><p>{movie.synopsis}</p><button className="text-button movie-select" onClick={() => { setActiveMovieId(movie.id); document.getElementById("schedule")?.scrollIntoView({ behavior: "smooth" }); }}>Xem suất chiếu <span aria-hidden="true">→</span></button></div></article>)}</div> : <div className="empty-state"><span className="empty-icon">✳</span><h3>Phim hay đang chuẩn bị lên sóng</h3><p>Hiện chưa có phim trong danh mục. Bạn có thể thử tải lại sau ít phút.</p></div>}
       </section>
 

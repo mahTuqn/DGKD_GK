@@ -1,0 +1,15 @@
+.git
+.github
+node_modules
+**/node_modules
+**/dist
+reports
+test-results
+playwright-report
+coverage
+**/coverage
+**/.env
+**/.env.*
+*.log
+*.trace
+*.har

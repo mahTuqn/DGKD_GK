@@ -11,6 +11,7 @@ flowchart LR
   API --> Auth[Auth, RBAC, ownership]
   API --> Catalog[Catalog, showtimes, seat map]
   API --> Booking[Holds, orders, claims, tickets]
+  Worker[Expiration and reconciliation worker] -->|expire due state / process outbox| DB
   API --> Admin[Admin and reports]
   Booking -->|Prisma transactions| DB[(PostgreSQL)]
   Admin --> DB
@@ -18,7 +19,7 @@ flowchart LR
   API -->|audit events| DB
 ```
 
-Bản nộp hiện không có Redis, background worker, outbox hoặc cổng thanh toán thật. API thu hồi hold hết hạn khi xử lý nghiệp vụ; mọi đối soát production, retry worker và recovery runbook vẫn thuộc phạm vi cần mở rộng.
+Bản demo có worker định kỳ để hết hạn hold/đơn đang chờ và xử lý outbox. Callback thành công hợp lệ đến sau expiry ghi một sự kiện idempotent; worker mở hồ sơ đối soát thủ công, không tự xác nhận đơn hoặc hoàn tiền. Redis, cổng thanh toán thật, vận hành đa worker/soak, recovery runbook và quy trình đối soát production chưa nằm trong evidence hiện có.
 
 ## 2. Mô hình dữ liệu
 
@@ -126,6 +127,26 @@ erDiagram
     string entityId
     datetime createdAt
   }
+  OUTBOX_EVENT {
+    string id PK
+    string eventKey UK
+    string eventType
+    string aggregateId
+    json payload
+    string status
+    int attempts
+    datetime processedAt
+  }
+  RECONCILIATION_CASE {
+    string id PK
+    string providerEventId UK
+    string orderId FK
+    string outboxEventId FK_UK
+    int amountVnd
+    string currency
+    string reason
+    string status
+  }
 
   CINEMA ||--o{ AUDITORIUM : contains
   CINEMA o|--o{ USER : assigned_staff
@@ -145,10 +166,12 @@ erDiagram
   PAYMENT ||--o{ PAYMENT_EVENT : records
   CINEMA_ORDER ||--o{ TICKET : issues
   SEAT_CLAIM ||--o| TICKET : issues_for
+  CINEMA_ORDER ||--o{ RECONCILIATION_CASE : may_need_review
+  OUTBOX_EVENT ||--o| RECONCILIATION_CASE : creates
   USER o|--o{ AUDIT_LOG : acts
 ```
 
-Các ràng buộc quan trọng: email và movie slug duy nhất; auditorium name duy nhất trong một cinema; seat label và `(auditoriumId,row,column)` duy nhất; `(showtimeId,seatId)` duy nhất cho `SeatClaim`; `CinemaOrder.holdId`, `Payment.orderId`, `PaymentEvent.providerEventId`, `Ticket.seatClaimId` và `Ticket.qrToken` duy nhất. Expired/released claim được cập nhật và tái sử dụng cho cùng seat/showtime, không tạo lịch sử claim thứ hai.
+Các ràng buộc quan trọng: email và movie slug duy nhất; auditorium name duy nhất trong một cinema; seat label và `(auditoriumId,row,column)` duy nhất; `(showtimeId,seatId)` duy nhất cho `SeatClaim`; `CinemaOrder.holdId`, `Payment.orderId`, `PaymentEvent.providerEventId`, `Ticket.seatClaimId`, `Ticket.qrToken`, `OutboxEvent.eventKey`, `ReconciliationCase.providerEventId` và `ReconciliationCase.outboxEventId` duy nhất. Expired/released claim được cập nhật và tái sử dụng cho cùng seat/showtime, không tạo lịch sử claim thứ hai.
 
 ## 3. State machine đặt vé
 
@@ -162,11 +185,12 @@ stateDiagram-v2
   HELD --> PAYMENT_PENDING: tạo đơn từ hold còn hiệu lực
   PAYMENT_PENDING --> CONFIRMED: mock success / callback HMAC hợp lệ
   PAYMENT_PENDING --> PAYMENT_FAILED: mock failure
-  PAYMENT_PENDING --> EXPIRED: callback success đến sau hạn
+  PAYMENT_PENDING --> EXPIRED: order/hold hết hạn
+  PAYMENT_PENDING --> RECONCILIATION_REQUIRED: callback success hợp lệ đến sau hạn
   CONFIRMED --> CHECKED_IN: Staff tại cinema được gán hoặc Admin toàn cục quét QR lần đầu
 ```
 
-Khi xác nhận, payment/order/hold được cập nhật, claim chuyển `SOLD`, và mỗi claim tạo tối đa một ticket trong transaction idempotent. Khi thất bại, claim được giải phóng. Callback đúng chữ ký nhưng đến sau expiry trả `409 PAYMENT_TOO_LATE`, order hết hạn, không tạo vé và không chiếm lại ghế đã được cấp cho người khác. Vé đã check-in có `checkedInAt`; lượt sau bị từ chối. Trạng thái hủy/hoàn tiền là ngoài phạm vi demo dù một số enum trạng thái có sẵn trong schema.
+Khi xác nhận, payment/order/hold được cập nhật, claim chuyển `SOLD`, và mỗi claim tạo tối đa một ticket trong transaction idempotent. Khi thất bại hoặc hết hạn, claim được giải phóng. Callback đúng chữ ký nhưng đến sau expiry trả `409 PAYMENT_TOO_LATE`, order hết hạn, payment mang trạng thái `RECONCILIATION_REQUIRED`, không tạo vé và không chiếm lại ghế đã được cấp cho người khác. Sự kiện outbox dùng khóa từ provider event ID; worker chỉ tạo hồ sơ `OPEN` để người vận hành xử lý, không tự hoàn tiền. Vé đã check-in có `checkedInAt`; lượt sau bị từ chối. Hủy/hoàn tiền tự động vẫn ngoài phạm vi demo.
 
 ## 4. Payment sequence
 
@@ -226,10 +250,10 @@ Event id duy nhất và payload hash hỗ trợ retry idempotent; cùng event/pa
 | Concurrent seat claim | PostgreSQL transaction/row lock + unique `(showtimeId,seatId)`; xử lý conflict `409` | Database là nguồn sự thật, không phụ thuộc frontend hay queue một process |
 | Payment | Mock adapter; demo API và HMAC-SHA256 webhook; không nhận/lưu dữ liệu thẻ | Không phải tích hợp cổng thanh toán hoặc chứng minh tuân thủ payment thật |
 | Idempotency | Khóa order/event và unique event ID; callback cùng payload không nhân đôi ticket | Xử lý retry/callback đồng thời an toàn trong phạm vi test |
-| Quyền | Customer chỉ xem đơn mình; Staff chỉ check-in tại cinema được gán (không gán thì bị từ chối); Admin quản trị và check-in toàn cục | Final API 17/17 kiểm tra hai route check-in, Staff assigned/unassigned/cross-cinema và Admin global trong fixture |
-| Lịch suất | Cùng auditorium phải có ít nhất 20 phút giữa endAt và startAt của hai suất kế tiếp | Final API 17/17 kiểm tra POST/PATCH; khoảng gap dưới 20 phút bị từ chối, gap đúng 20 phút khi tạo được chấp nhận |
+| Quyền | Customer chỉ xem đơn mình; Staff chỉ check-in tại cinema được gán (không gán thì bị từ chối); Admin quản trị và check-in toàn cục | Follow-up API 20/20 kiểm tra hai route check-in, Staff assigned/unassigned/cross-cinema và Admin global; TC-SEC-03 kiểm tra ownership order/ticket/QR giữa hai Customer |
+| Lịch suất | Cùng auditorium phải có ít nhất 20 phút giữa endAt và startAt của hai suất kế tiếp | Follow-up API 20/20 kiểm tra POST/PATCH; khoảng gap dưới 20 phút bị từ chối, gap đúng 20 phút khi tạo được chấp nhận |
 | Backup/restore | PostgreSQL custom-format dump rồi restore vào database UTF8 từ template0 | Rehearsal PostgreSQL 17 đạt 27/10/2026; chưa kiểm thử lịch backup, PITR, RPO/RTO hay production restore |
 | Báo cáo | Revenue cộng payment `SUCCEEDED`; occupancy là `SeatClaim.SOLD` trên tổng capacity của suất `ACTIVE` trong kỳ (mặc định chỉ suất chưa bắt đầu) | Công thức được ghi trong API và đối chiếu bằng integration test |
 | P1/P2 | Promotion/refund/cancel, loyalty, notification, recommendation và cổng thật chưa bật | Cắt phạm vi để giữ P0; không mô tả là đã triển khai |
 
-Cutoff đặt/hủy/hoàn, chính sách phân loại độ tuổi, quy định pháp lý, production staging budget và production operational/recovery plan vẫn cần phê duyệt trước khi vận hành thật. Rehearsal local backup/restore đạt nhưng chưa có evidence cho lịch backup/PITR/RPO/RTO production. Domain coverage đạt 100% line/branch/function, mutation 81.82%, k6 local baseline 50 VU/5 phút và ZAP scans đã có evidence; các số đo này không thay thế kiểm định staging. Worker/outbox, soak/multi-instance, live hold-TTL boundary, manual accessibility và exhaustive ASVS/BOLA review vẫn chưa được đánh giá.
+Cutoff đặt/hủy/hoàn, chính sách phân loại độ tuổi, quy định pháp lý, production staging budget và production operational/recovery plan vẫn cần phê duyệt trước khi vận hành thật. Restore rehearsal PostgreSQL 17/UTF8 đã chạy lại sau migrations mới; chưa có evidence cho lịch backup/PITR/RPO/RTO production. Coverage 100%, mutation 81.82% và k6 local Docker QA 50 VU/5 phút đã chạy trên working tree; ZAP còn dùng baseline frozen và cần đo lại trước release. Worker/outbox đã có integration coverage; soak/multi-instance, restart recovery, live hold-TTL boundary, manual accessibility và exhaustive ASVS/BOLA review vẫn chưa được đánh giá.

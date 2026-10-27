@@ -9,8 +9,8 @@ assertAuthenticationConfiguration();
 assertMockPaymentConfiguration();
 
 await prisma.$connect();
-const server = createApp().listen(port, () => {
-  console.info(`CinemaBooking API listening on http://localhost:${port}`);
+const server = createApp().listen(port, "0.0.0.0", () => {
+  console.info(`CinemaBooking API listening on http://0.0.0.0:${port}`);
 });
 
 for (const signal of ["SIGINT", "SIGTERM"] as const) {

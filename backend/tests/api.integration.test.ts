@@ -7,6 +7,7 @@ import { createToken, hashPassword } from "../src/auth.js";
 import { prisma } from "../src/db.js";
 import { formatBusinessDate } from "../src/domain/booking-policy.js";
 import { signMockPaymentEvent } from "../src/domain/mock-payment-signature.js";
+import { processOutboxBatch } from "../src/worker.js";
 
 const hasTestDatabase = Boolean(process.env.DATABASE_URL_TEST);
 const apiDescribe = hasTestDatabase ? describe.sequential : describe.skip;
@@ -57,6 +58,8 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
       const orderIds = orders.map((order) => order.id);
       if (orderIds.length) {
         await prisma.ticket.deleteMany({ where: { orderId: { in: orderIds } } });
+        await prisma.reconciliationCase.deleteMany({ where: { orderId: { in: orderIds } } });
+        await prisma.outboxEvent.deleteMany({ where: { aggregateId: { in: orderIds } } });
         await prisma.paymentEvent.deleteMany({ where: { orderId: { in: orderIds } } });
         await prisma.payment.deleteMany({ where: { orderId: { in: orderIds } } });
         await prisma.seatClaim.deleteMany({ where: { orderId: { in: orderIds } } });
@@ -255,6 +258,13 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
       .send(lateEvent);
     expect(lateCallback.status).toBe(409);
     expect(lateCallback.body.error).toBe("PAYMENT_TOO_LATE");
+    expect(await prisma.payment.findUniqueOrThrow({ where: { orderId: lateOrder.body.id as string } }).then((payment) => payment.status)).toBe("RECONCILIATION_REQUIRED");
+    expect(await prisma.outboxEvent.count({ where: { eventKey: `payment-reconciliation:${lateEvent.eventId}` } })).toBe(1);
+    await processOutboxBatch(prisma);
+    const reconciliationCase = await prisma.reconciliationCase.findUniqueOrThrow({ where: { providerEventId: lateEvent.eventId } });
+    expect(reconciliationCase.status).toBe("OPEN");
+    expect(reconciliationCase.orderId).toBe(lateOrder.body.id);
+    expect(reconciliationCase.amountVnd).toBe(lateOrder.body.totalVnd);
     const expiredOrder = await request(app).get(`/api/orders/${lateOrder.body.id}`).set(authB);
     expect(expiredOrder.body.status).toBe(OrderStatus.EXPIRED);
     expect(expiredOrder.body.tickets).toHaveLength(0);

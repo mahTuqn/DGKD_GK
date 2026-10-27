@@ -10,16 +10,17 @@
 
 | Mức | Phạm vi | Trạng thái bản demo |
 |---|---|---|
-| P0 — bắt buộc | Đăng ký/đăng nhập, profile, Customer/Staff/Admin RBAC, ownership đơn/vé, cinema-scoped Staff check-in | Final API 17/17 gồm profile, assigned/unassigned/cross-cinema Staff và Admin global check-in |
-| P0 — bắt buộc | Danh mục phim/rạp/phòng/ghế/suất; lọc lịch, xem seat map và buffer 20 phút giữa suất cùng phòng | Final API 17/17 kiểm tra buffer và Playwright 24/24 kiểm tra filter/axe trên phạm vi đã định |
-| P0 — bắt buộc | Hold 1–8 ghế trong 5 phút; hết hạn và cạnh tranh cùng ghế | 100 request API: 1 thành công, 99 conflict; expiry/release và signed late callback được kiểm tra. Boundary trước/sát 5 phút chưa đo |
-| P0 — bắt buộc | Order với giá server snapshot; mock payment, HMAC webhook, retry/idempotency | Happy/fail/retry/forged total/revenue và late callback có integration coverage; không phải cổng thật |
-| P0 — bắt buộc | Vé QR/lịch sử/check-in một lần | Final Playwright 24/24 và API 17/17 đạt trong các luồng Customer/Staff/Admin đã nêu |
-| P0 — bắt buộc | Admin CRUD, occupancy và revenue report | Final API 17/17; E2E dashboard occupancy và create/update cinema pass |
+| P0 — bắt buộc | Đăng ký/đăng nhập, profile, Customer/Staff/Admin RBAC, ownership đơn/vé, cinema-scoped Staff check-in | Follow-up API 20/20 gồm profile, Staff assigned/unassigned/cross-cinema, Admin global và TC-SEC-03 trên order/ticket/QR ownership |
+| P0 — bắt buộc | Danh mục phim/rạp/phòng/ghế/suất; lọc lịch, xem seat map và buffer 20 phút giữa suất cùng phòng | Follow-up API 20/20 kiểm tra buffer; browser Docker 28/28 kiểm tra filter, axe và seat conflict |
+| P0 — bắt buộc | Hold 1–8 ghế trong 5 phút; hết hạn và cạnh tranh cùng ghế | 100 request API: 1 thành công, 99 conflict; worker expiry/idempotency và browser stale-seat 409 được kiểm tra. Boundary sát 5 phút và soak chưa đo |
+| P0 — bắt buộc | Order với giá server snapshot; mock payment, HMAC webhook, retry/idempotency | Success/failure/retry/forged total/revenue, late callback và manual reconciliation outbox có integration coverage; không phải cổng thật |
+| P0 — bắt buộc | Worker hết hạn hold/đơn đang chờ và ghi nhận late-payment reconciliation | API suite 20/20: sweep idempotent; callback late success chỉ mở một case thủ công, không tự hoàn tiền |
+| P0 — bắt buộc | Vé QR/lịch sử/check-in một lần | Follow-up browser 28/28 và API 20/20 đạt trong các luồng Customer/Staff/Admin đã nêu |
+| P0 — bắt buộc | Admin CRUD, occupancy và revenue report | Follow-up API 20/20; E2E dashboard occupancy và create/update cinema pass |
 | P1 — chưa bật | Promotion/discount; workflow hủy/hoàn; mở rộng rule giá/suất | Không đưa vào bản nộp hiện tại. Seat type/surcharge cơ bản có trong demo, nhưng không đồng nghĩa P1 pricing/promotion đầy đủ |
 | P2 — chưa bật | Gợi ý phim, điểm thưởng, email/SMS, đa đơn vị rạp, thanh toán thật | Ngoài bản nộp; không mô tả như chức năng hoàn thành |
 
-**Ngoài phạm vi hiện tại:** production deployment, thanh toán thật, refund/cancellation, age-rating policy đã được phê duyệt pháp lý, worker/outbox/reconciliation production, performance/Security certification.
+**Ngoài phạm vi hiện tại:** production deployment, thanh toán thật, refund/cancellation, age-rating policy đã được phê duyệt pháp lý, worker/outbox vận hành đa instance và đối soát production, performance/security certification.
 
 ## 3. Definition of Done
 
@@ -32,19 +33,33 @@ P0 chỉ được coi là hoàn tất cho một commit/môi trường cụ thể
 5. Evidence có commit, lệnh, runtime/DB config, exit code và report/trace an toàn; không đưa token, QR token hay PII vào artifacts.
 6. Security, accessibility, performance và recovery gate được đo theo ngưỡng đã duyệt trước khi tuyên bố production readiness.
 
-**Evidence local đến 27/10/2026:** API suite 17/17 (4 files) và browser run 24/24 (12 case × Chromium desktop/Pixel 7), gồm regression `TC-E2E-11`. `npm run qa:trace` PASS với 40 test cases/24 requirements; validator kiểm tra test ID markers ở source `.ts/.js/.mjs/.yaml/.yml` và hỗ trợ prefix `Automated`, gồm markers trong hai ZAP config. Build và backend start smoke pass; Redocly OpenAPI lint không warning, quality workflow có gate; dependency audit 0 vulnerabilities. Gitleaks v8.30.1 pass trên commit mã nguồn đóng băng, không có leak; Gitleaks Action v3 cùng phiên bản đã cấu hình trong `ci.yml`, nhưng remote GitHub Actions chưa chạy. Coverage domain 100% lines/branches/functions; mutation 81.82%; k6 local 50 VU/5 phút đạt p95/error thresholds. ZAP không báo High/Critical; authenticated scan có alert Low-confidence trong JSON, còn được ghi nhận ngoài UI đã kiểm tra. Axe discovery/seat map/checkout không có serious/critical; keyboard/focus E2E đến checkout pass. PostgreSQL 17 custom-format backup/restore rehearsal pass, source/target UTF8. Commit `2be2d911c635cbdbe810bd4f77eca71b73928d1f` đã qua clean-clone run; manual accessibility, staging/soak, production backup schedule/PITR/RPO/RTO, live expiry boundary, worker/gateway operations và full ASVS/BOLA review chưa được đánh giá. Đây là local P0 demo có evidence, chưa phải production readiness.
+**Evidence local:** frozen commit `2be2d911c635cbdbe810bd4f77eca71b73928d1f` đã qua clean-clone run với API 17/17, browser 24/24 và traceability 40/24. Follow-up trên working tree đạt API 20/20, browser Docker QA 28/28, traceability 45/25, build/OpenAPI/audit, domain coverage 100%, mutation 81.82%, k6 50 VU/5 phút và restore rehearsal PostgreSQL 17 sau migrations mới; Docker demo có PostgreSQL/API/web/worker. ZAP và Gitleaks-history scan chưa chạy lại trên delta hiện tại; remote GitHub Actions chưa chạy. Manual accessibility, staging/soak, backup schedule/PITR/RPO/RTO, worker soak/multi-instance, live expiry boundary, gateway thật, full ASVS/BOLA review chưa được đánh giá. Đây là local P0 demo có evidence từng cổng, chưa phải production readiness.
+
+### Trạng thái theo các giai đoạn trong kế hoạch
+
+| Giai đoạn | Trạng thái hiện tại | Còn lại |
+|---|---|---|
+| 0. Khởi động | Hoàn tất charter, backlog P0/P1/P2 và risk register | Owner cần ký các chính sách còn mở trước production |
+| 1. Đặc tả | Hoàn tất SRS, RTM, test catalog, ERD và OpenAPI lint | Chốt cutoff hủy/hoàn, age-rating và staging target |
+| 2. Nền tảng | Hoàn tất local Docker Compose: PostgreSQL, migration, seed, API, worker và web; build/test chạy được | GitHub Actions remote chưa chạy; clean-clone mới đang chờ |
+| 3. Danh mục và lịch | Hoàn tất phim/rạp/phòng/ghế/suất, lọc, Admin CRUD và buffer suất cùng phòng | Chưa đánh giá Firefox/WebKit hoặc staging |
+| 4. Giữ ghế và đơn | Hoàn tất API/UI, 100-request race, expiry sweep và price snapshot | Chưa chạy live boundary quanh TTL 5 phút hoặc soak |
+| 5. Thanh toán và vé | Hoàn tất mock payment, webhook, idempotency, QR/check-in và late-success reconciliation thủ công | Chưa kết nối gateway thật hoặc refund tự động |
+| 6. Báo cáo và UX | Hoàn tất report API/UI, browser desktop/mobile, axe trong scope và keyboard journey | Chờ manual WCAG review cho login/ticket/admin và screen reader |
+| 7. Kiểm định và sửa lỗi | API 20/20, browser 28/28, coverage 100%, mutation 81.82%, k6 50 VU/5 phút, OpenAPI/audit/restore pass | ZAP và Gitleaks cần chạy lại trên commit mới; worker soak/multi-instance còn thiếu |
+| 8. Đóng gói | Docker demo chạy ổn định; test catalog/RTM/evidence follow-up đã cập nhật | Commit thay đổi, clean-clone run, hash manifest và triage cuối |
 
 ## 4. Risk register
 
 | ID | Rủi ro | Khả năng / tác động | Giảm thiểu hiện có | Trạng thái còn lại |
 |---|---|---|---|---|
 | R-01 | Hai Customer giữ cùng ghế hoặc sinh vé trùng | Trung bình / Cao | PostgreSQL transaction/unique claim; test 100 request cho 1 thành công/99 conflict; payment callback idempotency | Chưa có benchmark multi-process/soak; 100 request test không thay k6 |
-| R-02 | Hold hết hạn nhưng callback thanh toán đến muộn | Trung bình / Cao | Test checkout expiry/release và HMAC callback sau expiry: `409 PAYMENT_TOO_LATE`, order expired, không vé, ghế được giải phóng | Chưa kiểm tra thời điểm ngay trước/sát mốc 5 phút hoặc cơ chế reconciliation/refund production |
+| R-02 | Hold hết hạn nhưng callback thanh toán đến muộn | Trung bình / Cao | Test checkout expiry/release; late success hợp lệ trả `409 PAYMENT_TOO_LATE`, không phát vé; payment tạo outbox idempotent và case `OPEN` thủ công | Chưa kiểm tra thời điểm ngay trước/sát mốc 5 phút; người vận hành phải xử lý reconciliation, không có refund tự động |
 | R-03 | Tổng tiền sai hoặc client sửa giá | Trung bình / Cao | Giá tính ở server, snapshot trên claim/order; forged total bị từ chối; retry order trả cùng order ID | Chưa kiểm thử mọi seat/promotion/tax combination; promotion chưa bật |
-| R-04 | Customer xem đơn người khác hoặc role vượt quyền/cinema scope | Trung bình / Cao | Final API suite pass ownership/RBAC, profile và Staff đúng/sai cinema trên check-in ID/QR | Chưa phải kiểm thử exhaustive BOLA/IDOR trên mọi object/route/cinema |
+| R-04 | Customer xem đơn người khác hoặc role vượt quyền/cinema scope | Trung bình / Cao | API suite 20/20 kiểm tra Customer A/B trên order list/detail và nested ticket/QR; RBAC, profile và Staff đúng/sai cinema check-in | Chưa phải kiểm thử exhaustive BOLA/IDOR trên mọi object/route/cinema |
 | R-05 | Callback giả, replay hoặc đổi payload cùng event ID | Trung bình / Cao | HMAC-SHA256, amount/currency check, unique event ID/payload hash/idempotency; ZAP authenticated/unauthenticated API scans không có High/Critical trong scope | Còn alert Low-confidence XSS trong JSON chưa được xác minh; scan không thay thế full OWASP/API Top 10, review BOLA, logging/rate-limit và production secret rotation |
 | R-06 | Lỗi accessibility ngoài trang khám phá | Trung bình / Trung bình | Final Playwright axe 0 serious/critical ở discovery, seat map và checkout; keyboard/focus E2E đến checkout pass | Login, ticket/admin chưa axe; keyboard/focus review thủ công đầy đủ chưa chạy |
-| R-07 | Chậm/lỗi khi nhiều người truy cập | Trung bình / Cao | k6 local 50 VU/5 phút: showtime p95 27.57ms, hold p95 349.70ms, unexpected errors 0%; API race một ghế đạt 1/99 | Chưa chạy staging, soak hoặc reliability test đa instance/worker; không suy rộng local baseline thành production capacity |
+| R-07 | Chậm/lỗi khi nhiều người truy cập | Trung bình / Cao | k6 local 50 VU/5 phút: showtime p95 9.85ms, hold p95 265.35ms, unexpected errors 0%; API race một ghế đạt 1/99 | Chưa chạy staging, soak hoặc reliability test đa instance; không suy rộng local baseline thành production capacity |
 | R-08 | Báo cáo bị hiểu sai khi có pending/failed/refund | Thấp / Trung bình | Test xác nhận revenue chỉ tăng khi CONFIRMED; occupancy có định nghĩa tử/mẫu và fixture assertions | Refund chưa triển khai; chưa có đối soát nghiệp vụ sau refund |
 | R-09 | Scope vượt khả năng nhóm | Cao / Cao | Khóa bản nộp ở P0, dùng mock adapter; P1/P2 giữ off | Giữ P1/P2 ngoài release cho tới khi có yêu cầu, decision table, test và review riêng |
 | R-10 | Seed/default secret bị dùng ngoài demo | Thấp / Cao | Tài khoản giả, `.env.example`, secret cấu hình riêng; Gitleaks v8.30.1 quét commit mã nguồn đóng băng và clean clone đạt; cùng phiên bản được cấu hình trong CI | Remote CI chưa chạy; cấm dùng credential/default mock secret cho production; production secret/config chưa đánh giá |

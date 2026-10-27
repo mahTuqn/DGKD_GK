@@ -1,7 +1,8 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
-const API_URL = "http://127.0.0.1:4000/api";
+const API_URL = process.env.E2E_API_URL || "http://127.0.0.1:4000/api";
+const PREVIEW_URL = process.env.E2E_PREVIEW_URL || "http://127.0.0.1:5174/";
 const uniqueEmail = () => `qa-${Date.now()}-${Math.random().toString(16).slice(2)}@example.test`;
 
 async function openLogin(page: Page) {
@@ -37,6 +38,15 @@ async function expectVisibleKeyboardFocus(target: Locator) {
 function seriousAxeViolations(violations: Awaited<ReturnType<AxeBuilder["analyze"]>>["violations"]) {
   return violations.filter((violation) => ["serious", "critical"].includes(violation.impact ?? ""))
     .map(({ id, impact, nodes }) => ({ id, impact, targets: nodes.map((node) => node.target), failureSummaries: nodes.map((node) => node.failureSummary) }));
+}
+
+async function waitForOverlayAnimations(page: Page) {
+  const overlay = page.locator(".overlay").first();
+  if (await overlay.count()) {
+    await overlay.evaluate(async (element) => {
+      await Promise.all(element.getAnimations().map((animation) => animation.finished));
+    });
+  }
 }
 
 async function registerCustomer(page: Page) {
@@ -94,7 +104,7 @@ test("[TC-E2E-00] API health trả trạng thái sẵn sàng", async ({ request 
 });
 
 test("[TC-E2E-10][TC-PLAN-07] trang web gửi security headers cơ bản", async ({ page }) => {
-  const response = await page.goto("http://127.0.0.1:5174/");
+  const response = await page.goto(PREVIEW_URL);
   expect(response).not.toBeNull();
   const headers = response!.headers();
   expect(headers["content-security-policy"]).toContain("default-src 'self'");
@@ -281,6 +291,7 @@ test("[TC-E2E-08] Axe không báo lỗi serious hoặc critical ở sơ đồ gh
   const seatDialog = page.getByRole("dialog");
   const availableSeat = seatDialog.locator('[data-testid="seat"][aria-label*="trống"]:not([disabled])').first();
   await expect(availableSeat).toBeVisible();
+  await waitForOverlayAnimations(page);
   expect(seriousAxeViolations((await new AxeBuilder({ page }).analyze()).violations)).toEqual([]);
 
   await page.route("**/api/holds", async (route) => {
@@ -298,6 +309,7 @@ test("[TC-E2E-08] Axe không báo lỗi serious hoặc critical ở sơ đồ gh
   await seatDialog.getByTestId("hold-submit").click();
   await expect(page.getByTestId("hold-countdown")).toBeVisible();
   await expect(page.getByTestId("checkout-submit")).toBeEnabled();
+  await waitForOverlayAnimations(page);
   expect(seriousAxeViolations((await new AxeBuilder({ page }).analyze()).violations)).toEqual([]);
 });
 
