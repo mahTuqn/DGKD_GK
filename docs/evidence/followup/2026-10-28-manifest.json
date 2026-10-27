@@ -1,0 +1,237 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "runId": "2026-10-28-followup-clean-clone-5ae4c2b",
+  "status": "PASS_LOCAL_FOLLOWUP_WITH_DOCUMENTED_LIMITATIONS",
+  "capturedAt": "2026-10-28T00:02:30.8242040+07:00",
+  "date": "2026-10-28",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "commit": "5ae4c2b7b25e5e5b6b4d80c675fc190763743125",
+  "parentBaseSha": "93b652c2528ce0115c1d7bfe26a28469ddad4630",
+  "commitNote": "Follow-up source commit verified from a fresh clone. Local evidence does not establish staging or production readiness.",
+  "environment": {
+    "os": "Windows 11",
+    "node": "v26.7.0",
+    "npm": "12.0.2",
+    "docker": "29.7.2",
+    "dockerCompose": "v5.4.0",
+    "postgresql": "17",
+    "browserProjects": [
+      "chromium-desktop",
+      "chromium-mobile"
+    ],
+    "apiTestDatabase": "Dedicated cinema_test database in isolated clean-clone PostgreSQL container on port 5437; connection string omitted",
+    "demoDatabase": "Isolated clone cinema database, seeded only for browser E2E; original demo PostgreSQL database was not modified"
+  },
+  "cleanClone": {
+    "path": "reports/generated/clean-clone/followup-5ae4c2b",
+    "commit": "5ae4c2b7b25e5e5b6b4d80c675fc190763743125",
+    "install": "npm ci exit 0; 464 packages added; 0 vulnerabilities",
+    "docker": "Fresh Compose build, 4 migrations applied, demo seed completed; PostgreSQL/API/web/worker healthy after test run",
+    "overallTest": "npm test exit 0; API 20/20; Playwright 28/28 across Chromium desktop and Pixel 7 mobile",
+    "additionalGates": [
+      "npm run build",
+      "npm run lint:openapi",
+      "npm run qa:trace",
+      "npm audit --audit-level=moderate"
+    ]
+  },
+  "overall": {
+    "result": "PASS_LOCAL_FOLLOWUP",
+    "apiTestsPassed": 20,
+    "apiTestsFailed": 0,
+    "apiTestFilesPassed": 6,
+    "browserTestsPassed": 28,
+    "browserTestsFailed": 0,
+    "browserCaseCount": 14,
+    "browserProjects": [
+      "chromium-desktop",
+      "chromium-mobile"
+    ],
+    "traceabilityTestCases": 45,
+    "traceabilityRequirements": 25,
+    "domainCoverage": "100% lines (35/35), branches (47/47), functions (14/14)",
+    "mutationScore": "81.82% (153 killed, 34 survived, 0 timeout/error)",
+    "k6": "50 VU for 5 minutes; showtime p95 9.85 ms; hold p95 265.35 ms; 0% unexpected errors; 50/50 holds",
+    "dependencyAuditVulnerabilities": 0,
+    "gitleaks": "Gitleaks v8.30.1 scanned 5 commits; no leaks found"
+  },
+  "gates": [
+    {
+      "name": "Clean-clone combined tests",
+      "result": "PASS",
+      "command": "npm test",
+      "exitCode": 0,
+      "apiTests": "20/20",
+      "browserTests": "28/28"
+    },
+    {
+      "name": "Production build",
+      "result": "PASS",
+      "command": "npm run build",
+      "exitCode": 0
+    },
+    {
+      "name": "OpenAPI lint",
+      "result": "PASS",
+      "command": "npm run lint:openapi",
+      "exitCode": 0
+    },
+    {
+      "name": "Traceability",
+      "result": "PASS",
+      "command": "npm run qa:trace",
+      "exitCode": 0,
+      "testCases": 45,
+      "requirements": 25
+    },
+    {
+      "name": "Dependency audit",
+      "result": "PASS",
+      "command": "npm audit --audit-level=moderate",
+      "exitCode": 0,
+      "vulnerabilities": 0
+    },
+    {
+      "name": "Gitleaks",
+      "result": "PASS",
+      "command": "npm run scan:secrets",
+      "exitCode": 0,
+      "commitsScanned": 5,
+      "leaks": 0
+    }
+  ],
+  "notMeasured": [
+    "ZAP scan of the follow-up commit",
+    "Remote GitHub Actions run",
+    "Staging or production behavior",
+    "Worker soak and multi-instance reliability",
+    "Manual WCAG and screen-reader review",
+    "Backup schedule, PITR, RPO, and RTO",
+    "Real payment gateway and automatic refund",
+    "Exhaustive ASVS and BOLA review"
+  ],
+  "artifacts": [
+    {
+      "path": "reports/generated/clean-clone-followup-5ae4c2b-test.log",
+      "sha256": "2e69e05691b09fcc9cb5c3fbbf29398f815aa1225afcb4c4c32558dc5493039d",
+      "bytes": 13220,
+      "description": "Clean-clone API and Playwright test run: 20 API and 28 browser tests passed"
+    },
+    {
+      "path": "reports/generated/clean-clone-followup-5ae4c2b-build.log",
+      "sha256": "93c7de47f4499fc163d3887e9b3f0c36fe54b93b7a9e4ef10440bc1b88273f18",
+      "bytes": 1013,
+      "description": "Clean-clone production build"
+    },
+    {
+      "path": "reports/generated/clean-clone-followup-5ae4c2b-openapi.log",
+      "sha256": "f2d56cb7624f317982a6aff9735dd113c7cfdc080aefd80938b19fda1041c63f",
+      "bytes": 254,
+      "description": "Clean-clone OpenAPI lint"
+    },
+    {
+      "path": "reports/generated/clean-clone-followup-5ae4c2b-trace.log",
+      "sha256": "3102f5b506684f75b4e16c257972cedfb9d4fd315024f2a0c934452b0ead54f8",
+      "bytes": 186,
+      "description": "Clean-clone traceability validation: 45 test cases and 25 requirements"
+    },
+    {
+      "path": "reports/generated/clean-clone-followup-5ae4c2b-audit.log",
+      "sha256": "4b02d4a3c23d969c46bd2041360f80bfcb1fe760d9db864009acdd710f9de601",
+      "bytes": 25,
+      "description": "Clean-clone npm audit: 0 vulnerabilities"
+    },
+    {
+      "path": "reports/generated/clean-clone-followup-5ae4c2b-compose-ps.log",
+      "sha256": "c83e3bd5333f4dd3fe6495ff98e0961d1a15950587983a15e281f3087581df30",
+      "bytes": 830,
+      "description": "Clean-clone PostgreSQL, API, web, and worker containers healthy"
+    },
+    {
+      "path": "reports/generated/clean-clone-followup-5ae4c2b-health.log",
+      "sha256": "ec8c00f8797a90e8dd09773e6d24026d5857ca34e098e34022e65a5604a75b75",
+      "bytes": 26,
+      "description": "Clean-clone web HTTP 200 and API health ok"
+    },
+    {
+      "path": "reports/generated/final-gitleaks.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "bytes": 3,
+      "description": "Redacted Gitleaks report for follow-up commit history"
+    },
+    {
+      "path": "reports/generated/followup-api-docker.log",
+      "sha256": "e68436c917e78566bd3927c253df24a7c33a0aa62b065802b196465927cf2ea8",
+      "bytes": 8282,
+      "description": "Working-tree API/PostgreSQL integration run: 20 passed"
+    },
+    {
+      "path": "reports/generated/followup-browser-docker-rerun.log",
+      "sha256": "f4f06a1b5188d7185a09961020fd9ac217be16bdc109b20a53ac5c510efe5dab",
+      "bytes": 4867,
+      "description": "Working-tree Docker browser run: 28 passed"
+    },
+    {
+      "path": "reports/generated/followup-build.log",
+      "sha256": "9b7690db81c1b3a9a6c008d43706ac5c6ffdfe501fca866be41128ca109eb94c",
+      "bytes": 1058,
+      "description": "Working-tree production build"
+    },
+    {
+      "path": "reports/generated/followup-openapi.log",
+      "sha256": "e78635cbad52e65e78a39fc091699abc0dc4679ac1ffbec7b941686fe9af21ce",
+      "bytes": 254,
+      "description": "Working-tree OpenAPI lint"
+    },
+    {
+      "path": "reports/generated/followup-audit.log",
+      "sha256": "4b02d4a3c23d969c46bd2041360f80bfcb1fe760d9db864009acdd710f9de601",
+      "bytes": 25,
+      "description": "Working-tree dependency audit"
+    },
+    {
+      "path": "reports/generated/followup-traceability.log",
+      "sha256": "3102f5b506684f75b4e16c257972cedfb9d4fd315024f2a0c934452b0ead54f8",
+      "bytes": 186,
+      "description": "Working-tree traceability validation"
+    },
+    {
+      "path": "reports/generated/followup-coverage.log",
+      "sha256": "4e8a083d5f9422d7b3ea44e10100c494c9d6a1c070e8a3cb7633f806a16277fa",
+      "bytes": 1026,
+      "description": "Domain coverage run: 100 percent"
+    },
+    {
+      "path": "reports/generated/followup-mutation.log",
+      "sha256": "e6f9c035c62ba5da6db4ac8c83f17b2d6492f7c285db362d1dacd94ba09887a2",
+      "bytes": 20816,
+      "description": "Mutation run: 81.82 percent"
+    },
+    {
+      "path": "reports/generated/followup-worker-smoke.log",
+      "sha256": "31bc02e5bb0aebe257fac90fbb182d565370d65f3c361933c4453a1d3b8ef4b0",
+      "bytes": 255,
+      "description": "Docker worker expiry smoke"
+    },
+    {
+      "path": "reports/generated/followup-worker-restart-smoke.log",
+      "sha256": "5193f9ef7386077d964bb5bf81ccef0c6ca00a5d12185f33240bdad7316989dd",
+      "bytes": 298,
+      "description": "Docker worker restart catch-up smoke"
+    },
+    {
+      "path": "reports/generated/k6/followup-20261027-metadata.json",
+      "sha256": "3cab6264b75eddf652ba8afdff6e9a789af2da9de50eb163f456d9f9f3d88adb",
+      "bytes": 1340,
+      "description": "Local Docker k6 50 VU, five-minute run summary"
+    },
+    {
+      "path": "reports/generated/recovery/followup-20261027.json",
+      "sha256": "fb4d20fd353a19dcd36a050913a190b33aedfad9a36cb0df8ea71e5608bb9637",
+      "bytes": 785,
+      "description": "PostgreSQL 17 backup and UTF8 restore rehearsal counts"
+    }
+  ],
+  "artifactHashStatus": "ALL_LISTED_ARTIFACTS_SHA256_RECORDED"
+}

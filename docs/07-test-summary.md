@@ -65,4 +65,17 @@ Các phép đo unit/coverage, hiệu năng, ZAP và Gitleaks dùng fixture/histo
 | Performance trên Docker QA | Đạt local: 50 VU/5 phút | Showtime p95 9.85ms, hold p95 265.35ms, unexpected errors 0%, 50/50 holds; `reports/generated/k6/followup-20261027-metadata.json`; chưa phải staging |
 | Backup/restore với migrations mới | Đạt | PostgreSQL 17 custom-format dump → restore database UTF8; Cinema/Movie/User/Showtime/OutboxEvent/ReconciliationCase counts khớp; `reports/generated/recovery/followup-20261027.json` |
 
-Lượt này xác nhận API, browser, traceability, build, OpenAPI, audit, domain coverage, mutation, k6, restore rehearsal và Docker worker expiry/restart smoke trên working tree. Chưa chạy clean clone cho delta mới, ZAP hoặc Gitleaks-history scan. Worker restart được kiểm tra một lần; soak/multi-instance chưa chạy. Do đó evidence frozen baseline vẫn hữu ích cho commit cũ, không được xem là kết quả mới của toàn bộ working tree.
+Tại thời điểm snapshot 27/10, clean clone và scan history trên delta mới còn chờ. Worker restart được kiểm tra một lần; soak/multi-instance chưa chạy. Các xác nhận mới hơn được ghi ở mục dưới.
+
+## Xác nhận clean clone follow-up — 28/10/2026
+
+| Cổng | Kết quả | Phạm vi/evidence |
+|---|---|---|
+| Commit được xác nhận | `5ae4c2b7b25e5e5b6b4d80c675fc190763743125` | Nhánh `codex/phase8-clean-clone`; clean clone độc lập tại `reports/generated/clean-clone/followup-5ae4c2b` |
+| Cài dependencies và Docker | Đạt | `npm ci`: 464 packages, 0 vulnerabilities; Docker build, 4 migrations và seed đạt; PostgreSQL/API/web/worker đều healthy; `reports/generated/clean-clone-followup-5ae4c2b-compose-ps.log` và `clean-clone-followup-5ae4c2b-health.log` |
+| API/PostgreSQL và browser E2E | Đạt: 20/20 và 28/28 | `reports/generated/clean-clone-followup-5ae4c2b-test.log`; 14 case trên Chromium desktop và Pixel 7 mobile |
+| Build/OpenAPI/traceability/audit | Đạt | Logs `reports/generated/clean-clone-followup-5ae4c2b-build.log`, `clean-clone-followup-5ae4c2b-openapi.log`, `clean-clone-followup-5ae4c2b-trace.log`, `clean-clone-followup-5ae4c2b-audit.log`; trace 45/25, audit 0 vulnerabilities |
+| Gitleaks history scan | Đạt | Gitleaks v8.30.1 quét 5 commits, không phát hiện leak; `reports/generated/final-gitleaks.json` |
+| Hash manifest | Đạt | [Follow-up manifest](evidence/followup/2026-10-28-manifest.json) liệt kê SHA-256 của 20 artifact logs/reports |
+
+Đây là kiểm chứng local cho commit đã nêu. ZAP chưa chạy lại trên delta mới; worker soak/multi-instance, staging/production, manual WCAG review, backup schedule/PITR/RPO/RTO, gateway thật và exhaustive ASVS/BOLA review chưa được thực hiện.

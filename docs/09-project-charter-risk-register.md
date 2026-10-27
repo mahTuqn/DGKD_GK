@@ -33,7 +33,7 @@ P0 chỉ được coi là hoàn tất cho một commit/môi trường cụ thể
 5. Evidence có commit, lệnh, runtime/DB config, exit code và report/trace an toàn; không đưa token, QR token hay PII vào artifacts.
 6. Security, accessibility, performance và recovery gate được đo theo ngưỡng đã duyệt trước khi tuyên bố production readiness.
 
-**Evidence local:** frozen commit `2be2d911c635cbdbe810bd4f77eca71b73928d1f` đã qua clean-clone run với API 17/17, browser 24/24 và traceability 40/24. Follow-up trên working tree đạt API 20/20, browser Docker QA 28/28, traceability 45/25, build/OpenAPI/audit, domain coverage 100%, mutation 81.82%, k6 50 VU/5 phút và restore rehearsal PostgreSQL 17 sau migrations mới; Docker demo có PostgreSQL/API/web/worker. ZAP và Gitleaks-history scan chưa chạy lại trên delta hiện tại; remote GitHub Actions chưa chạy. Manual accessibility, staging/soak, backup schedule/PITR/RPO/RTO, worker soak/multi-instance, live expiry boundary, gateway thật, full ASVS/BOLA review chưa được đánh giá. Đây là local P0 demo có evidence từng cổng, chưa phải production readiness.
+**Evidence local:** frozen commit `2be2d911c635cbdbe810bd4f77eca71b73928d1f` đã qua clean-clone run với API 17/17, browser 24/24 và traceability 40/24. Follow-up commit `5ae4c2b7b25e5e5b6b4d80c675fc190763743125` cũng qua clean-clone: API 20/20, browser 28/28, build/OpenAPI/audit/traceability; Gitleaks v8.30.1 quét 5 commits và không có leak. Follow-up đạt domain coverage 100%, mutation 81.82%, k6 50 VU/5 phút, restore rehearsal PostgreSQL 17 sau migrations mới; Docker demo có PostgreSQL/API/web/worker. ZAP chưa chạy lại trên delta mới; remote GitHub Actions chưa chạy. Manual accessibility, staging/soak, backup schedule/PITR/RPO/RTO, worker soak/multi-instance, live expiry boundary, gateway thật, full ASVS/BOLA review chưa được đánh giá. Đây là local P0 demo có evidence từng cổng, chưa phải production readiness.
 
 ### Trạng thái theo các giai đoạn trong kế hoạch
 
@@ -41,13 +41,13 @@ P0 chỉ được coi là hoàn tất cho một commit/môi trường cụ thể
 |---|---|---|
 | 0. Khởi động | Hoàn tất charter, backlog P0/P1/P2 và risk register | Owner cần ký các chính sách còn mở trước production |
 | 1. Đặc tả | Hoàn tất SRS, RTM, test catalog, ERD và OpenAPI lint | Chốt cutoff hủy/hoàn, age-rating và staging target |
-| 2. Nền tảng | Hoàn tất local Docker Compose: PostgreSQL, migration, seed, API, worker và web; build/test chạy được | GitHub Actions remote chưa chạy; clean-clone mới đang chờ |
+| 2. Nền tảng | Hoàn tất local Docker Compose: PostgreSQL, migration, seed, API, worker và web; clean clone commit `5ae4c2b` đã build/migrate/seed thành công | GitHub Actions remote chưa chạy |
 | 3. Danh mục và lịch | Hoàn tất phim/rạp/phòng/ghế/suất, lọc, Admin CRUD và buffer suất cùng phòng | Chưa đánh giá Firefox/WebKit hoặc staging |
 | 4. Giữ ghế và đơn | Hoàn tất API/UI, 100-request race, expiry sweep và price snapshot | Chưa chạy live boundary quanh TTL 5 phút hoặc soak |
 | 5. Thanh toán và vé | Hoàn tất mock payment, webhook, idempotency, QR/check-in và late-success reconciliation thủ công | Chưa kết nối gateway thật hoặc refund tự động |
 | 6. Báo cáo và UX | Hoàn tất report API/UI, browser desktop/mobile, axe trong scope và keyboard journey | Chờ manual WCAG review cho login/ticket/admin và screen reader |
-| 7. Kiểm định và sửa lỗi | API 20/20, browser 28/28, coverage 100%, mutation 81.82%, k6 50 VU/5 phút, OpenAPI/audit/restore pass | ZAP và Gitleaks cần chạy lại trên commit mới; worker soak/multi-instance còn thiếu |
-| 8. Đóng gói | Docker demo chạy ổn định; test catalog/RTM/evidence follow-up đã cập nhật | Commit thay đổi, clean-clone run, hash manifest và triage cuối |
+| 7. Kiểm định và sửa lỗi | API 20/20, browser 28/28, coverage 100%, mutation 81.82%, k6 50 VU/5 phút, OpenAPI/audit/restore pass; Gitleaks pass trên commit mới | ZAP chưa chạy lại trên delta; worker soak/multi-instance còn thiếu |
+| 8. Đóng gói | Hoàn tất: commit `5ae4c2b` và clean-clone run đạt; Docker demo chạy ổn định; test catalog/RTM/evidence và SHA-256 manifest đã cập nhật | Không còn hạng mục đóng gói local; các giới hạn của giai đoạn 7 vẫn cần xử lý trước staging/production |
 
 ## 4. Risk register
 
@@ -62,7 +62,7 @@ P0 chỉ được coi là hoàn tất cho một commit/môi trường cụ thể
 | R-07 | Chậm/lỗi khi nhiều người truy cập | Trung bình / Cao | k6 local 50 VU/5 phút: showtime p95 9.85ms, hold p95 265.35ms, unexpected errors 0%; API race một ghế đạt 1/99 | Chưa chạy staging, soak hoặc reliability test đa instance; không suy rộng local baseline thành production capacity |
 | R-08 | Báo cáo bị hiểu sai khi có pending/failed/refund | Thấp / Trung bình | Test xác nhận revenue chỉ tăng khi CONFIRMED; occupancy có định nghĩa tử/mẫu và fixture assertions | Refund chưa triển khai; chưa có đối soát nghiệp vụ sau refund |
 | R-09 | Scope vượt khả năng nhóm | Cao / Cao | Khóa bản nộp ở P0, dùng mock adapter; P1/P2 giữ off | Giữ P1/P2 ngoài release cho tới khi có yêu cầu, decision table, test và review riêng |
-| R-10 | Seed/default secret bị dùng ngoài demo | Thấp / Cao | Tài khoản giả, `.env.example`, secret cấu hình riêng; Gitleaks v8.30.1 quét commit mã nguồn đóng băng và clean clone đạt; cùng phiên bản được cấu hình trong CI | Remote CI chưa chạy; cấm dùng credential/default mock secret cho production; production secret/config chưa đánh giá |
+| R-10 | Seed/default secret bị dùng ngoài demo | Thấp / Cao | Tài khoản giả, `.env.example`, secret cấu hình riêng; Gitleaks v8.30.1 quét sạch frozen baseline và follow-up history 5 commits; cùng phiên bản được cấu hình trong CI | Remote CI chưa chạy; cấm dùng credential/default mock secret cho production; production secret/config chưa đánh giá |
 | R-11 | Quality report bị hiểu là chứng nhận/chứng minh toàn diện | Trung bình / Trung bình | Ghi commit/environment/scope; nêu test gaps và evidence rõ | Không gọi kết quả là chứng nhận ISO, PCI, WCAG hay security clearance |
 | R-12 | Hai suất cùng phòng chồng giờ hoặc thiếu thời gian vệ sinh/chuyển ca | Thấp / Cao | Final API test tạo gap đúng 20 phút thành công và chặn conflict qua create/patch | Không bao phủ mọi hướng cập nhật/lịch phức hợp |
 | R-13 | Backup không restore đúng encoding hoặc dữ liệu không đầy đủ | Thấp / Cao | PostgreSQL 17 custom dump restore vào UTF8 từ template0; counts được đối chiếu và exit code đều 0 | Chưa đánh giá lịch backup, PITR, RPO/RTO hoặc production restore; default target encoding WIN1258 đã fail ở lần thử đầu |

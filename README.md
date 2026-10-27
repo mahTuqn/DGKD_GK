@@ -84,3 +84,4 @@ npm run test:api
 - [RTM](docs/03-rtm.csv), [test catalog](docs/04-test-cases.csv) và [tóm tắt evidence](docs/07-test-summary.md)
 - [OpenAPI](docs/openapi.yaml) — bao gồm role Staff theo cinema được phân công và buffer 20 phút giữa suất trong cùng phòng
 - [Manifest evidence final](docs/evidence/final/manifest.json) — lệnh, kết quả, artifact và SHA-256
+- [Manifest follow-up clean clone](docs/evidence/followup/2026-10-28-manifest.json) — commit `5ae4c2b`, test local và SHA-256 artifact
