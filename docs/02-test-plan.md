@@ -8,7 +8,7 @@ Kiểm tra các yêu cầu trong [SRS](01-srs.md), tập trung rủi ro bán tr�
 
 | Tầng | Phạm vi | Cổng đề xuất |
 |---|---|---|
-| Unit/domain | TTL, giá VND, trạng thái đơn/vé, giới hạn ghế | Exact-head `8b1fc83`: domain coverage pass; Stryker đạt 82.89% (155 killed/32 survived), vượt ngưỡng 70%, chỉ chạy `tests/domain.test.ts`. |
+| Unit/domain | TTL, giá VND, trạng thái đơn/vé, giới hạn ghế | Current source `b84ba70`: domain coverage/mutation gate pass. Exact Stryker score chưa được ghi trong manifest hiện tại; historical `8b1fc83` đạt 82.89% (155 killed/32 survived), chỉ trên `tests/domain.test.ts`. |
 | API/integration | Auth/RBAC, validation, ownership, payment/hold/order/check-in | PostgreSQL test DB; mutation có assertion dữ liệu sau cùng |
 | Contract/OpenAPI | Cấu trúc OpenAPI và rule lint | `npm run lint:openapi` chạy trong CI; Redocly lint không warning. Đây là lint contract document, chưa phải runtime contract test cho mọi endpoint |
 | Concurrency | Nhiều request cùng ghế/suất | 100 request ở nhiều browser/context/process; tối đa 1 hold/sale active; conflict còn lại là 409 |

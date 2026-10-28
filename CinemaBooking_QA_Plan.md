@@ -4,13 +4,13 @@
 
 Xây dựng **CinemaBooking**, một ứng dụng web responsive cho một cụm rạp, đồng thời tạo hồ sơ đánh giá và kiểm định chất lượng có thể tái lập như StudySpace. Kết quả cuối gồm sản phẩm chạy được, mã nguồn, test tự động, báo cáo lỗi, ma trận truy vết và bằng chứng gắn với đúng commit. Mọi kết luận “đạt” chỉ áp dụng cho môi trường và kịch bản đã đo.
 
-Giả định để lập lịch: nhóm 2 người, 10 tuần, khoảng 12–15 giờ/người/tuần; tiền tệ VND; múi giờ nghiệp vụ `Asia/Ho_Chi_Minh`; triển khai trình diễn trên một môi trường staging. Thanh toán dùng cổng **giả lập hoặc sandbox** qua một adapter, không nhận hay lưu dữ liệu thẻ. Cấu hình chính sách hủy/hoàn và phân loại độ tuổi sẽ do nhóm chốt trong SRS; không tuyên bố tuân thủ pháp luật hay vận hành thanh toán thật chỉ từ bản demo.
+Giả định gốc của kế hoạch là nhóm 2 người, 10 tuần, khoảng 12–15 giờ/người/tuần; tiền tệ VND; múi giờ nghiệp vụ `Asia/Ho_Chi_Minh`. Kế hoạch ban đầu giả định staging, nhưng môi trường hiện được xác nhận chỉ là Docker local; vì vậy không đánh dấu các gate staging/production là đạt. Thanh toán hiện là **mock** qua adapter, không nhận hay lưu dữ liệu thẻ. Hủy/hoàn tiền thuộc P1/ngoài acceptance P0; phân loại độ tuổi và chính sách pháp lý chưa được phê duyệt.
 
 ### Tiêu chí thành công
 
-1. Khách xem phim, rạp, suất chiếu và ghế; người dùng đăng nhập giữ ghế, thanh toán sandbox và nhận vé QR; nhân viên quét vé; quản trị viên vận hành và xem báo cáo.
+1. Khách xem phim, rạp, suất chiếu và ghế; người dùng đăng nhập giữ ghế, thanh toán mock và nhận vé QR; nhân viên quét vé; quản trị viên vận hành và xem báo cáo.
 2. Không có hai vé hợp lệ cho cùng `showtimeId + seatId`, kể cả khi nhiều request hoặc webhook đến đồng thời.
-3. Các chuyển trạng thái đặt vé, giữ ghế, thanh toán, hoàn tiền và soát vé tuân theo bảng trạng thái đã phê duyệt; request lặp cho cùng idempotency key không tạo giao dịch mới.
+3. Các chuyển trạng thái đặt vé, giữ ghế, mock payment và soát vé tuân theo bảng trạng thái đã phê duyệt; callback thanh toán muộn được ghi reconciliation thủ công. Hủy/hoàn tiền không thuộc P0; request lặp không tạo giao dịch mới.
 4. Mọi yêu cầu quan trọng có ít nhất một test và evidence; các đường đi lỗi và biên được kiểm tra trước khi tuyên bố hoàn thành.
 5. Bản nộp giải thích rõ kết quả thực chạy, lỗi còn tồn tại và phạm vi chưa đánh giá; không dùng coverage hoặc scanner pass để thay thế đánh giá nghiệp vụ.
 
@@ -21,10 +21,10 @@ Giả định để lập lịch: nhóm 2 người, 10 tuần, khoảng 12–15 
 | P0 — bắt buộc | Đăng ký/đăng nhập, hồ sơ, phân quyền `CUSTOMER`/`STAFF`/`ADMIN` | Quyền được kiểm tra ở API và theo từng đối tượng |
 | P0 — bắt buộc | Danh mục phim, rạp, phòng, sơ đồ ghế, suất chiếu | Lọc theo ngày/rạp/phim; chỉ công bố suất hợp lệ |
 | P0 — bắt buộc | Chọn 1–8 ghế cùng suất, giữ ghế 5 phút, hết hạn giữ ghế | Đồng hồ do server/DB quyết định; ghế được giải phóng đúng lúc |
-| P0 — bắt buộc | Tạo đơn, tính giá ở server, thanh toán giả lập/sandbox, webhook | Thành công, thất bại, trễ, trùng và sai chữ ký có kết quả xác định |
+| P0 — bắt buộc | Tạo đơn, tính giá ở server, mock payment, webhook | Thành công, thất bại, trễ, trùng và sai chữ ký có kết quả xác định; callback muộn được đưa vào reconciliation thủ công |
 | P0 — bắt buộc | Vé điện tử/QR, lịch sử đơn, soát vé một lần | Vé chỉ phát sau thanh toán được xác nhận; không dùng lại QR |
 | P0 — bắt buộc | Admin quản lý phim, rạp, phòng, ghế, suất, giá; Staff kiểm vé | Thao tác có validation, RBAC và audit log |
-| P0 — bắt buộc | Báo cáo doanh thu và tỷ lệ lấp đầy | Định nghĩa mẫu số/tử số, trạng thái thanh toán và hoàn tiền rõ ràng |
+| P0 — bắt buộc | Báo cáo doanh thu và tỷ lệ lấp đầy | Định nghĩa mẫu số/tử số và trạng thái thanh toán rõ ràng; không tính refund vì refund chưa triển khai |
 | P1 — sau khi P0 ổn định | Chọn nhiều loại ghế/giá, mã khuyến mãi, hủy và hoàn tiền sandbox | Thêm rule, test và evidence riêng trước khi bật |
 | P2 — ngoài bản nộp chính | Gợi ý phim, điểm thưởng, email/SMS, đa đơn vị rạp, thanh toán thật | Không được mô tả như chức năng đã hoàn thành |
 
@@ -38,8 +38,8 @@ Tạo `docs/01-srs.md` với actor, precondition, main/alternate/exception flow,
 |---|---|---|
 | `REQ-AUTH-01..04` | Đăng ký, đăng nhập/đăng xuất, hồ sơ, quyền và thu hồi quyền | 401/403; role hiện tại lấy từ nguồn đáng tin cậy sau khi đổi quyền |
 | `REQ-CATALOG-01..04` | Phim, rạp, phòng/ghế, lịch chiếu | Không trùng suất trên cùng phòng kể cả thời gian dọn phòng; múi giờ chính xác |
-| `REQ-BOOK-01..06` | Sơ đồ ghế, giữ/hết hạn, giá, checkout, hủy, lịch sử | Không bán trùng; không tin giá gửi từ client; ownership |
-| `REQ-PAY-01..04` | Tạo payment intent, webhook, retry/idempotency, hoàn tiền | Một payment xác nhận chỉ dẫn tới một đơn/vé; callback giả mạo bị từ chối |
+| `REQ-BOOK-01..06` | Sơ đồ ghế, giữ/hết hạn, giá, checkout, lịch sử; hủy thuộc P1 nếu được duyệt | Không bán trùng; không tin giá gửi từ client; ownership |
+| `REQ-PAY-01..04` | Mock payment, webhook, retry/idempotency; refund thuộc P1 nếu được duyệt | Một payment xác nhận chỉ dẫn tới một đơn/vé; callback giả mạo bị từ chối |
 | `REQ-TICKET-01..03` | Phát vé QR, xem vé, soát vé | QR không chứa dữ liệu nhạy cảm; vé chỉ dùng một lần |
 | `REQ-ADMIN-01..04` | Quản lý danh mục, suất/giá, người dùng, báo cáo/audit | Admin/Staff chỉ làm thao tác đúng vai trò; số liệu đối soát được |
 
@@ -48,7 +48,7 @@ Tạo `docs/01-srs.md` với actor, precondition, main/alternate/exception flow,
 - Mỗi ghế thuộc đúng một phòng; mỗi suất chiếu thuộc đúng một phòng và một phim; mọi ghế trong một đơn thuộc cùng một suất.
 - Không được có hơn một claim ghế **đang hiệu lực** (`HELD` hoặc `SOLD`) cho cùng `(showtimeId, seatId)`. Không dựa vào kiểm tra ở frontend để giữ bất biến này.
 - `HELD` có `expiresAt` do server tạo. Trong transaction lấy ghế, claim hết hạn phải được thu hồi trước khi cấp claim mới. Worker dọn hạn chỉ hỗ trợ; tính đúng đắn không phụ thuộc worker chạy đúng từng giây.
-- Sau khi thanh toán đã xác nhận, claim đổi `SOLD` và phát vé trong một luồng idempotent. Webhook trùng không tạo vé thứ hai; webhook trễ sau khi hold hết hạn chuyển vào quy trình hoàn/đối soát, không chiếm lại ghế đã bán cho người khác.
+- Sau khi thanh toán đã xác nhận, claim đổi `SOLD` và phát vé trong một luồng idempotent. Webhook trùng không tạo vé thứ hai; webhook trễ sau khi hold hết hạn tạo reconciliation case thủ công, không chiếm lại ghế đã bán cho người khác. Refund chưa được triển khai trong P0.
 - Tổng tiền do server tính từ snapshot giá suất/loại ghế/khuyến mãi tại thời điểm checkout; lưu tiền bằng số nguyên VND, không dùng số thực. Một đơn không được đổi giá âm thầm sau khi người dùng xác nhận.
 - Chỉ chủ đơn xem/hủy đơn của mình. Staff chỉ quét vé ở rạp được phân quyền. Admin bị hạ quyền phải mất quyền quản trị ở request kế tiếp theo chính sách xác thực đã chọn.
 - QR dùng mã định danh khó đoán hoặc token ký, không chứa email/số điện thoại/giá; thao tác quét là cập nhật nguyên tử để không thể dùng vé hai lần.
@@ -64,12 +64,10 @@ stateDiagram-v2
   PAYMENT_PENDING --> CONFIRMED: webhook hợp lệ
   PAYMENT_PENDING --> PAYMENT_FAILED: thất bại
   PAYMENT_PENDING --> EXPIRED: hết hạn và chưa trả tiền
-  CONFIRMED --> REFUND_PENDING: hủy hợp lệ
-  REFUND_PENDING --> REFUNDED: hoàn tiền xác nhận
   CONFIRMED --> CHECKED_IN: quét vé hợp lệ
 ```
 
-Tài liệu trạng thái phải quyết định riêng trường hợp thanh toán đến sau `EXPIRED`, hoàn tiền thất bại và giao dịch treo. Không cho route bất kỳ gán trực tiếp trạng thái tùy ý.
+Các trạng thái hủy/refund chỉ được thêm sau khi P1 được phê duyệt. Tài liệu P0 phải quyết định riêng trường hợp thanh toán đến sau `EXPIRED` và giao dịch treo; late payment hiện được ghi reconciliation case thủ công. Không cho route bất kỳ gán trực tiếp trạng thái tùy ý.
 
 ## 4. Thiết kế hệ thống
 
@@ -79,7 +77,7 @@ Tài liệu trạng thái phải quyết định riêng trường hợp thanh to
 - Backend: Node.js + TypeScript với các module `auth`, `catalog`, `showtimes`, `seat-holds`, `orders`, `payments`, `tickets`, `check-in`, `admin`, `reports`; validation đầu vào và error contract thống nhất.
 - Database: PostgreSQL cho transaction, khóa hàng và unique constraint; migrations versioned. Redis chỉ dùng cache/rate limit nếu cần, không là nguồn sự thật của ghế.
 - Worker: xử lý hold hết hạn, webhook retry, outbox và đối soát. Mọi job phải idempotent và có thể chạy lại.
-- Payment adapter: giao diện chung cho mock/sandbox; xác minh chữ ký callback, lưu `providerEventId` duy nhất, nhận trạng thái qua backend webhook chứ không tin URL redirect của trình duyệt.
+- Payment adapter: mock adapter cho demo; xác minh chữ ký callback, lưu `providerEventId` duy nhất, nhận trạng thái qua backend webhook chứ không tin URL redirect của trình duyệt. Sandbox gateway chỉ được thêm khi có quyết định riêng.
 - Quan sát: structured logs có correlation ID, audit log cho mutation, metrics về hold conflict, payment pending, webhook retry và quét vé; không ghi token/PII vào log.
 
 Chọn PostgreSQL vì row lock và partial unique index cho claim ghế đang hoạt động có thể biểu diễn trực tiếp trong database; kiểm tra API vẫn phải xử lý unique conflict và retry có giới hạn. [Tài liệu PostgreSQL về row lock](https://www.postgresql.org/docs/current/explicit-locking.html) và [partial unique index](https://www.postgresql.org/docs/current/sql-createindex.html) là nguồn thiết kế, còn SQL cụ thể phải được test bằng migration trên DB thật.
@@ -140,17 +138,18 @@ Tạo `docs/02-test-plan.md`, `docs/03-rtm.csv`, `docs/04-test-cases.csv` cùng 
 1. **Race ghế:** 100 request cùng một ghế/suất từ nhiều user/process; đúng một hold thành công, còn lại conflict; database chỉ có một claim active.
 2. **Hold hết hạn:** trước hạn 1 giây không cấp lại; đúng/sau hạn cho phép cấp lại; payment của hold cũ đến muộn không phát vé hay chiếm lại ghế.
 3. **Idempotency:** lặp `POST /orders`/payment với cùng key trả cùng kết quả; cùng key nhưng payload khác bị từ chối; webhook cùng event gửi nhiều lần chỉ ghi một tác động.
-4. **Thanh toán:** redirect trình duyệt báo “thành công” nhưng chưa có webhook thì đơn vẫn pending; webhook sai chữ ký bị từ chối; amount/currency không khớp bị cách ly; refund thất bại còn trạng thái cần xử lý.
+4. **Thanh toán P0:** redirect trình duyệt báo “thành công” nhưng chưa có webhook thì đơn vẫn pending; webhook sai chữ ký bị từ chối; amount/currency không khớp bị cách ly; callback muộn tạo reconciliation case. Refund failure thuộc P1 và chưa nằm trong P0.
 5. **Quyền:** Customer A không xem/hủy đơn hoặc vé của B; Staff không đổi giá; admin bị hạ quyền không tiếp tục gọi `/admin/*` bằng token cũ.
 6. **Suất chiếu:** thời lượng phim + buffer dọn phòng không được chồng suất cùng phòng; ngày giao thừa và ranh giới UTC/VN không tạo lịch sai.
-7. **Giá và báo cáo:** cùng dữ liệu cố định, tổng tiền, giảm giá, refund, doanh thu thuần và occupancy khớp công thức; không đếm đơn thất bại là vé bán.
+7. **Giá và báo cáo P0:** cùng dữ liệu cố định, tổng tiền và occupancy khớp công thức; doanh thu chỉ tính payment đã xác nhận, không đếm đơn thất bại là vé bán. Discount/refund thuộc P1.
 8. **QR:** quét đồng thời cùng vé chỉ một lần thành công; vé của suất/rạp khác hoặc đã hoàn bị từ chối; log quét không lộ PII.
 
 ## 7. Quality gate và evidence
 
 - **Gate mỗi PR:** lint/typecheck, test unit/integration liên quan, OpenAPI/RTM validation, dependency/secret scan, migration test từ database trống. PR thay domain phải thêm hoặc cập nhật test biên và decision table.
-- **Gate trước release:** toàn bộ unit/API/E2E P0 pass; mutation, coverage, concurrency, accessibility, security và performance đạt ngưỡng đã công bố; không còn bug Critical/High; backup/restore được diễn tập.
-- **Ngưỡng hiệu năng khởi điểm để thử nghiệm:** trên staging có cấu hình được ghi, 50 virtual users trong 5 phút: tra cứu suất p95 ≤500 ms, giữ ghế p95 ≤800 ms, request lỗi ngoài conflict dự kiến <1%. Chỉ chốt ngưỡng cuối sau khi đo baseline và được nhóm phê duyệt trước lần chạy final.
+- **Gate bàn giao demo local:** unit/API/E2E P0 tự động pass trên source đã ghi trong evidence; không còn bug Critical/High đã biết trong phạm vi đã kiểm tra; ghi rõ các gate thủ công và môi trường chưa đo. Accessibility thủ công vẫn cần chủ dự án hoàn thành checklist.
+- **Gate staging/production:** trước khi tuyên bố release readiness phải có cấu hình staging được ghi, đo performance, review đầy đủ DAST findings, hoàn tất accessibility thủ công, backup/restore rehearsal và mục tiêu RPO/RTO. Các gate này hiện chưa đạt vì staging/production chưa có.
+- **Ngưỡng hiệu năng khởi điểm:** trên staging có cấu hình được ghi, 50 virtual users trong 5 phút: tra cứu suất p95 ≤500 ms, giữ ghế p95 ≤800 ms, request lỗi ngoài conflict dự kiến <1%. Baseline k6 local chỉ là tham chiếu, không thay thế lần đo staging.
 - **Evidence:** lưu raw JSON/HTML/trace trong `reports/generated/`, không commit DB hay secret; manifest ghi commit SHA, thời điểm, OS/runtime, seed, lệnh chạy, ngưỡng, exit code, kết quả và SHA-256 artifact. Phân biệt evidence lịch sử với evidence final đúng commit.
 - **Kết luận ISO:** đánh giá chín đặc tính ISO/IEC 25010:2023; mục nào chưa có phép đo thì ghi “chưa đánh giá”. Không gọi đây là chứng nhận ISO.
 
