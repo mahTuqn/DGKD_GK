@@ -1,0 +1,4 @@
+# False positives: SHA-256 digests of sanitized public GitHub Actions DAST reports.
+# These checksums identify report bytes and are not credentials or access tokens.
+36fbac5408e8c2190192cf454cf089b34b61e899:docs/evidence/followup/2026-10-28-github-actions-298e738.json:generic-api-key:67
+36fbac5408e8c2190192cf454cf089b34b61e899:docs/evidence/followup/2026-10-28-github-actions-298e738.json:generic-api-key:69
