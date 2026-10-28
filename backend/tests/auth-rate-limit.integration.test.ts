@@ -77,4 +77,33 @@ rateLimitDescribe("REQ-SEC-01: runtime login rate limiting", () => {
     expect(blockedRegistration.status).toBe(429);
     expect(blockedRegistration.body.error).toBe("REGISTRATION_RATE_LIMITED");
   }, 15_000);
+
+  it("[TC-SEC-27] ignores spoofed forwarded IPs on a direct API listener", async () => {
+    const previousTrustProxyHops = process.env.TRUST_PROXY_HOPS;
+    process.env.TRUST_PROXY_HOPS = "0";
+    const directApp = (() => {
+      try {
+        return createApp();
+      } finally {
+        if (previousTrustProxyHops === undefined) delete process.env.TRUST_PROXY_HOPS;
+        else process.env.TRUST_PROXY_HOPS = previousTrustProxyHops;
+      }
+    })();
+
+    for (let attempt = 1; attempt <= 10; attempt += 1) {
+      const response = await request(directApp)
+        .post("/api/auth/login")
+        .set("X-Forwarded-For", `198.51.100.${attempt}`)
+        .send({});
+      expect(response.status, `spoofed forwarded address ${attempt}`).toBe(422);
+      expect(response.body.error).toBe("VALIDATION_ERROR");
+    }
+
+    const blockedLogin = await request(directApp)
+      .post("/api/auth/login")
+      .set("X-Forwarded-For", "198.51.100.99")
+      .send({});
+    expect(blockedLogin.status).toBe(429);
+    expect(blockedLogin.body.error).toBe("AUTH_RATE_LIMITED");
+  }, 15_000);
 });

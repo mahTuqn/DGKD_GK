@@ -66,6 +66,7 @@ P0 chỉ được coi là hoàn tất cho một commit/môi trường cụ thể
 | R-11 | Quality report bị hiểu là chứng nhận/chứng minh toàn diện | Trung bình / Trung bình | Ghi commit/environment/scope; nêu test gaps và evidence rõ | Không gọi kết quả là chứng nhận ISO, PCI, WCAG hay security clearance |
 | R-12 | Hai suất cùng phòng chồng giờ hoặc thiếu thời gian vệ sinh/chuyển ca | Thấp / Cao | Final API test tạo gap đúng 20 phút thành công và chặn conflict qua create/patch | Không bao phủ mọi hướng cập nhật/lịch phức hợp |
 | R-13 | Backup không restore đúng encoding hoặc dữ liệu không đầy đủ | Thấp / Cao | PostgreSQL 17 custom dump restore vào UTF8 từ template0; counts được đối chiếu và exit code đều 0 | Chưa đánh giá lịch backup, PITR, RPO/RTO hoặc production restore; default target encoding WIN1258 đã fail ở lần thử đầu |
+| R-14 | Rate limit mất hiệu lực khi restart hoặc chạy nhiều API replica | Trung bình / Cao | API hiện dùng express-rate-limit in-memory store; current local Compose chạy một API process. TC-SEC-27 bổ sung kiểm tra không thể né login limiter bằng X-Forwarded-For giả khi gọi trực tiếp | Chưa dùng shared rate-limit store; trước khi scale cần Redis/store dùng chung và request-level test qua Nginx trusted hop |
 
 ## 5. Quyết định chính
 
