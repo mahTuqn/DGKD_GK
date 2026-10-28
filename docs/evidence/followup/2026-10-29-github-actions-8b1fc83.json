@@ -1,0 +1,123 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "recordedAt": "2026-10-29",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "commit": "8b1fc83c5e8f6c4a20b8106a9633e25515c25d83",
+  "branch": "codex/cross-browser-smoke",
+  "overall": "PASS_EXACT_SOURCE_CI_WITH_DOCUMENTED_LIMITATIONS",
+  "runs": {
+    "qualityAndDast": {
+      "id": 40780057457,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40780057457",
+      "overall": "PASS",
+      "jobs": {
+        "quality": {
+          "result": "PASS",
+          "runtime": {
+            "runner": "ubuntu-latest",
+            "node": 24,
+            "postgres": 17
+          },
+          "traceability": {
+            "result": "PASS",
+            "testCases": 80,
+            "requirements": 25
+          },
+          "verifiedSteps": [
+            "secret and dependency scans",
+            "database generation, migrations and seed",
+            "OpenAPI lint and traceability",
+            "API integration tests",
+            "live five-minute hold expiry over HTTP",
+            "two-worker five-minute soak and graceful restart",
+            "production build",
+            "Chromium Playwright browser suite"
+          ],
+          "playwright": {
+            "result": "PASS",
+            "testCases": 24,
+            "testFiles": 7,
+            "projects": [
+              "chromium-desktop",
+              "chromium-mobile (Pixel 7)"
+            ],
+            "configuredExecutions": 48,
+            "artifact": {
+              "name": "cinema-booking-browser-results-8b1fc83c5e8f6c4a20b8106a9633e25515c25d83",
+              "id": 12858040842,
+              "sizeBytes": 326525,
+              "digest": "sha256:d09bd7085fb7bae06f2aa9a2449f1a06c15e6a6d419ff5c7629ffc424dfc44ec"
+            }
+          }
+        },
+        "composeWorkerHealthSmoke": {
+          "result": "PASS",
+          "scope": "Build and start the current Compose worker stack, wait for healthy container status, verify the loopback /healthz probe, and clean up the unique CI Compose project.",
+          "testCase": "TC-WORKER-08"
+        },
+        "domainCoverageAndMutation": {
+          "result": "PASS",
+          "testScope": [
+            "backend/tests/domain.test.ts"
+          ],
+          "scorePercent": 82.89,
+          "thresholdPercent": 70,
+          "killed": 155,
+          "survived": 32,
+          "timeout": 0,
+          "errors": 0,
+          "artifact": {
+            "name": "cinema-booking-domain-quality-8b1fc83c5e8f6c4a20b8106a9633e25515c25d83",
+            "id": 12856138803,
+            "sizeBytes": 144569,
+            "digest": "sha256:0141ea1b1748843b81428264ddee42c06d8cdb092b061b82bfe295242e999aa3"
+          }
+        },
+        "dast": {
+          "result": "PASS_WITHIN_CONFIGURED_HIGH_ALERT_GATE",
+          "findingDetailsReviewed": false,
+          "severityCounts": "Not reviewed; no counts claimed.",
+          "artifact": {
+            "name": "cinema-booking-dast-reports-8b1fc83c5e8f6c4a20b8106a9633e25515c25d83",
+            "id": 12856967011,
+            "sizeBytes": 6465,
+            "digest": "sha256:9c4ac2ba8d470a2e4c566aaf5c6bb56a7b0181db537c774a510d5e00502f42fb"
+          }
+        }
+      }
+    },
+    "crossBrowser": {
+      "id": 40780057484,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40780057484",
+      "result": "PASS",
+      "scope": "TC-E2E-01, TC-E2E-02, and TC-E2E-09 on Firefox and WebKit desktop; six configured executions.",
+      "artifact": {
+        "name": "cinema-booking-cross-browser-results-8b1fc83c5e8f6c4a20b8106a9633e25515c25d83",
+        "id": 12856497587,
+        "sizeBytes": 221787,
+        "digest": "sha256:d49dfcffb81160e7550f73091c5dad707c9f1323b10b376e174b6a03f8096b67"
+      }
+    },
+    "workerSoak15Minutes": {
+      "id": 40780057400,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40780057400",
+      "result": "PASS",
+      "scope": "Two worker processes ran for 900 seconds, then graceful shutdown/restart and pending-event catch-up passed.",
+      "artifact": "No artifact was published by this workflow run."
+    }
+  },
+  "environment": {
+    "runner": "GitHub Actions clean checkout",
+    "applicationEnvironment": "Local Docker only; no staging URL was provided"
+  },
+  "notMeasured": [
+    "Manual WCAG 2.2 AA, screen-reader, contrast, zoom/reflow, orientation and full keyboard review; requester will perform the checklist",
+    "Performance validation on named staging or production",
+    "Detailed DAST findings and exhaustive ASVS/API Top 10 and BOLA review",
+    "Production behavior, backup schedule, PITR, RPO/RTO and production restore",
+    "Reliability soak longer than 15 minutes",
+    "Real payment gateway/refund, which is outside the SRS"
+  ],
+  "scopeNote": "Quality/API, Compose worker health, DAST gate, domain coverage/mutation, Chromium, Firefox/WebKit, and 15-minute worker reliability all passed on this exact source SHA. DAST artifact metadata is recorded, but its report contents and severity breakdown were not reviewed. These results do not establish manual WCAG conformance or staging/production readiness."
+}
