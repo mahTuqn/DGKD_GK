@@ -1,0 +1,100 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "runId": "github-actions-40749428850",
+  "status": "PASS_QUALITY_AND_DAST",
+  "recordedAt": "2026-10-29",
+  "commit": "2683e3537e47379591c089740edd2a36c2f17716",
+  "runUrl": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40749428850",
+  "environment": {
+    "runner": "GitHub Actions clean checkout",
+    "browserProjects": [
+      "chromium-desktop",
+      "chromium-mobile (Pixel 7)"
+    ],
+    "staging": "Not available; local Docker is the only user-provided QA environment"
+  },
+  "quality": {
+    "result": "PASS",
+    "gates": {
+      "gitleaks": "PASS; two exact SHA-256 report-checksum false positives are allowlisted in .gitleaksignore",
+      "dependencyAudit": "PASS",
+      "openApiLint": "PASS",
+      "traceability": {
+        "result": "PASS",
+        "testCases": 74,
+        "requirements": 25
+      },
+      "apiIntegration": "PASS; includes TC-SEC-17 registration rate limiting, TC-SEC-18 production mock-payment block, and TC-SEC-19 signed webhook idempotency/replay checks",
+      "liveHoldExpiry": {
+        "testId": "TC-WORKER-03",
+        "result": "PASS"
+      },
+      "workerProcessSoakRestart": {
+        "testId": "TC-WORKER-06",
+        "result": "PASS"
+      },
+      "productionBuild": "PASS"
+    },
+    "playwright": {
+      "result": "PASS",
+      "testsPassed": 46,
+      "testsFailed": 0,
+      "testsSkipped": 0,
+      "testsFlaky": 0,
+      "durationMs": 139453.366,
+      "testCases": 23,
+      "projects": [
+        "chromium-desktop",
+        "chromium-mobile (Pixel 7)"
+      ],
+      "TC-E2E-09": "PASS on Chromium desktop and Pixel 7 mobile, including modal focus wrapping, Escape, and focus restoration",
+      "artifactId": 12842439712,
+      "artifactUrl": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40749428850/artifacts/12842439712"
+    }
+  },
+  "dast": {
+    "result": "PASS_WITH_TRIAGED_LOW",
+    "job": "DAST (isolated Docker Compose)",
+    "unauthenticatedApi": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0,
+      "informational": 2
+    },
+    "authenticatedApi": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 1,
+      "informational": 2,
+      "triagedFinding": "Low-confidence persistent-markup observation in JSON; the Admin UI renders the value as text."
+    },
+    "productionWebPreview": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0,
+      "informational": 1
+    },
+    "criticalHighMediumFindings": 0,
+    "artifactId": 12843870789,
+    "artifactUrl": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40749428850/artifacts/12843870789"
+  },
+  "initialFalsePositiveRun": {
+    "runId": "40748823379",
+    "runUrl": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40748823379",
+    "finding": "Gitleaks generic-api-key matched two SHA-256 digests of public sanitized DAST reports in the CI evidence manifest; no credential was exposed.",
+    "resolution": "Added exact fingerprints for only those two lines to .gitleaksignore; local pinned full-history scan passed and exact-head run 40749428850 passed."
+  },
+  "notMeasured": [
+    "Manual WCAG 2.2 AA, screen-reader, contrast, zoom/reflow, orientation, and full keyboard review; requester will perform the checklist",
+    "Named staging performance validation; no staging environment is available",
+    "Production behavior, backup schedule, PITR, RPO/RTO, and production restore",
+    "Exhaustive ASVS/API Top 10 and BOLA review beyond the documented automated matrix",
+    "Reliability soak longer than five minutes",
+    "Firefox/WebKit cross-browser behavior"
+  ],
+  "scopeNote": "This exact-head run verifies commit 2683e35. The SRS specifies mock payment; real gateway/refund testing is outside acceptance scope."
+}
