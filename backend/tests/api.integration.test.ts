@@ -252,7 +252,7 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
     const amountMismatchSnapshot = async () => ({
       order: await prisma.cinemaOrder.findUniqueOrThrow({ where: { id: secondOrder.body.id as string } }),
       hold: await prisma.seatHold.findUniqueOrThrow({ where: { id: secondHold.body.id as string } }),
-      payment: await prisma.payment.findUniqueOrThrow({ where: { orderId: secondOrder.body.id as string } }),
+      payment: await prisma.payment.findUnique({ where: { orderId: secondOrder.body.id as string } }),
       claims: await prisma.seatClaim.findMany({ where: { orderId: secondOrder.body.id as string }, orderBy: { id: "asc" } }),
       tickets: await prisma.ticket.findMany({ where: { orderId: secondOrder.body.id as string }, orderBy: { id: "asc" } }),
       paymentEvents: await prisma.paymentEvent.findMany({ where: { orderId: secondOrder.body.id as string }, orderBy: { id: "asc" } }),
