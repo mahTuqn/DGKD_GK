@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 
 const API_URL = process.env.E2E_API_URL || "http://127.0.0.1:4000/api";
 const uniqueEmail = () => `qa-e2e-${Date.now()}-${Math.random().toString(16).slice(2)}@example.test`;
@@ -9,7 +10,7 @@ async function openLogin(page: import("@playwright/test").Page) {
   else await page.getByRole("button", { name: /Mở tài khoản/ }).click();
 }
 
-test("[TC-E2E-20] khách chọn ghế trước khi đăng nhập và giữ đúng suất sau xác thực", async ({ page, request }) => {
+test("[TC-E2E-20][TC-E2E-24] dialog đăng nhập lồng trên sơ đồ ghế giữ đúng focus và tên dialog", async ({ page, request }) => {
   const email = uniqueEmail();
   const registration = await request.post(`${API_URL}/auth/register`, {
     data: { name: "QA Queued Booking", email, password: "CinemaQa123!" },
@@ -42,6 +43,30 @@ test("[TC-E2E-20] khách chọn ghế trước khi đăng nhập và giữ đún
   const authDialog = page.locator(".auth-dialog");
   await expect(authDialog).toBeVisible();
   await expect(seatDialog).toBeVisible();
+  await expect(seatDialog).toHaveAttribute("aria-modal", "false");
+  await expect(page.locator(".booking-overlay")).toHaveAttribute("inert", "");
+  await expect(page.locator('[role="dialog"][aria-modal="true"]')).toHaveCount(1);
+
+  const stackedDialogViolations = (await new AxeBuilder({ page }).include(".overlay").analyze()).violations
+    .filter((violation) => ["serious", "critical"].includes(violation.impact ?? ""))
+    .map(({ id, impact, nodes }) => ({ id, impact, targets: nodes.map((node) => node.target) }));
+  expect(stackedDialogViolations).toEqual([]);
+
+  const authClose = authDialog.getByRole("button", { name: "Đóng" });
+  const authLastControl = authDialog.getByRole("button", { name: "Tạo tài khoản mới" });
+  await authLastControl.focus();
+  await page.keyboard.press("Tab");
+  await expect(authClose).toBeFocused();
+  await expect(authDialog.locator(":focus")).toHaveCount(1);
+
+  const holdSubmit = seatDialog.getByTestId("hold-submit");
+  await page.keyboard.press("Escape");
+  await expect(authDialog).toBeHidden();
+  await expect(holdSubmit).toBeFocused();
+  await expect(seatDialog).toHaveAttribute("aria-modal", "true");
+
+  await holdSubmit.click();
+  await expect(authDialog).toBeVisible();
   await authDialog.getByLabel("Email").fill(email);
   await authDialog.getByLabel("Mật khẩu").fill("CinemaQa123!");
   const holdResponsePromise = page.waitForResponse((response) => {

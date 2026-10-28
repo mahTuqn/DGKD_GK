@@ -142,8 +142,8 @@ function AuthDialog({ mode, setMode, onClose, onSuccess }: { mode: AuthMode; set
   </div>;
 }
 
-function SeatDialog({ showtime, session, onClose, onRequireAuth, onHoldCreated }: {
-  showtime: Showtime; session: Session | null; onClose: () => void; onRequireAuth: (showtimeId: string, seatIds: string[]) => void; onHoldCreated: (hold: Hold, seatMap: SeatMap) => void;
+function SeatDialog({ showtime, session, isTopModal, onClose, onRequireAuth, onHoldCreated }: {
+  showtime: Showtime; session: Session | null; isTopModal: boolean; onClose: () => void; onRequireAuth: (showtimeId: string, seatIds: string[]) => void; onHoldCreated: (hold: Hold, seatMap: SeatMap) => void;
 }) {
   const [seatMap, setSeatMap] = useState<SeatMap | null>(null); const [selected, setSelected] = useState<string[]>([]);
   const [loading, setLoading] = useState(true); const [busy, setBusy] = useState(false); const [error, setError] = useState("");
@@ -175,8 +175,8 @@ function SeatDialog({ showtime, session, onClose, onRequireAuth, onHoldCreated }
     }
     finally { setBusy(false); }
   }
-  return <div className="overlay booking-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-    <section ref={dialogRef} className="dialog seat-dialog" role="dialog" aria-modal="true" aria-labelledby="seat-title" tabIndex={-1}>
+  return <div className="overlay booking-overlay" role="presentation" inert={!isTopModal || undefined} onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+    <section ref={dialogRef} className="dialog seat-dialog" role="dialog" aria-modal={isTopModal} aria-labelledby="seat-title" tabIndex={-1}>
       <div className="dialog-top"><div><span className="eyebrow">CHỌN CHỖ NGỒI</span><h2 id="seat-title">{showtime.movieTitle}</h2><p className="muted">{showtime.cinemaName} · {showtime.auditoriumName} · {shortDate(showtime.date)} · {timeOf(showtime.startAt)}</p></div><button className="icon-button" aria-label="Đóng" onClick={onClose}>×</button></div>
       {error && <p role="alert" className="alert alert-error">{error}</p>}
       {loading ? <div className="seat-loading"><span className="spinner" />Đang tải sơ đồ ghế…</div> : seatMap && <>
@@ -397,7 +397,7 @@ export default function App() {
 
     <footer className="footer"><a href="#top" className="brand"><span className="brand-icon" aria-hidden="true">C</span><span>Cinema<span className="brand-light">Booking</span></span></a><p>Thêm một chút cảm xúc vào lịch trình của bạn.</p><span>© 2026 CINEMA BOOKING · VÉ DEMO</span></footer>
 
-    {seatShowtime && <SeatDialog showtime={seatShowtime} session={session} onClose={() => setSeatShowtime(null)} onRequireAuth={(showtimeId, seatIds) => { setQueuedSelection({ showtimeId, seatIds }); setAuthMode("login"); setAuthOpen(true); }} onHoldCreated={(created, map) => { setSecondsLeft(Math.max(0, Math.ceil((new Date(created.expiresAt).getTime() - Date.now()) / 1000))); setHold(created); setHoldMap(map); setBookingStep("checkout"); setSeatShowtime(null); setError(""); }} />}
+    {seatShowtime && <SeatDialog showtime={seatShowtime} session={session} isTopModal={!authOpen} onClose={() => setSeatShowtime(null)} onRequireAuth={(showtimeId, seatIds) => { setQueuedSelection({ showtimeId, seatIds }); setAuthMode("login"); setAuthOpen(true); }} onHoldCreated={(created, map) => { setSecondsLeft(Math.max(0, Math.ceil((new Date(created.expiresAt).getTime() - Date.now()) / 1000))); setHold(created); setHoldMap(map); setBookingStep("checkout"); setSeatShowtime(null); setError(""); }} />}
     {authOpen && <AuthDialog mode={authMode} setMode={setAuthMode} onClose={() => { setAuthOpen(false); setQueuedSelection(null); }} onSuccess={saveSession} />}
 
     {hold && <div className="overlay booking-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && bookingStep !== "success") return; }}>

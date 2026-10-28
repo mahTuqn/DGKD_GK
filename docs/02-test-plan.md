@@ -26,6 +26,12 @@ The first attempt on parent commit `36fbac5` failed only because Gitleaks treate
 
 The requester will complete the manual WCAG/screen-reader checklist. No staging environment is available, so named-staging performance remains unmeasured; local Docker k6 results are only a baseline. Production backup/PITR/RPO/RTO/restore and full adversarial ASVS/API Top 10 remain unmeasured. The browser smoke covers Firefox/WebKit desktop; physical devices and mobile engines beyond Chromium Pixel 7 remain unmeasured. The SRS specifies mock payment; a real gateway/refund is outside acceptance scope.
 
+## Working-tree follow-up — awaiting exact-source CI
+
+The traceability gate currently passes with **90 test cases / 26 requirements**. The working tree adds TC-E2E-24–26 for stacked-modal semantics, Staff scan status/error accessibility, and the successful-payment screen; TC-CAT-06 and TC-SEC-22–26 add inactive-cinema creation, parallel webhook, Admin BOPLA/transition and QR denial assertions. These regressions have not yet been run against an exact-source CI checkout.
+
+The CI Compose job now builds and starts the current PostgreSQL/migration/API/worker/web stack, seeds its disposable database, checks API/worker/web readiness, then runs TC-OPS-01 in Chromium against the built web image. Its dedicated API override uses the test environment so the demo-payment browser flow is enabled; production-mode API safety remains separately exercised by the DAST/deployment checks. A DAST step will report current-run severity counts while omitting alert names, URLs and payloads. Both gates are pending the next CI run. Existing local Docker projects and volumes were not rebuilt or restarted.
+
 ## Quy tắc test
 
 - Tên test tự động bắt đầu bằng test ID trong `docs/04-test-cases.csv`.

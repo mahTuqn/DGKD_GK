@@ -512,4 +512,61 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
     expect(await orderState(second)).toEqual(secondBeforeReplay);
     expect(await orderState(original)).toEqual(originalBeforeReplay);
   }, 30_000);
+
+  it("[TC-SEC-22] handles two parallel identical signed webhook HTTP requests idempotently", async () => {
+    const customer = await prisma.user.create({
+      data: {
+        name: "Concurrent Webhook Customer",
+        email: `webhook-concurrent-${fixture}@test.local`,
+        passwordHash: "unused-in-concurrent-webhook-test",
+        role: Role.CUSTOMER
+      }
+    });
+    userIds.push(customer.id);
+    const customerAuth = { Authorization: `Bearer ${createToken({ id: customer.id, authVersion: customer.authVersion })}` };
+    const now = new Date();
+    const claims = await prisma.seatClaim.findMany({ where: { showtimeId }, select: { seatId: true, status: true, expiresAt: true } });
+    const occupiedSeatIds = new Set(claims
+      .filter((claim) => claim.status === "SOLD" || (claim.status === "HELD" && claim.expiresAt !== null && claim.expiresAt > now))
+      .map((claim) => claim.seatId));
+    const availableSeat = await prisma.seat.findFirst({
+      where: { auditoriumId, id: { notIn: [...occupiedSeatIds] } },
+      orderBy: { column: "asc" },
+      select: { id: true }
+    });
+    expect(availableSeat).not.toBeNull();
+
+    const hold = await request(app).post("/api/holds").set(customerAuth).send({ showtimeId, seatIds: [availableSeat!.id] });
+    expect(hold.status).toBe(201);
+    const order = await request(app).post("/api/orders").set(customerAuth).send({ holdId: hold.body.id as string });
+    expect(order.status).toBe(201);
+    expect(order.body.status).toBe(OrderStatus.PAYMENT_PENDING);
+
+    const event = {
+      eventId: `evt-concurrent-webhook-${fixture}`,
+      orderId: order.body.id as string,
+      status: "SUCCEEDED" as const,
+      amountVnd: order.body.totalVnd as number,
+      currency: "VND" as const
+    };
+    const secret = process.env.MOCK_PAYMENT_SECRET || "cinema-booking-local-mock-payment-secret-2026";
+    const signature = signMockPaymentEvent(event, secret);
+    const [first, second] = await Promise.all([
+      request(app).post("/api/payments/mock/webhook").set("x-mock-signature", signature).send(event),
+      request(app).post("/api/payments/mock/webhook").set("x-mock-signature", signature).send(event)
+    ]);
+
+    expect([first.status, second.status]).toEqual([200, 200]);
+    expect([first.body.idempotent, second.body.idempotent].sort((left: boolean, right: boolean) => Number(left) - Number(right))).toEqual([false, true]);
+    for (const response of [first, second]) {
+      expect(response.body).toMatchObject({ accepted: true, orderId: event.orderId, status: OrderStatus.CONFIRMED, totalVnd: event.amountVnd });
+      expect(response.body.tickets).toHaveLength(1);
+    }
+    expect(first.body.tickets[0].id).toBe(second.body.tickets[0].id);
+
+    expect(await prisma.paymentEvent.count({ where: { providerEventId: event.eventId, orderId: event.orderId } })).toBe(1);
+    expect(await prisma.ticket.count({ where: { orderId: event.orderId } })).toBe(1);
+    expect(await prisma.auditLog.count({ where: { action: "PAYMENT_CONFIRMED", entity: "CinemaOrder", entityId: event.orderId } })).toBe(1);
+    expect(await prisma.cinemaOrder.findUniqueOrThrow({ where: { id: event.orderId } }).then((item) => item.status)).toBe(OrderStatus.CONFIRMED);
+  }, 30_000);
 });

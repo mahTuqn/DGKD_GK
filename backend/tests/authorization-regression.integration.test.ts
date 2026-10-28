@@ -22,22 +22,28 @@ regressionDescribe("authorization regression coverage", () => {
   const fixture = randomUUID();
   const userIds: string[] = [];
   let cinemaId: string | undefined;
+  let foreignCinemaId: string | undefined;
+  let inactiveCinemaId: string | undefined;
   let auditoriumId: string | undefined;
+  let foreignAuditoriumId: string | undefined;
+  let foreignSeatId: string | undefined;
   let seatId: string | undefined;
   let movieId: string | undefined;
   let showtimeId: string | undefined;
   let userAId: string | undefined;
   let userBId: string | undefined;
   let staffId: string | undefined;
+  let protectedStaffId: string | undefined;
   let adminId: string | undefined;
   let holdId: string | undefined;
   let orderId: string | undefined;
   let tokenB: string;
   let staffToken: string;
+  let protectedStaffToken: string;
   let adminToken: string;
   const attemptedCinemaNames = [`Guest cinema ${fixture}`, `Denied cinema ${fixture}`];
   const attemptedMovieSlugs = [`guest-movie-${fixture}`, `denied-movie-${fixture}`];
-  const attemptedRoomNames = [`Guest room ${fixture}`, `Denied room ${fixture}`];
+  const attemptedRoomNames = [`Guest room ${fixture}`, `Denied room ${fixture}`, `Mass assignment room ${fixture}`];
   const attemptedShowtimeStarts: Date[] = [];
 
   beforeAll(async () => {
@@ -48,8 +54,23 @@ regressionDescribe("authorization regression coverage", () => {
     });
     cinemaId = cinema.id;
 
+    const foreignCinema = await prisma.cinema.create({
+      data: { name: `Authorization Foreign Cinema ${fixture}`, city: "Test", address: "Cross-cinema assignment fixture", status: RecordStatus.ACTIVE }
+    });
+    foreignCinemaId = foreignCinema.id;
+    const inactiveCinema = await prisma.cinema.create({
+      data: { name: `Authorization Inactive Cinema ${fixture}`, city: "Test", address: "Inactive assignment fixture", status: RecordStatus.INACTIVE }
+    });
+    inactiveCinemaId = inactiveCinema.id;
+
     const auditorium = await prisma.auditorium.create({ data: { cinemaId: cinema.id, name: `Regression Room ${fixture}` } });
     auditoriumId = auditorium.id;
+    const foreignAuditorium = await prisma.auditorium.create({ data: { cinemaId: foreignCinema.id, name: `Foreign Room ${fixture}` } });
+    foreignAuditoriumId = foreignAuditorium.id;
+    const foreignSeat = await prisma.seat.create({
+      data: { auditoriumId: foreignAuditorium.id, label: "F1", row: "F", column: 1, type: SeatType.STANDARD }
+    });
+    foreignSeatId = foreignSeat.id;
     const seat = await prisma.seat.create({
       data: { auditoriumId: auditorium.id, label: "R1", row: "R", column: 1, type: SeatType.STANDARD }
     });
@@ -101,8 +122,14 @@ regressionDescribe("authorization regression coverage", () => {
     });
     adminId = admin.id;
     userIds.push(admin.id);
+    const protectedStaff = await prisma.user.create({
+      data: { name: "Regression Protected Staff", email: `regression-protected-staff-${fixture}@test.local`, passwordHash: "unused-test-only", role: Role.STAFF, assignedCinemaId: cinema.id }
+    });
+    protectedStaffId = protectedStaff.id;
+    userIds.push(protectedStaff.id);
     tokenB = createToken({ id: userB.id, authVersion: userB.authVersion });
     staffToken = createToken({ id: staff.id, authVersion: staff.authVersion });
+    protectedStaffToken = createToken({ id: protectedStaff.id, authVersion: protectedStaff.authVersion });
     adminToken = createToken({ id: admin.id, authVersion: admin.authVersion });
 
     const expiresAt = new Date(Date.now() + 60 * 60_000);
@@ -162,9 +189,13 @@ regressionDescribe("authorization regression coverage", () => {
       }
       if (userIds.length) await prisma.auditLog.deleteMany({ where: { actorId: { in: userIds } } });
       if (seatId) await prisma.seat.deleteMany({ where: { id: seatId } });
+      if (foreignSeatId) await prisma.seat.deleteMany({ where: { id: foreignSeatId } });
       if (movieId) await prisma.movie.deleteMany({ where: { id: movieId } });
+      if (foreignAuditoriumId) await prisma.auditorium.deleteMany({ where: { id: foreignAuditoriumId } });
       if (auditoriumId) await prisma.auditorium.deleteMany({ where: { id: auditoriumId } });
       if (userIds.length) await prisma.user.deleteMany({ where: { id: { in: userIds } } });
+      if (inactiveCinemaId) await prisma.cinema.deleteMany({ where: { id: inactiveCinemaId } });
+      if (foreignCinemaId) await prisma.cinema.deleteMany({ where: { id: foreignCinemaId } });
       if (cinemaId) await prisma.cinema.deleteMany({ where: { id: cinemaId } });
     } finally {
       await prisma.$disconnect();
@@ -231,6 +262,145 @@ regressionDescribe("authorization regression coverage", () => {
     expect(profileAfter.status).toBe(200);
     expect(profileAfter.body).toEqual(profileBefore.body);
     expect(profileAfter.body).toMatchObject({ role: Role.CUSTOMER, assignedCinemaId: null });
+  }, 30_000);
+
+  it("[TC-SEC-23] rejects auditorium and seat ownership mass assignment and blocks mutation of a held seat", async () => {
+    const adminAuth = { Authorization: `Bearer ${adminToken}` };
+    const snapshot = async () => ({
+      auditoriums: await prisma.auditorium.findMany({
+        where: { cinemaId: { in: [cinemaId!, foreignCinemaId!] } },
+        orderBy: { id: "asc" },
+        select: { id: true, cinemaId: true, name: true, screenType: true }
+      }),
+      seats: await prisma.seat.findMany({
+        where: { auditoriumId: { in: [auditoriumId!, foreignAuditoriumId!] } },
+        orderBy: { id: "asc" },
+        select: { id: true, auditoriumId: true, label: true, row: true, column: true, type: true, isAccessible: true }
+      }),
+      claim: await prisma.seatClaim.findUniqueOrThrow({ where: { showtimeId_seatId: { showtimeId: showtimeId!, seatId: seatId! } } }),
+      createAudits: await prisma.auditLog.count({ where: { actorId: adminId, action: "AUDITORIUM_CREATED" } }),
+      auditoriumUpdateAudits: await prisma.auditLog.count({ where: { actorId: adminId, action: "AUDITORIUM_UPDATED" } }),
+      seatUpdateAudits: await prisma.auditLog.count({ where: { actorId: adminId, action: "SEAT_UPDATED" } })
+    });
+    const before = await snapshot();
+
+    const nestedSeatOwnership = await request(app).post("/api/admin/auditoriums").set(adminAuth).send({
+      cinemaId,
+      name: attemptedRoomNames[2],
+      seats: [{ label: "M1", row: "M", column: 1, type: SeatType.STANDARD, auditoriumId: foreignAuditoriumId }]
+    });
+    expect(nestedSeatOwnership.status).toBe(422);
+    expect(nestedSeatOwnership.body.error).toBe("VALIDATION_ERROR");
+    expect(await snapshot()).toEqual(before);
+
+    const auditoriumOwnership = await request(app).patch(`/api/admin/auditoriums/${auditoriumId!}`).set(adminAuth)
+      .send({ cinemaId: foreignCinemaId });
+    expect(auditoriumOwnership.status).toBe(422);
+    expect(auditoriumOwnership.body.error).toBe("VALIDATION_ERROR");
+    expect(await snapshot()).toEqual(before);
+
+    const seatOwnership = await request(app).patch(`/api/admin/seats/${seatId!}`).set(adminAuth)
+      .send({ auditoriumId: foreignAuditoriumId });
+    expect(seatOwnership.status).toBe(422);
+    expect(seatOwnership.body.error).toBe("VALIDATION_ERROR");
+    expect(await snapshot()).toEqual(before);
+
+    const heldSeatMutation = await request(app).patch(`/api/admin/seats/${seatId!}`).set(adminAuth).send({ label: "R2" });
+    expect(heldSeatMutation.status).toBe(409);
+    expect(heldSeatMutation.body.error).toBe("SEAT_HAS_BOOKINGS");
+    expect(await snapshot()).toEqual(before);
+  }, 30_000);
+
+  it("[TC-SEC-24] rejects Admin self-demotion and assignment of Staff to an inactive cinema without writes", async () => {
+    const adminAuth = { Authorization: `Bearer ${adminToken}` };
+    const adminBefore = await prisma.user.findUniqueOrThrow({
+      where: { id: adminId! },
+      select: { id: true, role: true, authVersion: true, assignedCinemaId: true }
+    });
+    const selfDemotionAuditsBefore = await prisma.auditLog.count({
+      where: { actorId: adminId, action: "USER_ROLE_CHANGED", entity: "User", entityId: adminId }
+    });
+
+    const selfDemotion = await request(app).patch(`/api/admin/users/${adminId!}/role`).set(adminAuth).send({ role: Role.CUSTOMER });
+    expect(selfDemotion.status).toBe(422);
+    expect(selfDemotion.body.error).toBe("SELF_DEMOTION_FORBIDDEN");
+    expect(await prisma.user.findUniqueOrThrow({
+      where: { id: adminId! },
+      select: { id: true, role: true, authVersion: true, assignedCinemaId: true }
+    })).toEqual(adminBefore);
+    expect(await prisma.auditLog.count({
+      where: { actorId: adminId, action: "USER_ROLE_CHANGED", entity: "User", entityId: adminId }
+    })).toBe(selfDemotionAuditsBefore);
+
+    const staffBefore = await prisma.user.findUniqueOrThrow({
+      where: { id: protectedStaffId! },
+      select: { id: true, role: true, authVersion: true, assignedCinemaId: true }
+    });
+    expect(staffBefore).toMatchObject({ role: Role.STAFF, assignedCinemaId: cinemaId });
+    const assignmentAuditsBefore = await prisma.auditLog.count({
+      where: { actorId: adminId, action: "STAFF_CINEMA_ASSIGNED", entity: "User", entityId: protectedStaffId }
+    });
+
+    const inactiveAssignment = await request(app).patch(`/api/admin/users/${protectedStaffId!}/assigned-cinema`).set(adminAuth)
+      .send({ cinemaId: inactiveCinemaId });
+    expect(inactiveAssignment.status).toBe(404);
+    expect(inactiveAssignment.body.error).toBe("CINEMA_NOT_FOUND");
+    expect(await prisma.user.findUniqueOrThrow({
+      where: { id: protectedStaffId! },
+      select: { id: true, role: true, authVersion: true, assignedCinemaId: true }
+    })).toEqual(staffBefore);
+    expect(await prisma.auditLog.count({
+      where: { actorId: adminId, action: "STAFF_CINEMA_ASSIGNED", entity: "User", entityId: protectedStaffId }
+    })).toBe(assignmentAuditsBefore);
+  }, 30_000);
+
+  it("[TC-SEC-25] exposes only the allowlisted fields in Admin users and nested cinema responses", async () => {
+    const response = await request(app).get("/api/admin/users").set({ Authorization: `Bearer ${adminToken}` });
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.body)).toBe(true);
+    const expectedUserKeys = ["assignedCinema", "assignedCinemaId", "createdAt", "email", "id", "name", "role"].sort();
+    const expectedCinemaKeys = ["id", "name"].sort();
+
+    for (const user of response.body as Array<Record<string, unknown>>) {
+      expect(Object.keys(user).sort()).toEqual(expectedUserKeys);
+      if (user.assignedCinema !== null) {
+        expect(user.assignedCinema).toEqual(expect.objectContaining({ id: expect.any(String), name: expect.any(String) }));
+        expect(Object.keys(user.assignedCinema as Record<string, unknown>).sort()).toEqual(expectedCinemaKeys);
+      }
+    }
+
+    const protectedStaff = (response.body as Array<Record<string, unknown>>).find((user) => user.id === protectedStaffId);
+    expect(protectedStaff?.assignedCinema).toMatchObject({ id: cinemaId, name: `Authorization Regression ${fixture}` });
+    expect((response.body as Array<Record<string, unknown>>).some((user) => user.assignedCinema === null)).toBe(true);
+  }, 30_000);
+
+  it("[TC-SEC-26] rejects short and unknown QR scans without tickets, check-in state, or audit writes", async () => {
+    const staffAuth = { Authorization: `Bearer ${protectedStaffToken}` };
+    const ticketState = async () => ({
+      tickets: await prisma.ticket.findMany({
+        where: { orderId: orderId! },
+        orderBy: { id: "asc" },
+        select: { id: true, orderId: true, seatClaimId: true, qrToken: true, checkedInAt: true }
+      }),
+      checkInAudits: await prisma.auditLog.findMany({
+        where: { actorId: protectedStaffId, action: "TICKET_CHECKED_IN", entity: "Ticket" },
+        orderBy: { id: "asc" },
+        select: { id: true, entityId: true, metadata: true }
+      })
+    });
+    const before = await ticketState();
+
+    const malformed = await request(app).post("/api/tickets/scan").set(staffAuth).send({ qrToken: "short" });
+    expect(malformed.status).toBe(422);
+    expect(malformed.body.error).toBe("VALIDATION_ERROR");
+    expect(await ticketState()).toEqual(before);
+
+    const unknownQrToken = randomUUID().replaceAll("-", "");
+    const unknown = await request(app).post("/api/tickets/scan").set(staffAuth).send({ qrToken: unknownQrToken });
+    expect(unknown.status).toBe(404);
+    expect(unknown.body.error).toBe("TICKET_NOT_FOUND");
+    expect(await prisma.ticket.findUnique({ where: { qrToken: unknownQrToken } })).toBeNull();
+    expect(await ticketState()).toEqual(before);
   }, 30_000);
 
   it("[TC-SEC-08] requires authentication on every protected route family", async () => {

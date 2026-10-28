@@ -12,6 +12,7 @@ const availabilityDescribe = process.env.DATABASE_URL_TEST ? describe.sequential
 availabilityDescribe("TC-CAT-05 inactive catalog availability gate", () => {
   const app = createApp();
   const fixture = randomUUID();
+  const rejectedAuditoriumName = `Rejected inactive-cinema room ${fixture}`;
   const cinemaIds: string[] = [];
   const auditoriumIds: string[] = [];
   const seatIds: string[] = [];
@@ -82,6 +83,8 @@ availabilityDescribe("TC-CAT-05 inactive catalog availability gate", () => {
 
   afterAll(async () => {
     try {
+      const unexpectedlyCreatedAuditoriums = await prisma.auditorium.findMany({ where: { name: rejectedAuditoriumName }, select: { id: true } });
+      const cleanupAuditoriumIds = [...new Set([...auditoriumIds, ...unexpectedlyCreatedAuditoriums.map((item) => item.id)])];
       const orders = showtimeIds.length
         ? await prisma.cinemaOrder.findMany({ where: { showtimeId: { in: showtimeIds } }, select: { id: true } })
         : [];
@@ -90,7 +93,7 @@ availabilityDescribe("TC-CAT-05 inactive catalog availability gate", () => {
         ? await prisma.seatHold.findMany({ where: { showtimeId: { in: showtimeIds } }, select: { id: true } })
         : [];
       const holdIds = holds.map((hold) => hold.id);
-      const auditEntityIds = [...showtimeIds, ...orderIds, ...holdIds];
+      const auditEntityIds = [...showtimeIds, ...orderIds, ...holdIds, ...unexpectedlyCreatedAuditoriums.map((item) => item.id)];
       if (userIds.length || auditEntityIds.length) {
         await prisma.auditLog.deleteMany({ where: { OR: [
           ...(userIds.length ? [{ actorId: { in: userIds } }] : []),
@@ -112,8 +115,9 @@ availabilityDescribe("TC-CAT-05 inactive catalog availability gate", () => {
         await prisma.showtime.deleteMany({ where: { id: { in: showtimeIds } } });
       }
       if (seatIds.length) await prisma.seat.deleteMany({ where: { id: { in: seatIds } } });
+      if (cleanupAuditoriumIds.length) await prisma.seat.deleteMany({ where: { auditoriumId: { in: cleanupAuditoriumIds } } });
       if (movieIds.length) await prisma.movie.deleteMany({ where: { id: { in: movieIds } } });
-      if (auditoriumIds.length) await prisma.auditorium.deleteMany({ where: { id: { in: auditoriumIds } } });
+      if (cleanupAuditoriumIds.length) await prisma.auditorium.deleteMany({ where: { id: { in: cleanupAuditoriumIds } } });
       if (userIds.length) await prisma.user.deleteMany({ where: { id: { in: userIds } } });
       if (cinemaIds.length) await prisma.cinema.deleteMany({ where: { id: { in: cinemaIds } } });
     } finally {
@@ -186,5 +190,28 @@ availabilityDescribe("TC-CAT-05 inactive catalog availability gate", () => {
     expect(await prisma.auditLog.count({ where: { actorId: adminId, action: "SHOWTIME_UPDATED" } })).toBe(updateAuditsBefore);
     expect(await prisma.showtime.findUniqueOrThrow({ where: { id: showtimeAId } })).toMatchObject({ priceVnd: 100_000, status: RecordStatus.ACTIVE });
     expect(await prisma.showtime.findUniqueOrThrow({ where: { id: showtimeBId } })).toMatchObject({ priceVnd: 100_000, status: RecordStatus.ACTIVE });
+  }, 30_000);
+
+  it("[TC-CAT-06] rejects auditorium creation under an inactive cinema without auditorium, seat, or audit changes", async () => {
+    expect((await prisma.cinema.findUniqueOrThrow({ where: { id: cinemaAId } })).status).toBe(RecordStatus.INACTIVE);
+    const snapshot = async () => ({
+      auditoriums: await prisma.auditorium.count({ where: { cinemaId: cinemaAId } }),
+      seats: await prisma.seat.count({ where: { auditorium: { cinemaId: cinemaAId } } }),
+      createAudits: await prisma.auditLog.count({ where: { actorId: adminId, action: "AUDITORIUM_CREATED" } })
+    });
+    const before = await snapshot();
+
+    const response = await request(app).post("/api/admin/auditoriums")
+      .set({ Authorization: `Bearer ${adminToken}` })
+      .send({
+        cinemaId: cinemaAId,
+        name: rejectedAuditoriumName,
+        seats: [{ label: "Z1", row: "Z", column: 1, type: SeatType.STANDARD }]
+      });
+
+    expect(response.status).toBe(404);
+    expect(response.body.error).toBe("CINEMA_NOT_FOUND");
+    expect(await snapshot()).toEqual(before);
+    expect(await prisma.auditorium.findFirst({ where: { cinemaId: cinemaAId, name: rejectedAuditoriumName } })).toBeNull();
   }, 30_000);
 });

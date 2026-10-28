@@ -31,20 +31,23 @@ function localBrowserTestDatabaseUrl() {
 }
 
 let browserApiDatabaseUrl: string | undefined;
-if (isGitHubActions) {
+if (externalBaseUrl && isGitHubActions) {
+  // The isolated Compose smoke targets its own disposable API/database and
+  // does not start Playwright's local API server.
+  browserApiDatabaseUrl = undefined;
+} else if (isGitHubActions) {
   browserApiDatabaseUrl = process.env.DATABASE_URL_TEST;
   if (!browserApiDatabaseUrl) {
     throw new Error("GitHub Actions Playwright runs require DATABASE_URL_TEST to point at the isolated ephemeral service database.");
   }
 } else {
-  if (externalBaseUrl) {
-    throw new Error("Local Playwright runs refuse an external E2E_BASE_URL because its database cannot be verified; run against the isolated local API with DATABASE_URL_TEST.");
-  }
+  if (externalBaseUrl) throw new Error("Local Playwright runs refuse an external E2E_BASE_URL because its database cannot be verified; run against the isolated local API with DATABASE_URL_TEST.");
   browserApiDatabaseUrl = localBrowserTestDatabaseUrl();
 }
 
 export default defineConfig({
   testDir: "./tests/e2e",
+  testIgnore: process.env.E2E_COMPOSE_SMOKE === "true" ? [] : ["**/compose-stack.spec.ts"],
   timeout: 30_000,
   expect: { timeout: 7_000 },
   fullyParallel: false,

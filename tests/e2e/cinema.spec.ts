@@ -90,6 +90,11 @@ async function buyOneTicket(page: Page) {
   await expect.poll(async () => amountFromCurrencyText(await page.getByTestId("pay-submit").innerText())).toBe(order.totalVnd);
   await expect.poll(async () => amountFromCurrencyText(await displayedTotal.innerText())).toBe(order.totalVnd);
   await page.getByTestId("pay-submit").click();
+  const checkoutDialog = page.locator(".checkout-dialog");
+  await expect(checkoutDialog.getByRole("heading", { name: "Hẹn gặp bạn tại rạp." })).toBeVisible();
+  await expect(checkoutDialog.getByText("Thanh toán demo thành công.")).toBeVisible();
+  await waitForOverlayAnimations(page);
+  expect(seriousAxeViolations((await new AxeBuilder({ page }).include(".checkout-dialog").analyze()).violations)).toEqual([]);
   await page.getByRole("button", { name: "Xem vé của tôi" }).click();
 
   await expect(page.getByRole("heading", { name: "Vé của bạn" })).toBeVisible();
@@ -129,7 +134,7 @@ test("[TC-E2E-10][TC-PLAN-07] trang web gửi security headers cơ bản", async
   expect(headers["referrer-policy"]).toBe("strict-origin-when-cross-origin");
 });
 
-test("[TC-E2E-01] customer đăng ký, đặt vé, thanh toán demo, xem vé và kiểm tra axe", async ({ page }) => {
+test("[TC-E2E-01][TC-E2E-26] customer đăng ký, đặt vé, quét axe màn hình thanh toán thành công và xem vé", async ({ page }) => {
   await registerCustomer(page);
   await buyOneTicket(page);
   expect(seriousAxeViolations((await new AxeBuilder({ page }).include(".content-page").analyze()).violations)).toEqual([]);
@@ -167,7 +172,7 @@ test("[TC-E2E-02] trang khám phá và dialog đăng nhập không có lỗi axe
   await expect(restoreFocus).toBeFocused();
 });
 
-test("[TC-E2E-03] staff soát QR vé một lần và từ chối lượt dùng lặp", async ({ page }) => {
+test("[TC-E2E-03][TC-E2E-25] staff soát QR và thông báo thành công/lỗi có thể tiếp cận", async ({ page }) => {
   await registerCustomer(page);
   await buyOneTicket(page);
   const qrToken = await getNewestTicketQrToken(page);
@@ -184,10 +189,12 @@ test("[TC-E2E-03] staff soát QR vé một lần và từ chối lượt dùng l
   await page.getByLabel("Mã QR vé").fill(qrToken);
   await page.getByRole("button", { name: "Xác nhận vào rạp" }).click();
   await expect(page.getByRole("status")).toContainText("Vé hợp lệ");
+  expect(seriousAxeViolations((await new AxeBuilder({ page }).include(".scan-panel").analyze()).violations)).toEqual([]);
 
   await page.getByLabel("Mã QR vé").fill(qrToken);
   await page.getByRole("button", { name: "Xác nhận vào rạp" }).click();
   await expect(page.getByRole("alert")).toContainText("đã được sử dụng");
+  expect(seriousAxeViolations((await new AxeBuilder({ page }).include(".scan-panel").analyze()).violations)).toEqual([]);
 });
 
 test("[TC-E2E-23] hai lượt quét QR đồng thời chỉ ghi nhận một vé", async ({ page }) => {

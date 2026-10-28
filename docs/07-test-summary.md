@@ -14,6 +14,12 @@ The requester will perform the manual WCAG 2.2 AA/screen-reader checklist. No st
 
 Phạm vi bao gồm browser recovery khi payment đã commit nhưng response bị mất, retry idempotent một order/one ticket; API ownership/mass-assignment cases; Customer denial trên đủ 18 route Admin; và Staff chuyển Cinema A→B với token cũ bị thu hồi, quyền check-in chỉ chuyển sang rạp mới. Đây là mock payment và kiểm thử tự động trong các scope đã nêu, không phải chứng nhận cổng thanh toán thật, WCAG hay security toàn diện.
 
+## Working-tree follow-up — awaiting exact-source CI
+
+Traceability passes for 90 test cases across 26 requirements. New browser accessibility checks cover the guest-login modal stacked over seat selection, staff scan success/error announcements, and the payment-success/QR dialog. New API regressions cover concurrent identical signed webhooks, inactive-cinema auditorium creation, catalog/seat BOPLA, Admin self-demotion and inactive-cinema assignment, exact Admin-user response fields, and malformed/unknown QR scans. The current-source run has not yet executed these changes.
+
+CI now has a dedicated current-source Compose/browser job for PostgreSQL, migrations, API, worker, and web images plus a seeded Chromium booking journey against the web container. DAST severity-count summarization is also pending exact-source CI. Neither result is claimed yet. User-owned manual WCAG review, external staging, production recovery/RPO/RTO, and full ASVS/BOLA review remain open.
+
 ## Frozen baseline — commit `2be2d911c635cbdbe810bd4f77eca71b73928d1f`
 
 Các số liệu trong bảng dưới đây thuộc commit frozen baseline và clean clone của commit đó. Chúng không bao gồm các thay đổi worker/Docker/browser bổ sung sau này.

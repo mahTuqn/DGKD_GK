@@ -106,6 +106,9 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run scan:dast:api
+      - name: Summarize current-run DAST severity counts
+        if: always()
+        run: node scripts/summarize-dast.mjs
       - uses: actions/upload-artifact@v6
         if: always()
         with:
@@ -143,37 +146,65 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
-  docker-worker-health:
-    name: Compose worker health smoke
+  docker-compose-browser-smoke:
+    name: Compose runtime and browser smoke
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 25
     env:
-      COMPOSE_PROJECT_NAME: cinema-worker-health-${{ github.run_id }}-${{ github.run_attempt }}
+      COMPOSE_PROJECT_NAME: cinema-compose-smoke-${{ github.run_id }}-${{ github.run_attempt }}
+      COMPOSE_FILE: docker-compose.yml:.github/compose-smoke.override.yml
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-      - name: Create disposable Compose secrets
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Create isolated Compose secrets
         run: npm run env:compose
-      - name: Build Compose services
-        run: docker compose --project-name "$COMPOSE_PROJECT_NAME" up --detach --build postgres worker
-      - name: Verify worker health endpoint
+      - name: Build and start the current full-stack Compose images
+        run: docker compose --project-name "$COMPOSE_PROJECT_NAME" up --detach --build web worker
+      - name: Seed the isolated database
+        run: docker compose --project-name "$COMPOSE_PROJECT_NAME" --profile seed run --rm seed
+      - name: Wait for API, worker, and web health
         run: |
-          container_id=""
-          for attempt in $(seq 1 90); do
-            container_id="$(docker compose --project-name "$COMPOSE_PROJECT_NAME" ps --all --quiet worker)"
-            if [[ -n "$container_id" ]]; then
-              container_state="$(docker inspect --format '{{.State.Status}}' "$container_id")"
-              health_state="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "$container_id")"
-              if [[ "$health_state" == "healthy" ]]; then break; fi
-              if [[ "$container_state" == "exited" ]]; then docker compose --project-name "$COMPOSE_PROJECT_NAME" logs worker; exit 1; fi
-            fi
-            sleep 2
+          set -euo pipefail
+          for service in api worker web; do
+            container_id=""
+            for attempt in $(seq 1 90); do
+              container_id="$(docker compose --project-name "$COMPOSE_PROJECT_NAME" ps --all --quiet "$service")"
+              if [[ -n "$container_id" ]]; then
+                container_state="$(docker inspect --format '{{.State.Status}}' "$container_id")"
+                health_state="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "$container_id")"
+                if [[ "$health_state" == "healthy" ]]; then break; fi
+                if [[ "$container_state" == "exited" ]]; then docker compose --project-name "$COMPOSE_PROJECT_NAME" logs "$service"; exit 1; fi
+              fi
+              sleep 2
+            done
+            test -n "$container_id"
+            test "$(docker inspect --format '{{.State.Health.Status}}' "$container_id")" = "healthy"
           done
-          test -n "$container_id"
-          test "$(docker inspect --format '{{.State.Health.Status}}' "$container_id")" = "healthy"
-          docker exec "$container_id" node -e "fetch('http://127.0.0.1:4001/healthz').then(response=>process.exit(response.status===200?0:1)).catch(()=>process.exit(1))"
+          curl --fail --silent --show-error http://127.0.0.1:8080/healthz
+          curl --fail --silent --show-error http://127.0.0.1:8080/api/health
+          worker_id="$(docker compose --project-name "$COMPOSE_PROJECT_NAME" ps --all --quiet worker)"
+          docker exec "$worker_id" node -e "fetch('http://127.0.0.1:4001/healthz').then(response=>process.exit(response.status===200?0:1)).catch(()=>process.exit(1))"
+      - name: Run a Chromium booking flow against the Compose images
+        run: npx playwright test tests/e2e/compose-stack.spec.ts --project=chromium-desktop --workers=1
+        env:
+          E2E_COMPOSE_SMOKE: "true"
+          E2E_BASE_URL: http://127.0.0.1:8080
+          E2E_API_URL: http://127.0.0.1:8080/api
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: cinema-booking-compose-browser-results-${{ github.sha }}
+          path: |
+            reports/generated/playwright
+            reports/generated/playwright-results.json
+            test-results
+          if-no-files-found: warn
+          retention-days: 14
       - name: Clean up this job's Compose project and generated secrets
         if: always()
         run: |
