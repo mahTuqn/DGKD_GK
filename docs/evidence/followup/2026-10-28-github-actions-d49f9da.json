@@ -1,0 +1,132 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "runId": "github-actions-40699221731",
+  "status": "PASS_QUALITY_AND_DAST",
+  "capturedAt": "2026-10-28T14:08:35Z",
+  "commit": "d49f9da503a20186567d53f939f6c22678978c7b",
+  "runUrl": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40699221731",
+  "environment": {
+    "runner": "GitHub Actions clean checkout",
+    "nodeMajor": 24,
+    "database": "Isolated PostgreSQL service, worker-process database, and dedicated worker-soak database",
+    "browserProjects": [
+      "chromium-desktop",
+      "chromium-mobile (Pixel 7)"
+    ],
+    "staging": "Not available; local Docker is the only user-provided QA environment"
+  },
+  "quality": {
+    "result": "PASS",
+    "dependencyAudit": {
+      "result": "PASS",
+      "command": "npm audit --audit-level=moderate",
+      "vulnerabilities": 0
+    },
+    "gitleaks": {
+      "result": "PASS",
+      "action": "gitleaks/gitleaks-action@v3"
+    },
+    "openApiLint": {
+      "result": "PASS",
+      "command": "npm run lint:openapi"
+    },
+    "traceability": {
+      "result": "PASS",
+      "testCases": 71,
+      "requirements": 25
+    },
+    "api": {
+      "result": "PASS",
+      "testsPassed": 33,
+      "testsFailed": 0,
+      "testFilesPassed": 9,
+      "regressions": {
+        "TC-SEC-14": "PASS: successful logins are skipped and the eleventh failed login is rate limited",
+        "TC-SEC-15": "PASS: a first-seen valid-HMAC wrong-amount webhook returns 422 with unchanged transaction snapshots",
+        "TC-SEC-16": "PASS: concurrent QR scans produce one success, one conflict, and one check-in audit"
+      }
+    },
+    "workerProcess60SecondSoak": {
+      "testId": "TC-WORKER-05",
+      "result": "PASS",
+      "testsPassed": 1,
+      "durationMs": 61490
+    },
+    "liveHoldExpiry": {
+      "testId": "TC-WORKER-03",
+      "result": "PASS",
+      "testsPassed": 1,
+      "durationMs": 300520
+    },
+    "workerProcessFiveMinuteSoak": {
+      "testId": "TC-WORKER-06",
+      "result": "PASS",
+      "testsPassed": 1,
+      "durationMs": 304940,
+      "restartCatchUp": "PASS"
+    },
+    "build": {
+      "result": "PASS",
+      "command": "npm run build"
+    },
+    "playwright": {
+      "result": "PASS",
+      "testsPassed": 46,
+      "testsFailed": 0,
+      "testsSkipped": 0,
+      "testsFlaky": 0,
+      "durationMs": 101663,
+      "testCases": 23,
+      "accessibility": "TC-E2E-02 axe/keyboard checks, including Tab and Shift+Tab focus wrapping, passed on desktop and Pixel 7 mobile",
+      "artifactId": 12822056369,
+      "artifactUrl": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40699221731/artifacts/12822056369",
+      "archiveSha256": "FEC36EB94419D457B60DB88E521AC00AA9A12318D53441072A6387A667BFDC1E",
+      "playwrightResultsSha256": "412D88E79E6C732E9CDF77DC1E7E768F9501412098FD3B8816860503FBC646C6"
+    }
+  },
+  "dast": {
+    "result": "PASS_WITH_TRIAGED_LOW",
+    "job": "DAST (isolated Docker Compose)",
+    "unauthenticatedApi": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0,
+      "informational": 2
+    },
+    "authenticatedApi": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 1,
+      "informational": 2,
+      "triagedFinding": "Low-confidence persistent-markup observation in JSON; the Admin UI renders the value as text."
+    },
+    "productionWebPreview": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0,
+      "informational": 1
+    },
+    "criticalHighMediumFindings": 0,
+    "artifactId": 12820719131,
+    "artifactUrl": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40699221731/artifacts/12820719131",
+    "archiveSha256": "0BDD5A90A19BCE45559A0E0535DA345263CF7F95859DFF95D9890A39ACD1D9FD"
+  },
+  "localArchives": {
+    "directory": "reports/generated/ci-40699221731/",
+    "qualityLogSha256": "99E894577FD64FA13CCF4632BD35ABFFA73228E8C19263136D6E018170FC3481",
+    "note": "Downloaded quality logs, browser results, and sanitized DAST artifacts are kept locally under the ignored reports/generated directory."
+  },
+  "notMeasured": [
+    "Manual WCAG 2.2 AA, screen-reader, contrast, zoom/reflow, orientation, and full keyboard review; requester will perform the checklist",
+    "Named staging performance validation; no staging environment is available, and existing k6 results are only a local Docker baseline",
+    "Production behavior, backup schedule, PITR, RPO/RTO, and production restore",
+    "Exhaustive ASVS/API Top 10 and BOLA review beyond the documented automated matrix",
+    "Reliability soak longer than five minutes",
+    "Firefox/WebKit cross-browser behavior"
+  ],
+  "scopeNote": "CI used a clean checkout and proves the automated application scope on this commit. The SRS specifies demo mock payment; a real payment gateway and automatic refunds are outside acceptance scope."
+}
