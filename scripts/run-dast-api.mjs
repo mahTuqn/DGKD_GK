@@ -271,8 +271,8 @@ function scan(projectName, scenario, planPath, token = "") {
   env.ZAP_RUN_SUFFIX = runSuffix;
   if (typeof process.getuid === "function" && typeof process.getgid === "function") {
     // Match the host runner UID so it can sanitize and preserve reports created
-    // on the bind mount. Use a writable HOME for the arbitrary container UID.
-    args.push("--user", `${process.getuid()}:${process.getgid()}`, "--env", "HOME=/tmp");
+    // on the bind mount. Keep ZAP's own home under its writable /tmp directory.
+    args.push("--user", `${process.getuid()}:${process.getgid()}`);
   }
 
   if (token) {
@@ -283,7 +283,7 @@ function scan(projectName, scenario, planPath, token = "") {
     args.push("--env", "ZAP_AUTH_HEADER_VALUE", "--env", "ZAP_AUTH_HEADER", "--env", "ZAP_AUTH_HEADER_SITE");
   }
 
-  args.push(image, "zap.sh", "-cmd", "-autorun", `/zap/wrk/${path.relative(projectRoot, planPath).replaceAll("\\", "/")}`);
+  args.push(image, "zap.sh", "-cmd", "-dir", "/tmp/zap-home", "-autorun", `/zap/wrk/${path.relative(projectRoot, planPath).replaceAll("\\", "/")}`);
   let scanError;
   try {
     run("docker", args, { env, timeoutMs });
