@@ -131,3 +131,73 @@ test("[TC-E2E-15] Admin tạo phim, phòng ghế, suất chiếu và lưu giá m
   await persistedSeatManagement.locator("summary").click();
   await expect(page.getByTestId("admin-seat-edit-form-" + seatId).getByLabel("Loại ghế")).toHaveValue("ACCESSIBLE");
 });
+
+test("[TC-E2E-22] Admin nhận lỗi khi thiếu buffer lịch chiếu và tạo được suất đúng buffer", async ({ page }) => {
+  await signInAsAdmin(page);
+
+  const suffix = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+  const movieTitle = `QA Schedule Movie ${suffix}`;
+  const auditoriumName = `QA Schedule Room ${suffix}`;
+  const moviePanel = page.locator(".panel").filter({ has: page.getByRole("heading", { name: "Thêm phim" }) });
+  await moviePanel.getByLabel("Tên phim").fill(movieTitle);
+  await moviePanel.getByLabel("Thể loại").fill("Kiểm thử lịch chiếu");
+  await moviePanel.getByLabel("Thời lượng (phút)").fill("100");
+  await moviePanel.getByLabel("Tóm tắt").fill("Fixture để kiểm tra giới hạn buffer lịch chiếu.");
+  await moviePanel.getByRole("button", { name: "Thêm vào danh mục" }).click();
+  await expect(page.getByRole("status")).toContainText("Đã thêm phim mới.");
+
+  const showtimePanel = page.locator(".panel").filter({ has: page.getByRole("heading", { name: "Tạo suất chiếu" }) });
+  const movieSelect = showtimePanel.getByLabel("Phim");
+  const movieOption = movieSelect.locator("option").filter({ hasText: movieTitle });
+  await expect(movieOption).toHaveCount(1);
+  const movieId = await movieOption.getAttribute("value");
+  expect(movieId).toBeTruthy();
+
+  const auditoriumPanel = page.locator(".panel").filter({ has: page.getByRole("heading", { name: "Tạo phòng và sơ đồ ghế" }) });
+  const auditoriumForm = auditoriumPanel.locator("form.admin-create-form");
+  await auditoriumForm.getByLabel("Rạp").selectOption({ index: 0 });
+  await auditoriumForm.getByLabel("Tên phòng").fill(auditoriumName);
+  await auditoriumForm.getByLabel("Định dạng").fill("STANDARD");
+  await auditoriumForm.getByLabel("Số hàng").fill("2");
+  await auditoriumForm.getByLabel("Số ghế mỗi hàng").fill("3");
+  await auditoriumForm.getByRole("button", { name: "Tạo phòng" }).click();
+  await expect(page.getByRole("status")).toContainText("Đã tạo phòng và sơ đồ ghế.");
+
+  const roomOption = showtimePanel.getByLabel("Phòng").locator("option").filter({ hasText: auditoriumName });
+  await expect(roomOption).toHaveCount(1);
+  const auditoriumId = await roomOption.getAttribute("value");
+  expect(auditoriumId).toBeTruthy();
+
+  const firstStartAt = await page.evaluate(() => {
+    const date = new Date(Date.now() + 48 * 60 * 60 * 1000);
+    date.setHours(18, 0, 0, 0);
+    const pad = (value: number) => String(value).padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  });
+  const atOffset = async (minutes: number) => page.evaluate(({ startAt, offset }) => {
+    const date = new Date(startAt);
+    date.setMinutes(date.getMinutes() + offset);
+    const pad = (value: number) => String(value).padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  }, { startAt: firstStartAt, offset: minutes });
+
+  await movieSelect.selectOption(movieId!);
+  await showtimePanel.getByLabel("Phòng").selectOption(auditoriumId!);
+  await showtimePanel.getByLabel("Thời gian bắt đầu").fill(firstStartAt);
+  await showtimePanel.getByRole("button", { name: "Tạo suất chiếu" }).click();
+  await expect(page.getByRole("status")).toContainText("Đã tạo suất chiếu.");
+  const createdShowtimes = page.locator(".admin-showtime-row").filter({ hasText: movieTitle });
+  await expect(createdShowtimes).toHaveCount(1);
+
+  await movieSelect.selectOption(movieId!);
+  await showtimePanel.getByLabel("Phòng").selectOption(auditoriumId!);
+  await showtimePanel.getByLabel("Thời gian bắt đầu").fill(await atOffset(90));
+  await showtimePanel.getByRole("button", { name: "Tạo suất chiếu" }).click();
+  await expect(page.getByRole("alert")).toContainText("Suất chiếu bị chồng thời gian với lịch đang có.");
+  await expect(createdShowtimes).toHaveCount(1);
+
+  await showtimePanel.getByLabel("Thời gian bắt đầu").fill(await atOffset(120));
+  await showtimePanel.getByRole("button", { name: "Tạo suất chiếu" }).click();
+  await expect(page.getByRole("status")).toContainText("Đã tạo suất chiếu.");
+  await expect(createdShowtimes).toHaveCount(2);
+});
