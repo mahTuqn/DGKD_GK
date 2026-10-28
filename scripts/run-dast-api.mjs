@@ -279,16 +279,26 @@ function scan(projectName, scenario, planPath, token = "") {
   }
 
   const planInContainer = `/zap/wrk/${path.relative(projectRoot, planPath).replaceAll("\\", "/")}`;
-  const reportInContainer = `/zap/wrk/reports/generated/dast/${scenario.reportName}`;
-  const zapCommand = `zap.sh -cmd -autorun '${planInContainer}'\nscan_status=$?\nchmod 0644 '${reportInContainer}' 2>/dev/null || true\nexit "$scan_status"`;
-  args.push("--entrypoint", "/bin/sh", image, "-c", zapCommand);
+  args.push(image, "zap.sh", "-cmd", "-autorun", planInContainer);
   let scanError;
   try {
     run("docker", args, { env, timeoutMs });
   } catch (error) {
     scanError = error;
   }
-  if (existsSync(path.join(reportDirectory, scenario.reportName))) sanitizeAndPreserveReport(scenario, token);
+  const reportPath = path.join(reportDirectory, scenario.reportName);
+  if (existsSync(reportPath) && process.platform !== "win32") {
+    // ZAP creates reports as UID 1000. Normalize the bind-mounted file from a
+    // short-lived root container so the host runner can sanitize and upload it.
+    const normalizeReportArgs = [
+      "run", "--rm", "--user", "0:0",
+      "--volume", `${dockerPath(reportDirectory)}:/zap-reports:rw`,
+      "--entrypoint", "/bin/sh", image, "-c",
+      `chmod 0644 '/zap-reports/${scenario.reportName}' && test -r '/zap-reports/${scenario.reportName}'`,
+    ];
+    run("docker", normalizeReportArgs, { env, timeoutMs: 30_000 });
+  }
+  if (existsSync(reportPath)) sanitizeAndPreserveReport(scenario, token);
   if (scanError) throw scanError;
   return sanitizeAndPreserveReport(scenario, token);
 }
