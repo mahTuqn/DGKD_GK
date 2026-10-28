@@ -1,0 +1,59 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "recordedAt": "2026-10-29",
+  "commit": "bbc1b9b05d4d9bc5c5eb617a81a27b05d1151638",
+  "scope": "Exact-head GitHub Actions clean-checkout verification for the Playwright project selection change and the new cross-browser workflow.",
+  "runs": {
+    "qualityAndDast": {
+      "runId": "40756549786",
+      "runUrl": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40756549786",
+      "status": "PASS",
+      "quality": "PASS",
+      "dast": "PASS",
+      "qualityGates": [
+        "Gitleaks and dependency audit",
+        "OpenAPI lint and traceability (74 test cases / 25 requirements)",
+        "API integration tests",
+        "TC-WORKER-03 live hold expiry",
+        "TC-WORKER-06 two-worker five-minute soak/restart",
+        "Production build",
+        "Playwright 46/46 on Chromium desktop and Pixel 7 mobile"
+      ],
+      "dastScopes": [
+        "Unauthenticated API",
+        "Authenticated API",
+        "Production web preview"
+      ]
+    },
+    "crossBrowserSmoke": {
+      "runId": "40756549883",
+      "runUrl": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40756549883",
+      "status": "PASS",
+      "testsPassed": 6,
+      "testCases": [
+        "TC-E2E-01 booking/payment/ticket flow",
+        "TC-E2E-02 discovery and login dialog",
+        "TC-E2E-09 keyboard/focus flow"
+      ],
+      "browserProjects": [
+        "Firefox desktop",
+        "WebKit desktop"
+      ],
+      "expectedRuns": "3 selected test cases × 2 browser projects"
+    }
+  },
+  "environment": {
+    "database": "Ephemeral GitHub Actions PostgreSQL service; migrations and seed completed in the cross-browser job",
+    "staging": "Not available; no staging performance or production claim is made"
+  },
+  "notMeasured": [
+    "Manual WCAG 2.2 AA, screen-reader, contrast, zoom/reflow, orientation and full keyboard review; requester will perform the checklist",
+    "Named staging performance validation",
+    "Production behavior, backup schedule, PITR, RPO/RTO and production restore",
+    "Exhaustive ASVS/API Top 10 and BOLA review beyond the documented automated matrix",
+    "Reliability soak longer than five minutes",
+    "Physical-device compatibility and mobile engines other than Chromium Pixel 7"
+  ],
+  "scopeNote": "DAST ran and passed; the detailed finding counts remain as recorded in the prior same-scope exact-head manifest. A Low-confidence JSON persistent-markup observation remains triaged."
+}
