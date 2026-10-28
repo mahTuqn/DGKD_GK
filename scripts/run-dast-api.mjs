@@ -269,6 +269,11 @@ function scan(projectName, scenario, planPath, token = "") {
     "--env", "ZAP_RUN_SUFFIX",
   ];
   env.ZAP_RUN_SUFFIX = runSuffix;
+  if (typeof process.getuid === "function" && typeof process.getgid === "function") {
+    // Match the host runner UID so it can sanitize and preserve reports created
+    // on the bind mount. Use a writable HOME for the arbitrary container UID.
+    args.push("--user", `${process.getuid()}:${process.getgid()}`, "--env", "HOME=/tmp");
+  }
 
   if (token) {
     env.ZAP_AUTH_HEADER_VALUE = `Bearer ${token}`;
