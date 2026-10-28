@@ -216,6 +216,9 @@ test("[TC-E2E-05] Admin tạo rạp, cập nhật trạng thái và thấy trạ
 });
 
 test("[TC-E2E-11] dữ liệu quản trị có markup được hiển thị như văn bản", async ({ page }) => {
+  await page.addInitScript(() => {
+    (window as Window & { __cinemaXss?: number }).__cinemaXss = 0;
+  });
   await page.goto("/");
   await signIn(page, "admin@cinema.local", "CinemaAdmin123!");
   await page.getByRole("button", { name: "Quản trị" }).click();
@@ -228,7 +231,17 @@ test("[TC-E2E-11] dữ liệu quản trị có markup được hiển thị như
   await cinemaPanel.getByLabel("Tên rạp").fill(payload);
   await cinemaPanel.getByLabel("Thành phố").fill(cityPayload);
   await cinemaPanel.getByLabel("Địa chỉ").fill(addressPayload);
+  const createResponsePromise = page.waitForResponse((response) =>
+    response.request().method() === "POST" && new URL(response.url()).pathname === "/api/admin/cinemas",
+  );
   await cinemaPanel.getByRole("button", { name: "Thêm rạp" }).click();
+  const createResponse = await createResponsePromise;
+  expect(createResponse.status()).toBe(201);
+  expect(await createResponse.json()).toMatchObject({
+    name: payload,
+    city: cityPayload,
+    address: addressPayload,
+  });
 
   const row = cinemaPanel.locator(".admin-record-row").filter({ hasText: payload });
   await expect(row).toBeVisible();
@@ -236,6 +249,7 @@ test("[TC-E2E-11] dữ liệu quản trị có markup được hiển thị như
   await expect(row.locator("span")).toContainText(cityPayload);
   await expect(row.locator("span")).toContainText(addressPayload);
   await expect(row.locator("img, script, svg")).toHaveCount(0);
+  await expect.poll(() => page.evaluate(() => (window as Window & { __cinemaXss?: number }).__cinemaXss)).toBe(0);
 });
 
 test("[TC-E2E-06] Bộ lọc phim và rạp cập nhật đúng các suất đang hiển thị", async ({ page }) => {

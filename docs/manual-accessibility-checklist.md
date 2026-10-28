@@ -1,0 +1,87 @@
+# Manual accessibility review checklist — CinemaBooking
+
+## Review status
+
+**Not performed.** This checklist is a prepared test artifact only. No human WCAG 2.2 AA, screen-reader, or full manual keyboard review is recorded in the repository at the time this file was created. Automated Playwright/axe results are separate evidence and do not complete these fields or establish conformance.
+
+| Review field | Value |
+|---|---|
+| Overall status | Not started |
+| Reviewer(s) | — |
+| Review date and timezone | — |
+| Application commit/build reviewed | — |
+| Environment/base URL | — |
+| Desktop browser / OS | — |
+| Desktop screen reader and version | — |
+| Mobile device / browser / screen reader | — |
+| Zoom, viewport, and display settings | — |
+| Evidence folder or links | — |
+| Findings / issue IDs | — |
+| Sign-off | — |
+
+For each check, select exactly one outcome: **Pass**, **Fail**, **Not applicable** (record the reason), or **Not tested**. A blank checkbox means no result has been recorded. Do not mark a check passed based only on axe, DOM inspection, or the existing Playwright assertions.
+
+## Suggested setup and review method
+
+1. Review the exact application build and commit intended for handoff. Record any role/seed account used without recording its password or session token.
+2. Use a desktop keyboard-only pass with mouse/touch input unavailable, then repeat the core workflows with a screen reader. A useful Windows pairing is current Chrome or Edge with NVDA; record exact versions. If a supported iOS/mobile device is available, add Safari with VoiceOver and record it separately.
+3. Repeat key content and workflows at 200% text/browser magnification and at a 320 CSS-pixel-wide viewport (often approximated by 400% browser zoom from a 1280 CSS-pixel viewport). Also inspect at 200% zoom for text resizing. Test portrait and landscape on a narrow mobile viewport.
+4. Check text contrast against its actual background, including disabled, hover, focus, selected, error, success, and muted states. Check non-text control boundaries, icons, focus indicators, and state indicators separately. Record a measurement or a clearly identified exception for each suspected failure.
+5. If a workflow is blocked, describe the blocking step and stop safely; do not create real transactions. Payment in this application is a demo flow.
+
+## Shared checks for every screen
+
+- [ ] **KBD-01 — Keyboard operation (WCAG 2.1.1, 2.1.2):** Complete every available action with Tab, Shift+Tab, Enter, Space, Escape, and arrow keys where the control pattern requires them. No keyboard trap occurs outside an intentionally modal dialog. Do not require precise timing, pointer gestures, or drag-only operation.
+- [ ] **FOCUS-01 — Order and visibility (2.4.3, 2.4.7):** Focus follows a meaningful visual/task order; every focused control has a visible indicator; focus is not lost to the document body after async updates, view changes, errors, or closing a component.
+- [ ] **FOCUS-02 — Focus not obscured (2.4.11 AA):** At narrow width and zoom, sticky headers, banners, dialogs, and scroll containers do not completely cover the focused control. Keyboard focus can scroll into view without changing the intended action.
+- [ ] **NAME-01 — Semantics and names (1.3.1, 2.4.6, 4.1.2):** Headings, landmarks, lists, buttons, links, inputs, and status widgets expose the right role/name/value. Visible labels match their accessible names. Decorative icons are not announced as duplicate text.
+- [ ] **COLOR-01 — Meaning and contrast (1.4.1, 1.4.3, 1.4.11):** Information is not conveyed by color alone. Normal text reaches 4.5:1, large text 3:1, and essential control/state graphics and boundaries 3:1 against adjacent colors unless a WCAG exception applies. Record measurement/tool and colors for failures/exceptions.
+- [ ] **REFLOW-01 — Zoom and reflow (1.4.4, 1.4.10, 1.4.12):** At 200% text resize and at 320 CSS px width, text and controls remain available without clipping, overlap, or two-direction scrolling for ordinary content. Text spacing adjustments do not hide content or controls. If a seat map or another two-dimensional area needs two-dimensional layout, test its operation and an equivalent accessible means to identify/select seats; document why any exception applies.
+- [ ] **TARGET-01 — Pointer target (2.5.8 AA):** Important adjacent touch targets meet 24 × 24 CSS px or have sufficient spacing/another WCAG-permitted exception. Record the target and basis for any exception.
+- [ ] **SR-01 — Screen-reader orientation:** Read the page from its start and use heading/landmark/form-control navigation. The page title, current view, section headings, and meaningful content order make the user's location and next action clear.
+- [ ] **SR-02 — Dynamic feedback (3.3.1, 3.3.2, 3.3.3, 4.1.3):** Loading, results, validation errors, successful saves, checkout/payment outcomes, hold expiry, and check-in outcomes are announced without requiring the user to find a changed visual region. Error messages identify the affected field or action and do not disappear before they can be read.
+
+## Screen and workflow checklist
+
+Record a result for each check ID. The result fields are intentionally blank and the initial status is **Not tested**.
+
+| ID / screen or workflow | Manual checks to perform | Status | Reviewer / date | Evidence link(s) | Finding / issue ID or N/A reason |
+|---|---|---|---|---|---|
+| A11Y-01 — App shell and discover movies | **Keyboard/focus:** traverse header, sign-in, view navigation, movie cards and primary actions; confirm focus follows order and remains visible after changing view. **Names/announcements:** confirm current page heading and movie title/details/actions are understandable; decorative poster artwork does not create noisy duplicate announcements, while meaningful poster content has an appropriate alternative. **Zoom/contrast:** repeat at 320 CSS px, 200% text and 400% zoom; verify header/cards/actions reflow, no horizontal page scroll, text and focus contrast. **SR:** navigate by landmarks/headings and verify that a view change or return from another view leaves a useful heading/location. | Not tested | — | — | — |
+| A11Y-02 — Movie, cinema, and date filters | **Keyboard/focus:** operate each filter with native select keys; verify filter order and that changing a filter does not unexpectedly move focus. **Labels:** each select announces its purpose and selected value. **Announcements:** updated result count/empty result and errors are announced; availability is not conveyed only by the colored dot/legend. **Zoom/contrast/target:** labels and controls stay associated and tappable at narrow width; focus and selected states remain distinct. **SR:** verify filter labels, selected options, result heading and movie/showtime context. | Not tested | — | — | — |
+| A11Y-03 — Login and registration dialog | **Keyboard/focus:** open from each responsive header entry point; focus enters the dialog, Tab/Shift+Tab wrap within it, Escape/close returns focus to the opener, and background controls cannot be operated while modal. **Labels/errors:** name, email, password, required state and input errors are announced; invalid email/short password and duplicate-email/invalid-login feedback identify what to correct. **Announcements:** registration and login errors are announced once and remain available. **Zoom/contrast/target:** dialog fits at 320 CSS px and 200%/400% zoom; close, switch-mode, and submit controls remain visible and operable. **SR:** dialog title/purpose is announced; password manager/autofill and paste are usable. | Not tested | — | — | — |
+| A11Y-04 — Seat-map dialog and hold selection | **Keyboard/focus:** open a showtime, reach each seat, select/deselect with keyboard, reach legend/hold/close; dialog traps focus and returns it to its opener. **Names/state:** each seat announces row/number, available/held/sold and selected state; accessible seats and blocked seats have understandable non-color distinctions; selected-seat count and total are understandable. **Announcements:** unavailable-seat conflict, hold created, and selection-limit feedback are announced. **Zoom/contrast/target:** seat map and controls work at mobile widths; selected/disabled/focus seat states are distinguishable and targets are not crowded. **SR:** traverse map without hearing an unstructured wall of repeated controls; confirm spatial labels provide enough context to choose safely. | Not tested | — | — | — |
+| A11Y-05 — Checkout, payment demo, expiry, and recovery | **Keyboard/focus:** after hold creation, focus/reading position reaches checkout context; order creation, payment, close/retry, and success navigation work by keyboard; focus is not hidden by dialog edges. **Names/content:** movie, cinema, time, seats, ticket count, and totals are read in a logical order. **Announcements:** busy/disabled state, payment failure, seat conflict, hold countdown/expiry, lost-response uncertainty, retry result, and successful payment are announced; repeated countdown updates do not interrupt screen-reader speech continuously. **Zoom/contrast/target:** totals and errors remain visible/readable; buttons and close controls remain reachable at 320 CSS px and magnification. **SR:** success says a ticket was created and how to reach it; retry does not silently duplicate or lose state. | Not tested | — | — | — |
+| A11Y-06 — My tickets, order details, and QR | **Keyboard/focus:** reach refresh, each order/ticket, and any next action in sequence. **Names/content:** ticket code, movie/showtime, seat and checked-in/unused status are available as text; QR has an accessible purpose/name and the corresponding usable ticket code is also present. **Announcements:** refresh loading/failure and empty state are announced or clearly discoverable; checked-in status is not color-only. **Zoom/contrast:** ticket cards and QR labels reflow without clipping. **SR:** verify order/ticket grouping and ensure QR image is not the only way to obtain/communicate the ticket identifier. | Not tested | — | — | — |
+| A11Y-07 — Staff sign-in and ticket check-in | **Keyboard/focus:** sign in, reach ticket-ID/QR input and submit; operate duplicate and invalid results without a pointer; focus moves to a useful result or stays on a sensible control. **Labels/errors:** input purpose and examples are associated; validation identifies missing/invalid ticket. **Announcements:** success, already-used, wrong-cinema/forbidden, not-found, and service errors are announced with actionable meaning. **Zoom/contrast/target:** scanner/input and submit remain usable on mobile and magnified views. **SR:** confirm venue/role context and ticket result are announced; no success is indicated only by a color/icon. | Not tested | — | — | — |
+| A11Y-08 — Admin dashboard and occupancy | **Keyboard/focus:** navigate summary, movie/cinema/showtime sections and occupancy without skipped or hidden focus. **Names/semantics:** metric labels are tied to values; progress bar exposes value, maximum, and accessible name; reports are understandable without color or position alone. **Announcements:** loading/error and refreshed/saved status use useful announcements. **Zoom/contrast:** metrics and occupancy summary reflow at 320 CSS px/200%/400%; focus remains visible. **SR:** heading and landmark structure identify the dashboard, summary, reports and each section. | Not tested | — | — | — |
+| A11Y-09 — Admin catalog and user forms | **Keyboard/focus:** operate create/edit forms and collapsible record/seat details with Tab/Shift+Tab/Enter/Space; open/close details and reach nested controls; focus remains in a logical place after save/cancel. **Labels/errors:** every movie/cinema/auditorium/seat/showtime/user control has a visible and programmatic label; required/range/date/time errors identify the input and correction. **Announcements:** saved changes, validation failures, conflicts (including schedule buffer), and permission errors are announced; after save, the changed record is identifiable. **Zoom/contrast/target:** forms and record details reflow and do not require two-axis scrolling except where justified; control boundaries, focus, selected, disabled and error states meet contrast needs. **SR:** summaries identify the record and expanded/collapsed state; nested form context and headings are clear. | Not tested | — | — | — |
+| A11Y-10 — Cross-workflow mobile and orientation | Repeat A11Y-01 through A11Y-09 at narrow mobile viewport, portrait and landscape, with screen-reader touch exploration. Verify no essential content/action disappears, focus/reading order match visual order, dialogs fit and can be closed, controls are not blocked by sticky content, and seat selection has a workable non-color, non-pointer-only path. Record device, OS, browser, AT and viewport. | Not tested | — | — | — |
+
+## Findings log
+
+Add one row per issue. Do not rewrite a failed result to pass after a code fix; retain the original finding and add a retest entry linked to the new build.
+
+| Finding ID | Check ID | Page/state and exact steps | Expected | Actual | Impact / priority | Evidence | Retest build/date/result |
+|---|---|---|---|---|---|---|---|
+| — | — | — | — | — | — | — | — |
+
+## Decision record
+
+| Decision | Record |
+|---|---|
+| Overall outcome | Not assessed — manual review has not been performed |
+| Unresolved blocker count | — |
+| Accepted exceptions and WCAG rationale | — |
+| Reviewer sign-off and date | — |
+
+## References
+
+- [Web Content Accessibility Guidelines (WCAG) 2.2](https://www.w3.org/TR/WCAG22/)
+- [WAI-ARIA Authoring Practices Guide: Modal Dialog Pattern](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/)
+- [Understanding SC 1.4.3: Contrast (Minimum)](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum)
+- [Understanding SC 1.4.10: Reflow](https://www.w3.org/WAI/WCAG22/Understanding/reflow.html)
+- [Understanding SC 2.5.8: Target Size (Minimum)](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum)
+- [Understanding SC 4.1.3: Status Messages](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html)
+
+These references define the criteria to evaluate; this checklist is a review aid and does not itself certify WCAG conformance.

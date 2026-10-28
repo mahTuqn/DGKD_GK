@@ -28,6 +28,7 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
   let adminCinemaId: string | undefined;
   let auditoriumId: string | undefined;
   let adminAuditoriumId: string | undefined;
+  let foreignAuditoriumId: string | undefined;
   let movieId: string | undefined;
   let showtimeId: string | undefined;
   let inactiveShowtimeId: string | undefined;
@@ -39,6 +40,9 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
     const auditorium = await prisma.auditorium.create({ data: { cinemaId: cinema.id, name: `HTTP room ${fixture}`, screenType: "TEST" } });
     auditoriumId = auditorium.id;
     await prisma.seat.createMany({ data: Array.from({ length: 9 }, (_, index) => ({ auditoriumId: auditorium.id, label: `T${index + 1}`, row: "T", column: index + 1, type: SeatType.STANDARD })) });
+    const foreignAuditorium = await prisma.auditorium.create({ data: { cinemaId: cinema.id, name: `HTTP foreign room ${fixture}`, screenType: "TEST" } });
+    foreignAuditoriumId = foreignAuditorium.id;
+    await prisma.seat.create({ data: { auditoriumId: foreignAuditorium.id, label: "F1", row: "F", column: 1, type: SeatType.STANDARD } });
     const movie = await prisma.movie.create({ data: { slug: `http-${fixture}`, title: `HTTP fixture ${fixture}`, genre: "Test", synopsis: "Temporary data for API integration assertions.", runtimeMinutes: 90, ageRating: "P" } });
     movieId = movie.id;
     const startAt = new Date(Date.now() + 365 * 86_400_000);
@@ -77,8 +81,10 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
     if (userIds.length) await prisma.user.deleteMany({ where: { id: { in: userIds } } });
     if (auditoriumId) await prisma.seat.deleteMany({ where: { auditoriumId } });
     if (adminAuditoriumId) await prisma.seat.deleteMany({ where: { auditoriumId: adminAuditoriumId } });
+    if (foreignAuditoriumId) await prisma.seat.deleteMany({ where: { auditoriumId: foreignAuditoriumId } });
     if (movieId) await prisma.movie.deleteMany({ where: { id: movieId } });
     if (adminAuditoriumId) await prisma.auditorium.deleteMany({ where: { id: adminAuditoriumId } });
+    if (foreignAuditoriumId) await prisma.auditorium.deleteMany({ where: { id: foreignAuditoriumId } });
     if (adminCinemaId) await prisma.cinema.deleteMany({ where: { id: adminCinemaId } });
     if (auditoriumId) await prisma.auditorium.deleteMany({ where: { id: auditoriumId } });
     if (cinemaId) await prisma.cinema.deleteMany({ where: { id: cinemaId } });
@@ -140,6 +146,23 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
     expect(filteredShowtimes.body.some((showtime: { id: string }) => showtime.id === inactiveShowtimeId)).toBe(false);
 
     const seatIds = (await prisma.seat.findMany({ where: { auditoriumId }, orderBy: { column: "asc" }, select: { id: true } })).map((seat) => seat.id);
+    const foreignSeat = await prisma.seat.findFirstOrThrow({ where: { auditoriumId: foreignAuditoriumId }, select: { id: true } });
+    const holdBoundarySnapshot = async () => ({
+      holds: await prisma.seatHold.count({ where: { userId: customerAId, showtimeId } }),
+      claims: await prisma.seatClaim.count({ where: { showtimeId } }),
+      audit: await prisma.auditLog.count({ where: { actorId: customerAId, action: "SEATS_HELD" } }),
+    });
+    const beforeMixedAuditoriumAttempt = await holdBoundarySnapshot();
+    const mixedAuditoriumHold = await request(app).post("/api/holds").set(authA).send({ showtimeId, seatIds: [seatIds[0], foreignSeat.id] });
+    expect(mixedAuditoriumHold.status).toBe(422);
+    expect(mixedAuditoriumHold.body.error).toBe("SEAT_NOT_FOUND");
+    expect(await holdBoundarySnapshot()).toEqual(beforeMixedAuditoriumAttempt);
+
+    const beforeOwnerSpoofAttempt = await holdBoundarySnapshot();
+    const ownerSpoofHold = await request(app).post("/api/holds").set(authA).send({ showtimeId, seatIds: [seatIds[0]], userId: userIds[1] });
+    expect(ownerSpoofHold.status).toBe(422);
+    expect(await holdBoundarySnapshot()).toEqual(beforeOwnerSpoofAttempt);
+
     const tooManySeats = await request(app).post("/api/holds").set(authA).send({ showtimeId, seatIds });
     expect(tooManySeats.status).toBe(422);
     expect(await prisma.seatHold.count({ where: { userId: customerAId, showtimeId } })).toBe(0);
