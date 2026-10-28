@@ -1,0 +1,139 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "runId": "github-actions-40690352889",
+  "status": "PASS_QUALITY_AND_DAST",
+  "capturedAt": "2026-10-28T13:03:40Z",
+  "commit": "d42044d1ea1c10a46f537b12250eeb1ac36d0632",
+  "runUrl": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40690352889",
+  "environment": {
+    "runner": "GitHub Actions clean checkout",
+    "nodeMajor": 24,
+    "database": "Isolated PostgreSQL service, worker-process database, and dedicated worker-soak database",
+    "browserProjects": [
+      "chromium-desktop",
+      "chromium-mobile (Pixel 7)"
+    ]
+  },
+  "quality": {
+    "result": "PASS",
+    "dependencyAudit": {
+      "result": "PASS",
+      "command": "npm audit --audit-level=moderate",
+      "vulnerabilities": 0
+    },
+    "gitleaks": {
+      "result": "PASS",
+      "action": "gitleaks/gitleaks-action@v3"
+    },
+    "openApiLint": {
+      "result": "PASS",
+      "command": "npm run lint:openapi"
+    },
+    "traceability": {
+      "result": "PASS",
+      "testCases": 68,
+      "requirements": 25
+    },
+    "api": {
+      "result": "PASS",
+      "testsPassed": 32,
+      "testsFailed": 0,
+      "testFilesPassed": 8,
+      "staffCinemaReassignment": {
+        "testId": "TC-STAFF-01",
+        "result": "PASS",
+        "assertions": [
+          "Cinema A to Cinema B reassignment invalidates the old token",
+          "Refreshed Staff token is denied in Cinema A with no ticket or audit side effect",
+          "Refreshed Staff token checks tickets in Cinema B by ID and QR",
+          "Successful check-ins record ticket timestamps and audit entries"
+        ]
+      }
+    },
+    "workerProcess60SecondSoak": {
+      "testId": "TC-WORKER-05",
+      "result": "PASS",
+      "testsPassed": 1,
+      "durationMs": 61981
+    },
+    "liveHoldExpiry": {
+      "testId": "TC-WORKER-03",
+      "result": "PASS",
+      "testsPassed": 1,
+      "durationMs": 300810
+    },
+    "workerProcessFiveMinuteSoak": {
+      "testId": "TC-WORKER-06",
+      "result": "PASS",
+      "testsPassed": 1,
+      "durationMs": 305950,
+      "restartCatchUp": "PASS"
+    },
+    "build": {
+      "result": "PASS",
+      "command": "npm run build"
+    },
+    "playwright": {
+      "result": "PASS",
+      "testsPassed": 46,
+      "testsFailed": 0,
+      "testsSkipped": 0,
+      "testsFlaky": 0,
+      "durationMs": 138291,
+      "testCases": 23,
+      "testIds": [
+        "TC-E2E-20",
+        "TC-E2E-21",
+        "TC-E2E-22"
+      ],
+      "artifactId": 12817104087,
+      "artifactUrl": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40690352889/artifacts/12817104087",
+      "archiveSha256": "75761F6D591B4E2BBA502A446B9C6B324527A8F77045C7AFDAEE15971348A8FB"
+    }
+  },
+  "dast": {
+    "result": "PASS_WITH_TRIAGED_LOW",
+    "job": "DAST (isolated Docker Compose)",
+    "unauthenticatedApi": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0,
+      "informational": 2
+    },
+    "authenticatedApi": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 1,
+      "informational": 2,
+      "triagedFinding": "Low-confidence persistent-markup observation in JSON; the Admin UI renders the value as text."
+    },
+    "productionWebPreview": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0,
+      "informational": 1
+    },
+    "criticalHighMediumFindings": 0,
+    "artifactId": 12816803205,
+    "artifactUrl": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40690352889/artifacts/12816803205",
+    "archiveSha256": "7C8E56726A844B34D77F2A8EAAC072BDDA9B4922F8AD58171535B3D56C16F5E4"
+  },
+  "localArchives": {
+    "directory": "reports/generated/ci-40690352889/",
+    "workflowLogsZipSha256": "109CE9A8BC42C6420CE5E10B05DCC270DBF2709599E6DF7521F60C84E57208A7",
+    "note": "Downloaded browser, DAST, and workflow-log artifacts are kept locally under the ignored reports/generated directory."
+  },
+  "notMeasured": [
+    "Manual WCAG 2.2 AA, screen-reader, and full keyboard/zoom/reflow review",
+    "Performance validation on the named staging environment (existing k6 results are local baseline only)",
+    "Production behavior, backup schedule, PITR, RPO/RTO, and production restore",
+    "Exhaustive ASVS/API Top 10 and BOLA review beyond the documented automated matrix",
+    "Reliability soak longer than five minutes",
+    "Firefox/WebKit cross-browser behavior"
+  ],
+  "scopeNote": "CI used a clean checkout and proves the automated application scope on this commit. The SRS specifies demo mock payment; a real payment gateway and automatic refunds are outside acceptance scope."
+}
