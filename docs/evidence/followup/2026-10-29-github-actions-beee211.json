@@ -1,0 +1,86 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "recordedAt": "2026-10-29",
+  "commit": "beee21123960d7d672a628751f0c5a22d816b409",
+  "branch": "codex/cross-browser-smoke",
+  "runs": {
+    "qualityAndDast": {
+      "id": 40771180065,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40771180065",
+      "overall": "FAILURE",
+      "jobs": {
+        "quality": {
+          "result": "PASS",
+          "durationMinutes": 14.75,
+          "verifiedSteps": [
+            "Gitleaks",
+            "dependency audit",
+            "database migrations and seed",
+            "OpenAPI lint",
+            "traceability",
+            "API integration",
+            "live five-minute HTTP hold expiry",
+            "two-worker five-minute soak and graceful restart",
+            "production build",
+            "Chromium Playwright browser suite"
+          ]
+        },
+        "dast": {
+          "result": "PASS",
+          "job": "DAST (isolated Docker Compose)",
+          "artifactId": 12852474930,
+          "artifactUrl": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40771180065/artifacts/12852474930",
+          "findingDetailsReviewed": false
+        },
+        "domainCoverageAndMutation": {
+          "coverageThreshold": "PASS",
+          "mutationThreshold": "FAIL",
+          "failedStep": "Verify hold/payment mutation threshold",
+          "durationSeconds": 4,
+          "processExitCode": 1,
+          "artifactId": 12853230414,
+          "artifactUrl": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40771180065/artifacts/12853230414",
+          "failureCause": "Unresolved: public check page exposes only process exit code; detailed logs/artifact require GitHub sign-in."
+        }
+      },
+      "browserArtifact": {
+        "artifactId": 12853267243,
+        "artifactUrl": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40771180065/artifacts/12853267243"
+      }
+    },
+    "crossBrowser": {
+      "id": 40771180239,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40771180239",
+      "result": "PASS"
+    },
+    "workerSoak15Minutes": {
+      "id": 40771180062,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40771180062",
+      "result": "PASS",
+      "durationMinutes": 15.28,
+      "testId": "TC-WORKER-07"
+    }
+  },
+  "sourceRegressions": {
+    "inactiveCinemaAvailability": "TC-CAT-05 ran under passing API/quality job",
+    "deploymentSecrets": "TC-SEC-13 ran under passing API/quality job",
+    "customerBookingRoleBoundary": "TC-SEC-21 ran under passing API/quality job",
+    "concurrentStaffQrScan": "TC-E2E-23 ran under passing Chromium browser step"
+  },
+  "environment": {
+    "runner": "GitHub Actions clean checkout",
+    "staging": "Not available; local Docker is the only user-provided QA environment"
+  },
+  "notMeasured": [
+    "Mutation score/result cause on this commit until the uploaded report/log is inspected",
+    "Detailed findings counts in this commit's DAST artifact",
+    "Requester manual WCAG 2.2 AA, screen-reader, contrast, zoom/reflow, orientation and full keyboard checklist",
+    "Named staging performance; no staging environment is available",
+    "Production behavior, backup schedule, PITR, RPO/RTO and production restore",
+    "Exhaustive ASVS/API Top 10 and BOLA review beyond the documented automated matrix",
+    "Reliability soak longer than 15 minutes",
+    "Real payment gateway/refund, which is outside the SRS"
+  ],
+  "scopeNote": "The quality/API, browser, DAST and worker soak outcomes apply to the exact source commit listed here. The overall quality/DAST workflow is not green because the independent mutation threshold step exited 1. This does not establish WCAG conformance, exhaustive security compliance, staging or production readiness."
+}
