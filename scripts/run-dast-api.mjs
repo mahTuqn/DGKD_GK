@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { createServer } from "node:net";
-import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -204,7 +204,14 @@ function sanitizeAndPreserveReport(scenario, token = "") {
     report = report.replaceAll(token, "[REDACTED_DAST_TOKEN]");
     report = report.replaceAll(`Bearer ${token}`, "Bearer [REDACTED_DAST_TOKEN]");
   }
-  writeFileSync(reportPath, report, { encoding: "utf8" });
+  const sanitizedPath = `${reportPath}.sanitized-${runSuffix}`;
+  writeFileSync(sanitizedPath, report, { encoding: "utf8", flag: "wx", mode: 0o600 });
+  try {
+    renameSync(sanitizedPath, reportPath);
+  } catch (error) {
+    rmSync(sanitizedPath, { force: true });
+    throw error;
+  }
   return reportPath;
 }
 
@@ -287,20 +294,37 @@ function scan(projectName, scenario, planPath, token = "") {
     scanError = error;
   }
   const reportPath = path.join(reportDirectory, scenario.reportName);
-  if (existsSync(reportPath) && process.platform !== "win32") {
+  let reportReady = process.platform === "win32" && existsSync(reportPath);
+  let reportPermissionError;
+  if (process.platform !== "win32") {
     // ZAP creates reports as UID 1000. Normalize the bind-mounted file from a
     // short-lived root container so the host runner can sanitize and upload it.
+    // Do not use host-side existsSync here: an unreadable parent/file can make
+    // it return false even though the report is present inside the mount.
     const normalizeReportArgs = [
       "run", "--rm", "--user", "0:0",
       "--volume", `${dockerPath(reportDirectory)}:/zap-reports:rw`,
       "--entrypoint", "/bin/sh", image, "-c",
-      `chmod 0644 '/zap-reports/${scenario.reportName}' && test -r '/zap-reports/${scenario.reportName}'`,
+      `if [ -f '/zap-reports/${scenario.reportName}' ]; then chmod 0644 '/zap-reports/${scenario.reportName}' && printf 'DAST_REPORT_PERMISSION_NORMALIZED\\n'; else printf 'DAST_REPORT_NOT_FOUND\\n' >&2; exit 1; fi`,
     ];
-    run("docker", normalizeReportArgs, { env, timeoutMs: 30_000 });
+    try {
+      run("docker", normalizeReportArgs, { env, timeoutMs: 30_000 });
+      reportReady = true;
+    } catch (error) {
+      reportPermissionError = error;
+    }
   }
-  if (existsSync(reportPath)) sanitizeAndPreserveReport(scenario, token);
+  let preservedReportPath;
+  if (reportReady) {
+    try {
+      preservedReportPath = sanitizeAndPreserveReport(scenario, token);
+    } catch (error) {
+      if (!scanError) scanError = error;
+    }
+  }
   if (scanError) throw scanError;
-  return sanitizeAndPreserveReport(scenario, token);
+  if (reportPermissionError) throw reportPermissionError;
+  return preservedReportPath || sanitizeAndPreserveReport(scenario, token);
 }
 
 function cleanupZapContainer(containerName) {
