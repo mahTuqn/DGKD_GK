@@ -41,3 +41,24 @@ test("[TC-OPS-01] current Compose images serve a complete browser booking journe
   await expect(page.getByRole("heading", { name: "Vé của bạn" })).toBeVisible();
   await expect(page.getByTestId("ticket-card").first()).toBeVisible();
 });
+
+test("[TC-SEC-28] login rate limiting ignores forged X-Forwarded-For through Nginx", async ({ request }) => {
+  test.skip(process.env.E2E_COMPOSE_SMOKE !== "true" || process.env.GITHUB_ACTIONS !== "true", "This proxy-hop smoke runs only against the isolated current-source Compose stack in GitHub Actions.");
+
+  const apiBaseUrl = process.env.E2E_API_URL ?? "http://127.0.0.1:8080/api";
+  for (let attempt = 1; attempt <= 10; attempt += 1) {
+    const response = await request.post(`${apiBaseUrl}/auth/login`, {
+      data: {},
+      headers: { "X-Forwarded-For": `198.51.100.${attempt}` }
+    });
+    expect(response.status(), `forged forwarded address ${attempt}`).toBe(422);
+    expect((await response.json()).error).toBe("VALIDATION_ERROR");
+  }
+
+  const blockedLogin = await request.post(`${apiBaseUrl}/auth/login`, {
+    data: {},
+    headers: { "X-Forwarded-For": "198.51.100.99" }
+  });
+  expect(blockedLogin.status()).toBe(429);
+  expect((await blockedLogin.json()).error).toBe("AUTH_RATE_LIMITED");
+});

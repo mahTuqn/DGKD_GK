@@ -1,0 +1,93 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "recordedAt": "2026-10-29",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "commit": "3357978eb2a0aa48bcc3fc39b225bf72c2244235",
+  "branch": "codex/cross-browser-smoke",
+  "overall": "PASS_EXACT_SOURCE_CI_WITH_DOCUMENTED_LIMITATIONS",
+  "runs": {
+    "qualityDastDomainAndCompose": {
+      "id": 40788685167,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40788685167",
+      "result": "PASS",
+      "duration": "14m 33s",
+      "traceability": {
+        "result": "PASS",
+        "testCases": 91,
+        "requirements": 26
+      },
+      "quality": {
+        "result": "PASS",
+        "verifiedSteps": [
+          "secret and dependency scans",
+          "database generation, migrations and seed",
+          "OpenAPI lint and traceability",
+          "API/PostgreSQL integration including TC-SEC-27 direct-listener X-Forwarded-For spoofing regression",
+          "live five-minute hold expiry over HTTP",
+          "two-worker five-minute soak and graceful restart",
+          "production build",
+          "Chromium desktop and Pixel 7 browser suites"
+        ],
+        "browserArtifact": {
+          "name": "cinema-booking-browser-results-3357978eb2a0aa48bcc3fc39b225bf72c2244235",
+          "sizeDisplay": "330 KB",
+          "digest": "sha256:74436404e815eb6e1640580dcfb5285c7dcb31a7e68a934a9f7cfd134d1f06f1"
+        }
+      },
+      "composeRuntimeBrowserSmoke": {
+        "result": "PASS",
+        "testCase": "TC-OPS-01",
+        "scope": "Built and seeded the isolated PostgreSQL/migration/API/worker/web Compose stack, passed health checks, and completed the Chromium registration, hold, order, demo-payment and ticket journey through the web image.",
+        "artifact": {
+          "name": "cinema-booking-compose-browser-results-3357978eb2a0aa48bcc3fc39b225bf72c2244235",
+          "sizeDisplay": "194 KB",
+          "digest": "sha256:f9ffe015eb921f6823546539fdf8da2f3f62fed703d5850708a9d99c502c4013"
+        }
+      },
+      "domainCoverageAndMutation": {
+        "result": "PASS",
+        "mutationScore": "82.89%",
+        "threshold": "70%",
+        "killed": 155,
+        "survived": 32,
+        "scope": "Stryker selection is limited to tests/domain.test.ts.",
+        "artifact": {
+          "name": "cinema-booking-domain-quality-3357978eb2a0aa48bcc3fc39b225bf72c2244235",
+          "sizeDisplay": "141 KB",
+          "digest": "sha256:03af4738bd1844e082a3e4fade6688b1d34adffec1c54753801c242e9f2c5bad"
+        }
+      },
+      "dast": {
+        "result": "PASS_WITHIN_CONFIGURED_HIGH_ALERT_GATE",
+        "findingDetailsReviewed": false,
+        "severityCounts": "Not independently reviewed; no counts or zero-finding claim made.",
+        "artifact": {
+          "name": "cinema-booking-dast-reports-3357978eb2a0aa48bcc3fc39b225bf72c2244235",
+          "sizeDisplay": "6.31 KB",
+          "digest": "sha256:2f6ef819dde9944b18e60e4a5f9a9acde6414bebcdf756c0485d7ff61e1ac8e0"
+        }
+      }
+    },
+    "crossBrowser": {
+      "id": 40784545596,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40784545596",
+      "result": "PASS_IMPLEMENTATION_EQUIVALENT_SOURCE",
+      "scope": "Firefox and WebKit desktop smoke; commit 3357978 adds tests/documentation only and does not change application implementation."
+    }
+  },
+  "environment": {
+    "runner": "GitHub Actions clean checkout",
+    "applicationEnvironment": "Local Docker Compose only; no staging URL was provided"
+  },
+  "notMeasured": [
+    "TC-SEC-28, added after this run to exercise spoofed X-Forwarded-For through actual Nginx/API Compose hop",
+    "Manual WCAG 2.2 AA, screen-reader, contrast, zoom/reflow, orientation and full keyboard review; requester will perform the checklist",
+    "Performance validation on named staging or production",
+    "Detailed DAST findings and exhaustive ASVS/API Top 10 and BOLA review",
+    "Production behavior, backup schedule, PITR, RPO/RTO and production restore",
+    "Reliability soak longer than 15 minutes on this exact source commit",
+    "Real payment gateway/refund, outside the SRS"
+  ],
+  "scopeNote": "All jobs passed for exact commit 3357978. TC-SEC-27 passed; TC-SEC-28 was added after this commit and requires a later exact-source run. DAST report metadata is recorded, but severity counts and individual alert details were not independently inspected. Cross-browser smoke is on implementation-equivalent source because 3357978 changes tests and documentation only. This does not establish manual WCAG conformance or staging/production readiness."
+}

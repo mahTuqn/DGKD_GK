@@ -1,6 +1,14 @@
 # Báo cáo tổng hợp kiểm thử
 
-## Current exact-source CI result — `b84ba70` — 29/10/2026
+## Latest exact-source CI result — `3357978` — 29/10/2026
+
+Commit `3357978eb2a0aa48bcc3fc39b225bf72c2244235` passed every job in [quality + DAST + Compose run 40788685167](https://github.com/mahTuqn/DGKD_GK/actions/runs/40788685167). Traceability passed at **91 cases / 26 requirements**; API integration, live HTTP expiry, two-worker five-minute soak/restart, build, Chromium desktop/Pixel 7, Compose full-stack/browser smoke, domain coverage/mutation and the configured DAST High-alert gate all passed. TC-SEC-27 verifies the login rate limit counts direct API requests despite changing forged `X-Forwarded-For` headers. Mutation score was **82.89% (155 killed/32 survived)** against the 70% gate.
+
+The workflow generated current-run artifacts; names, sizes, digests and non-measured scope are in the [3357978 evidence manifest](evidence/followup/2026-10-29-github-actions-3357978.json). Detailed DAST alerts and severity counts were not independently reviewed, so no zero-finding claim is made. The Firefox/WebKit smoke from run 40784545596 remains relevant because commit 3357978 only changes tests and documentation, not application implementation.
+
+The current workspace adds TC-SEC-28, a request path through the real Compose Nginx/API hop, and its test/evidence status is pending the next exact-source CI run. Manual WCAG review remains with the requester; no staging environment is available.
+
+## Previous exact-source CI result — `b84ba70` — 29/10/2026
 
 Commit `b84ba704398a91d12cdca9abfd0657d40cadefc0` passed all jobs in [quality + DAST run 40784545588](https://github.com/mahTuqn/DGKD_GK/actions/runs/40784545588); [cross-browser run 40784545596](https://github.com/mahTuqn/DGKD_GK/actions/runs/40784545596) also passed. Traceability passed at **90 cases/26 requirements**. The API/browser quality job, full Compose runtime/browser smoke, domain coverage/mutation, DAST gate, Firefox and WebKit smoke all passed.
 
@@ -24,7 +32,7 @@ The requester will perform the manual WCAG 2.2 AA/screen-reader checklist. No st
 
 Phạm vi bao gồm browser recovery khi payment đã commit nhưng response bị mất, retry idempotent một order/one ticket; API ownership/mass-assignment cases; Customer denial trên đủ 18 route Admin; và Staff chuyển Cinema A→B với token cũ bị thu hồi, quyền check-in chỉ chuyển sang rạp mới. Đây là mock payment và kiểm thử tự động trong các scope đã nêu, không phải chứng nhận cổng thanh toán thật, WCAG hay security toàn diện.
 
-## Current automated coverage follow-up — `b84ba70`
+## Automated coverage follow-up — `b84ba70`
 
 Traceability passes for 90 test cases across 26 requirements. Browser accessibility checks cover the guest-login modal stacked over seat selection, Staff scan success/error announcements, and the payment-success/QR dialog. API regressions cover concurrent identical signed webhooks, inactive-cinema auditorium creation, catalog/seat BOPLA, Admin self-demotion and inactive-cinema assignment, exact Admin-user response fields, and malformed/unknown QR scans. These cases pass in current-source CI.
 
