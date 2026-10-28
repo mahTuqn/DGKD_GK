@@ -1,0 +1,83 @@
+{
+  "capturedAt": "2026-10-28T05:04:06+07:00",
+  "project": "CinemaBooking QA",
+  "branch": "codex/phase8-clean-clone",
+  "sourceState": "Uncommitted working-tree follow-up; no commit or push was made.",
+  "recovery": {
+    "previousFailure": "Docker Desktop 4.88.0 backend aborted startup while removing an inaccessible AF_UNIX runtime socket with Windows error 1920.",
+    "actions": [
+      "Stopped Docker Desktop through its CLI and confirmed the docker-desktop WSL distribution was stopped.",
+      "Renamed %LOCALAPPDATA%/Docker/run to %LOCALAPPDATA%/Docker/run.codex-preserved-20261028-01 after confirming it contained only dockerInference and sailor-ingest.sock.",
+      "Preserved both socket entries in the renamed directory; Docker created a new runtime directory on startup."
+    ],
+    "dockerDataVhdxUntouched": true,
+    "volumesDeleted": false,
+    "factoryResetRun": false,
+    "installedPostgreSqlServiceStopped": false
+  },
+  "dockerRuntime": {
+    "desktopVersion": "4.88.0.237115",
+    "engineVersion": "29.7.2",
+    "dockerInfo": {
+      "containers": 30,
+      "images": 63
+    },
+    "projects": {
+      "dgkd_gk": "PostgreSQL, API, web and worker running; PostgreSQL/API/web healthy; migration container exited 0.",
+      "cinema-qa": "PostgreSQL, API, web and worker running; PostgreSQL/API/web healthy; migration container exited 0."
+    },
+    "hostPorts": {
+      "demoWeb": 8080,
+      "demoPostgreSql": 5434,
+      "qaWeb": 8081,
+      "qaPostgreSql": 5435
+    },
+    "demoDatabaseCounts": {
+      "Cinema": 1,
+      "Movie": 3,
+      "User": 3,
+      "Showtime": 4
+    },
+    "demoWebHealth": "GET http://localhost:8080/healthz returned 200 and body ok."
+  },
+  "browserVerification": {
+    "command": "npm run test:browser -- --reporter=json --output=reports/generated/docker-db-local-app-playwright-artifacts",
+    "exitCode": 0,
+    "browserDatabase": {
+      "container": "cinema-qa-postgres-1",
+      "hostPort": 5435,
+      "database": "cinema_browser_docker_20261028_01",
+      "migrationsExitCode": 0,
+      "seedExitCode": 0,
+      "cleanup": "Dropped only this newly created disposable database after the test; the QA and demo databases and volumes were retained."
+    },
+    "applicationSource": "Current uncommitted working-tree API/frontend started by Playwright on the host; database service was PostgreSQL inside the Docker QA stack.",
+    "playwright": {
+      "expected": 40,
+      "passed": 40,
+      "failed": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "durationMs": 147268.813
+    },
+    "artifacts": [
+      {
+        "path": "reports/generated/docker-db-local-app-playwright-results.json",
+        "sha256": "8CC459AD4B1E5610524D7A0E19C6910CB93CAA514FAB4193EC684B3707D4445F"
+      },
+      {
+        "path": "reports/generated/docker-browser-db-deploy-20261028.log",
+        "sha256": "E4939E824ED565197C36BF60C46B8443806CC8F483B1018EAB0249118536A080"
+      },
+      {
+        "path": "reports/generated/docker-browser-db-seed-20261028.log",
+        "sha256": "44CBFB7E798E381305AE52BF4199F3E78594B0FF007273DBC6FDA61C55E1A7C1"
+      }
+    ],
+    "scopeLimit": "This verifies current working-tree browser flows against PostgreSQL in Docker. It does not verify current API/web container images or the Docker/Nginx production preview."
+  },
+  "notRun": [
+    "Docker Compose DAST was not run: the pinned ZAP digest used by the runner was not present locally, and C: had approximately 0.15 GB free; no large image pull/build was started.",
+    "Remote GitHub Actions, manual WCAG/screen-reader review, staging/production, real payment/refund, prolonged reliability soak, PITR/RPO/RTO, and exhaustive ASVS/BOLA review remain open."
+  ]
+}

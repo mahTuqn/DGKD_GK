@@ -1,21 +1,27 @@
 # Báo cáo tổng hợp kiểm thử
 
+## Kết quả working tree mới nhất — 28/10/2026
+
+Sau authVersion hardening, các lượt kiểm tra hiện tại đạt API **28/28 trên 7 Vitest files**, focused authorization **8/8 trên 3 files**, Playwright **40/40** (20 case × Chromium desktop/Pixel 7 mobile), build backend/frontend và OpenAPI lint; traceability đạt **65 test cases/25 requirements**. Các cổng này được chạy thành những lượt riêng. Full `npm test` gần nhất trước authVersion đạt API 26/26, worker-process restart 1/1 và browser 40/40; chưa chạy lại full composite sau thay đổi đó. Mutation 81.82% (153 killed, 34 survived, 0 timeout/error; ngưỡng 70%), `npm audit --audit-level=high` 0 vulnerabilities và live hold TTL 300 giây 1/1 là các bằng chứng từ những lượt trước. Evidence/hash được tổng hợp trong [P0 gap regression manifest](evidence/followup/2026-10-28-local-postgres-p0-gap-regression.json).
+
+Phạm vi bổ sung gồm browser recovery khi payment đã commit nhưng response bị mất, retry idempotent một order/one ticket; API chặn Customer trả tiền cho order người khác không tạo side effect; profile từ chối mass assignment `role`/`assignedCinemaId`; và ma trận đủ 18 route Admin trả 403 với Customer token. Đây là mock payment và local regression, không phải chứng nhận cổng thanh toán thật hay DAST.
+
 ## Frozen baseline — commit `2be2d911c635cbdbe810bd4f77eca71b73928d1f`
 
-Các số liệu dưới đây thuộc commit frozen baseline và clean clone của commit đó. Chúng không bao gồm các thay đổi worker/Docker/browser bổ sung sau này.
+Các số liệu trong bảng dưới đây thuộc commit frozen baseline và clean clone của commit đó. Chúng không bao gồm các thay đổi worker/Docker/browser bổ sung sau này.
 
 | Cổng | Kết quả | Phạm vi/evidence |
 |---|---|---|
 | API, unit và PostgreSQL integration | Đạt: 17/17 trên 4 Vitest files | `npm test`; gồm API auth/RBAC/profile, concurrency 100 request, expiry/late webhook, order retry/payment, schedule buffer, Staff cinema scope, database uniqueness và callback idempotency |
 | Browser E2E | Đạt: 24/24 | 12 case × Chromium desktop + Pixel 7; gồm `TC-E2E-11` kiểm tra markup do Admin nhập được render như text; report `reports/generated/playwright-results.json` |
-| Accessibility | Đạt trong scope tự động | Axe 0 serious/critical ở discovery, seat map và checkout; keyboard/focus đến checkout pass; manual review và screen coverage còn thiếu |
+| Accessibility | Đạt trong scope tự động | Lượt local mới nhất axe pass ở discovery, login dialog, seat map, checkout, ticket và Admin; keyboard/focus đến checkout pass; manual WCAG/screen-reader review còn thiếu |
 | Build | Đạt | `npm run build`; backend TypeScript/Prisma và frontend TypeScript/Vite; log `reports/generated/final-build-results.log` |
 | OpenAPI lint/CI | Đạt theo lần chạy cuối của nhóm | `npm run lint:openapi`; Redocly không có warning; gate đã được thêm vào CI. Lint kiểm tra tài liệu/schema, không thay thế contract test runtime trên toàn bộ endpoint |
-| CI workflow configuration | Đã cấu hình; remote run chưa có | `ci.yml` gọi Gitleaks Action v3 cùng Gitleaks v8.30.1, Node 24, audit moderate, OpenAPI lint, traceability và test/build gates; GitHub Actions chưa được chạy trên remote |
+| CI workflow configuration | Đã cấu hình; remote run chưa có | `ci.yml` chạy Gitleaks v8.30.1, audit, OpenAPI/traceability, API/browser/build gates và DAST trong job Docker 60 phút riêng; browser và DAST reports upload thành artifacts. YAML parse đạt; GitHub Actions remote chưa chạy |
 | Coverage | Đạt | Domain 100% lines (35/35), branches (47/47), functions (14/14); 13 test domain; ngưỡng 90% line/80% branch |
 | Mutation | Đạt | Stryker 81.82%, 153 killed, 34 survived, 0 timeout/error; ngưỡng 70% |
 | Performance | Đạt trên local baseline, chưa phải staging | k6 50 VU/5 phút; showtime p95 27.57ms, hold p95 349.70ms, unexpected error 0%; ngưỡng lần lượt ≤500ms, ≤800ms, <1% |
-| Security scan | Không có Critical/High trong phạm vi quét; còn alert Low cần triage | ZAP unauth API: H/M/L 0, Info 1; auth API: H/M 0, Low 1 (confidence thấp), Info 1; built preview: H/M/L 0, Info 1. Chi tiết ở `docs/05-bug-reports.md` |
+| Security scan | Historical reports có kết quả; authenticated gate chưa xác minh | ZAP unauth API: H/M/L 0, Info 1; report auth cũ: H/M 0, Low 1 (confidence thấp), Info 1; built preview: H/M/L 0, Info 1. Authenticated config cũ thiếu auth method/user/header nên không chứng minh request đã đăng nhập; cần rerun. Chi tiết ở `docs/05-bug-reports.md` |
 | Dependency audit | Đạt | `npm audit --audit-level=moderate`: 0 vulnerabilities |
 | Backup/restore rehearsal | Đạt: 27/10/2026 13:55 +07 | PostgreSQL 17 custom dump, restore vào UTF8 database từ `template0`; verify cinema=8, movie=3, user=153, showtime=4; artifact `reports/generated/recovery/restore-rehearsal.json` |
 | Traceability | Đạt: 40 test cases/24 requirements | `npm run qa:trace` PASS. Validator kiểm tra test ID markers trên source `.ts/.js/.mjs/.yaml/.yml`, hỗ trợ prefix `Automated`; marker trong hai ZAP config được resolve |
@@ -31,7 +37,7 @@ Các phép đo unit/coverage, hiệu năng, ZAP và Gitleaks dùng fixture/histo
 - HTTP/PostgreSQL integration: auth/RBAC/profile, schedule overlap/buffer, hold limit/race/expiry, price snapshot/order retry, payment idempotency/late callback/revenue, admin và staff scope; unique seat claim và callback đồng thời trong DB.
 - Domain: 13 test; timezone, deadline, pricing, unique seat IDs, occupancy/input boundaries và bốn fixed-seed property tests.
 - Performance: 50 virtual users trong năm phút với backend build và PostgreSQL 17 riêng trên máy local.
-- Security: ZAP OpenAPI-driven unauthenticated/authenticated API scans và active scan trên frontend production preview; dữ liệu scanner nằm trong disposable database.
+- Security: ZAP unauthenticated API và frontend preview có historical evidence; report API được gọi authenticated chưa thể tái lập từ config cũ nên chưa tính là đã xác minh; cần rerun trên database DAST riêng.
 - Backup/restore: PostgreSQL custom-format dump được khôi phục vào UTF8 database rồi kiểm tra counts; dump giữ trong gitignored `reports/generated/recovery/`.
 
 ## Lỗi đã sửa và quan sát bảo mật
@@ -39,14 +45,14 @@ Các phép đo unit/coverage, hiệu năng, ZAP và Gitleaks dùng fixture/histo
 - `BUG-001` — Payment success làm mất modal khi `hold=null`; đã sửa và retest browser flow.
 - `BUG-002` — Axe tìm accessible name không khớp nội dung ở logo/áp phích; đã sửa, axe không còn serious/critical ở các màn đã quét.
 - `BUG-003` — CSP chặn React Refresh inline preamble trong Vite dev; đã giới hạn CSP vào built preview và chuyển E2E header check sang preview. Retest browser suite đạt 24/24.
-- `SEC-OBS-01` — ZAP authenticated scan lưu payload script vào trường cinema rồi thấy lại trong JSON. Alert Low/Low confidence do JSON không phải HTML; `TC-E2E-11` pass và xác nhận Admin UI render markup như text, không tạo node `img/script`. Alert không tái hiện thành thực thi script trong UI đã kiểm tra; API JSON consumers khác vẫn phải escape nội dung.
+- `SEC-OBS-01` — Historical ZAP report ghi nhận payload script trong JSON cinema. Config auth cũ không khai báo credentials/header nên trạng thái đăng nhập của phiên tạo report chưa được xác minh. `TC-E2E-11` pass và xác nhận Admin UI render markup như text, không tạo node `img/script`; API JSON consumers khác vẫn phải escape nội dung.
 
 ## Còn thiếu so với kế hoạch
 
-- k6 local Docker QA 50 VU/5 phút đã đạt; chưa chạy staging, soak hoặc reliability test đa instance.
+- k6 local Docker QA 50 VU/5 phút đã đạt; TC-WORKER-04 xác nhận hai Prisma client độc lập xử lý một event đúng một lần trên PostgreSQL. Chưa chạy process-level worker soak/multi-instance hoặc staging.
 - Browser suite hiện bao phủ payment failure và lost-seat conflict; vẫn chưa chờ integration thực quanh TTL năm phút.
-- ZAP scan scope hữu hạn; cần xác minh `SEC-OBS-01`, mở rộng review BOLA/IDOR ra mọi object/role và checklist ASVS/API Top 10. Một ZAP pass không chứng minh ứng dụng an toàn toàn diện.
-- Accessibility chưa có manual WCAG 2.2 AA review; axe chưa quét riêng login, ticket, admin.
+- Authenticated ZAP cần rerun với disposable Admin token và preflight trả 200; sau đó xác minh `SEC-OBS-01`, mở rộng review BOLA/IDOR ra mọi object/role và checklist ASVS/API Top 10. Một ZAP pass không chứng minh ứng dụng an toàn toàn diện.
+- Accessibility chưa có manual WCAG 2.2 AA/screen-reader review. Lượt local mới nhất đã thêm axe cho login dialog, ticket và Admin, ngoài discovery, seat map, checkout.
 - Restore rehearsal không đánh giá lịch backup, PITR, RPO/RTO hay production restore. Reconciliation có integration test; Docker worker expiry/restart catch-up smoke pass; soak và gateway timeout còn thiếu.
 - Không có hazard analysis; safety chưa đánh giá. Payment vẫn là mock, không phải cổng thanh toán thật.
 
@@ -78,8 +84,99 @@ Tại thời điểm snapshot 27/10, clean clone và scan history trên delta m�
 | Gitleaks history scan | Đạt | Gitleaks v8.30.1 quét 5 commits, không phát hiện leak; `reports/generated/final-gitleaks.json` |
 | Hash manifest | Đạt | [Follow-up manifest](evidence/followup/2026-10-28-manifest.json) liệt kê SHA-256 của 20 artifact logs/reports |
 
-Đây là kiểm chứng local cho commit đã nêu. ZAP chưa chạy lại trên delta mới; worker soak/multi-instance, staging/production, manual WCAG review, backup schedule/PITR/RPO/RTO, gateway thật và exhaustive ASVS/BOLA review chưa được thực hiện.
+Đây là kiểm chứng local cho commit đã nêu. ZAP chưa chạy lại trên delta mới; audit cho thấy authenticated plan cũ thiếu cấu hình auth nên report authenticated lịch sử chưa xác nhận trạng thái đăng nhập. Worker soak/multi-instance, staging/production, manual WCAG review, backup schedule/PITR/RPO/RTO, gateway thật và exhaustive ASVS/BOLA review chưa được thực hiện.
+
+## Rerun working tree với PostgreSQL tạm — 28/10/2026
+
+Trên working tree sau commit baseline `b03c99a917d5fd328dd08744fdd81bde2f7265ca`, `npm test` đạt API 21/21 trên 6 Vitest files và Playwright 28/28 (14 case × Chromium desktop + Pixel 7 mobile), không flaky/skip. Cluster PostgreSQL 17.11 mới được tạo riêng và bind loopback tại port 55432; không dùng Docker hoặc database của PostgreSQL service hiện hữu. Bổ sung `TC-WORKER-03` kiểm tra biên expiry chính xác: hold hết hạn tại `boundaryAt`, còn hiệu lực tại `boundaryAt + 1 ms`. Axe pass ở discovery, login dialog, seat map, checkout, ticket và Admin; title của QR SVG đã được bổ sung để sửa lỗi axe. `npm run build`, `npm run qa:trace` (46 test cases/25 requirements), kiểm tra cú pháp DAST runner và `git diff --check` đều đạt. Chi tiết lệnh, môi trường, thời lượng, artifact hash và giới hạn ở [rerun manifest](evidence/followup/2026-10-28-local-postgres-rerun.json). Đây không phải Docker/clean-clone/ZAP run.
 
 ## Trạng thái Docker Desktop — 28/10/2026
 
 Trong lần thử chạy lại ZAP trên QA, active scan bị treo; sau khi dừng, Docker Desktop không khởi động lại được và báo Windows error 1920 khi mở các AF_UNIX socket tại `%LOCALAPPDATA%\Docker\run\sailor-ingest.sock` và `%LOCALAPPDATA%\docker-secrets-engine\engine.sock`. Engine hiện dừng, PostgreSQL port 5434 không lắng nghe nên trạng thái database demo chưa thể xác minh. Docker data disk VHDX còn tồn tại; không có lệnh xóa volume hoặc factory reset chạy. Các lần test pass ở trên vẫn là evidence hợp lệ tại thời điểm ghi trong manifest, nhưng không chứng minh container đang chạy sau sự cố.
+
+## Expanded final local rerun — 28/10/2026
+
+Sau khi bổ sung E2E-14/15, TC-WORKER-04 và keyboard assertions cho E2E-02, full suite trên working tree đạt API 22/22 (6 Vitest files) và browser 32/32 (16 case × Chromium desktop + Pixel 7 mobile), không fail/skip/flaky. Trong quá trình mở rộng, axe tìm thấy `label-content-name-mismatch` trên poster fallback do Admin tạo; BUG-004 đã được sửa bằng tên nút lấy từ nội dung poster hiển thị. TC-E2E-02/08 và keyboard focus assertions đạt trên cả hai project; axe trong full suite pass discovery, login, seat map, checkout, ticket, Admin. TC-WORKER-03 kiểm tra expiry đúng tại deadline và còn hiệu lực tại +1 ms; TC-WORKER-04 xử lý đồng thời qua hai Prisma client và xác nhận event/case chỉ xuất hiện một lần.
+
+Build, OpenAPI lint và traceability đều đạt; trace 49 test cases/25 requirements. Báo cáo browser JSON và SHA-256 của các log nằm trong [multi-instance local PostgreSQL manifest](evidence/followup/2026-10-28-local-postgres-multi-instance.json). Cluster PostgreSQL tạm chỉ bind `127.0.0.1:55432`; đây không phải Docker/clean-clone/staging run. Docker Desktop còn dừng nên DAST/ZAP và demo DB không được xác minh trong lượt này; remote GitHub Actions, manual WCAG, process-level soak, gateway thật, PITR/RPO/RTO và exhaustive ASVS/BOLA review vẫn mở.
+
+## Process-level worker soak/restart và full rerun — 28/10/2026
+
+TC-WORKER-05 chạy hai worker loop có PID độc lập trong 60 giây trên database riêng `cinema_worker_process_test`, với interval 250ms. Test nạp event ban đầu và thêm sáu event định kỳ; tất cả được `PROCESSED` một lần và tạo đúng một case/event. Hai worker dừng graceful; sau đó test nạp event mới và khởi chạy worker thay thế, xác nhận event được bắt kịp và process thoát mã 0. Đây là soak/restart rehearsal local có thời lượng 60 giây; chưa chứng minh tải dài hạn, crash cưỡng bức, HA hay production reliability.
+
+Full `npm test` sau thay đổi soak/restart đạt API 22/22 trên 6 files, TC-WORKER-05 1/1 và browser 32/32 (16 case × Chromium desktop/Pixel 7 mobile), không fail/skip/flaky. Build, OpenAPI lint và traceability 50 test cases/25 requirements đã đạt; workflow CI parse được và đã cấu hình tạo DB process riêng, migrate rồi chạy soak sau API suite. Manifest và SHA-256 nằm trong [worker process manifest](evidence/followup/2026-10-28-local-postgres-worker-process.json). Kết quả local không phải remote Actions hay Docker. Docker Desktop vẫn dừng nên DAST/ZAP chưa chạy; prolonged production soak, manual WCAG/screen-reader, staging/production, gateway/refund thật, PITR/RPO/RTO và exhaustive ASVS/BOLA vẫn còn mở.
+
+## Live hold-expiry, accessibility states và full regression — 28/10/2026
+
+`TC-WORKER-03` live HTTP rehearsal tạo hold TTL đúng 300 giây trên database riêng. Trước deadline, hold vẫn `HELD`, seat map hiện ghế đang giữ và Customer thứ hai nhận 409. Sau deadline, worker thực sự ghi `SeatHold=EXPIRED`, xóa liên kết và expiry trên `SeatClaim`, ghi đúng một `SEAT_HOLD_EXPIRED` audit; seat map trả `AVAILABLE`, rồi Customer thứ hai giữ cùng ghế thành công. Test đạt 1/1 trong 301.60 giây; đây là local timing rehearsal, không phải prolonged production soak.
+
+Accessibility suite thêm TC-E2E-16/17/18: trường và validation đăng ký, thông báo live alert cho email trùng/đăng nhập sai, accessible names của Admin movie/auditorium/seat details và axe trên dialog/Admin. Qua đó phát hiện nội dung `humanError()` gán mọi 409 cho xung đột ghế và mọi 401 cho phiên hết hạn. Đã sửa server trả mã `EMAIL_TAKEN` cho unique conflict khi đăng ký và frontend chọn copy theo mã lỗi; API integration cùng browser assertions kiểm tra nội dung mới.
+
+Full `npm test` mới nhất trên PostgreSQL 17.11 biệt lập đạt API **25/25 trên 7 Vitest files**, worker process soak/restart **1/1**, browser **40/40** (20 case × Chromium desktop/Pixel 7 mobile), không fail/skip/flaky. Traceability đạt **57/25**. `TC-WORKER-03` live HTTP test riêng đạt **1/1 trong 301.60 giây**: trước hạn ghế vẫn HELD/409; sau worker sweep hold và claim EXPIRED, có đúng một audit, seat map AVAILABLE và khách thứ hai giữ được ghế. Build, OpenAPI, CI YAML và diff checks đều pass; manifest regression liệt kê log và SHA-256.
+
+Gitleaks v8.30.1 quét 7 commit và 18 mục mã nguồn/cấu hình/tài liệu trong working tree, không phát hiện leak. Quét toàn thư mục ban đầu chỉ tìm thấy 198 JWT-rule matches trong ba báo cáo kiểm thử thuộc `reports/generated` (được Git ignore); phạm vi và kết quả đã ghi ở [Gitleaks evidence](evidence/followup/2026-10-28-gitleaks-current-working-tree.json) và current regression manifest.
+
+Sau khi mở rộng `TC-E2E-11`, full `npm test` rerun đạt API 25/25 trên 7 files, worker-process 1/1 và browser 40/40 desktop/mobile, không fail/skip/flaky.
+
+Native ZAP 2.17.0 đã chạy đủ ba scope trên working tree bằng PostgreSQL tạm riêng và built Vite preview. API unauthenticated xác nhận 401; authenticated Admin xác nhận 200 và chạy active scan với hostname-only filter; Vite preview spider tìm 13 URL. Không có High/Medium; authenticated report có một cảnh báo Low-confidence/Low-risk về `name/city/address` được trả lại trong JSON. `TC-E2E-11` mở rộng kiểm tra cả ba trường hiển thị như text, không tạo DOM node `img/script/svg`, đạt 2/2 desktop/mobile và full suite pass. Preview có một informational false positive do chuỗi `http://www.w3.org/2000/svg` trong JS minified. ZAP requestor check cũng phát hiện và sửa lỗi `api:4000` không khớp hostname-only filter trong runner. Evidence là [native ZAP DAST report summary](evidence/followup/2026-10-28-native-zap-dast.json).
+
+Docker Desktop vẫn dừng; vì vậy Compose DAST, demo database/container và remote GitHub Actions chưa được xác minh. Native scan không thay thế kiểm tra Docker/Nginx image. Manual WCAG/screen-reader, staging/production, gateway/refund, prolonged reliability soak, PITR/RPO/RTO và exhaustive ASVS/BOLA review vẫn là giới hạn còn lại.
+
+## Focused authorization follow-up — 28/10/2026
+
+Thêm `TC-SEC-07` cho trường hợp Customer B gửi `holdId` thuộc Customer A vào `POST /api/orders`. Test xác nhận `404 HOLD_NOT_FOUND`, không trả dữ liệu order và không làm đổi hold, order, payment, claim hoặc audit. Ở snapshot ban đầu, focused authorization suite đạt 6/6 trên ba file; một lần chạy narrow suite sau đó đạt 8/8. Cả hai kết quả đều có trước ma trận mở rộng hiện tại và không phải exhaustive BOLA/IDOR review.
+
+## Full rerun sau team follow-up — 28/10/2026
+
+Sau khi bổ sung `TC-SEC-07`, mở rộng `TC-E2E-15` để sửa tên phòng và kiểm tra persistence, đồng thời thêm Enter/Tab/focus-outline assertions cho Admin disclosure trong `TC-E2E-18`, full `npm test` đạt **API 26/26 trên 7 files, worker-process 1/1, browser 40/40** trên Chromium desktop và Pixel 7 mobile, không fail/skip/flaky. Traceability tại snapshot đó là **58/25**; một focused authorization suite hẹp hơn đạt 8/8 trong lượt riêng, TC-E2E-15 2/2 và TC-E2E-18 2/2. PostgreSQL 17.11 chạy trong database cluster tạm biệt lập `127.0.0.1:55434`; không dùng Docker hay PostgreSQL service. Full test log và Playwright JSON được tạo lại trong `reports/generated/`. Kết quả authorization 8/8 là của suite trước ma trận role/object/cinema mở rộng hiện tại.
+
+Docker Desktop vẫn không lên: lần thử launch tự dừng ở Windows error 1920 do reparse point `%LOCALAPPDATA%\Docker\run\sailor-ingest.sock` không truy cập được; Docker API không kết nối. Không xóa volume/reset Docker. Chi tiết ở [Docker Desktop blocker evidence](evidence/followup/2026-10-28-docker-desktop-blocker.json). Compose demo DB/DAST, remote GitHub Actions, manual WCAG/screen-reader, staging/production, gateway/refund thật, prolonged reliability soak, PITR/RPO/RTO và exhaustive ASVS/BOLA tiếp tục chưa xác minh.
+
+## Docker runtime recovery and browser run using Docker PostgreSQL — 28/10/2026
+
+Docker Desktop 4.88.0 / Engine 29.7.2 đã lên lại sau khi thư mục socket lỗi được đổi tên và giữ nguyên dưới `%LOCALAPPDATA%\Docker\run.codex-preserved-20261028-01`. `dgkd_gk` demo và `cinema-qa` QA stack hiện chạy; PostgreSQL healthy ở `localhost:5434` và `localhost:5435`, web healthcheck pass ở cổng 8080/8081. Database demo query được (1 cinema, 3 movies, 3 users, 4 showtimes). VHDX, volumes và PostgreSQL service của máy không bị xóa/dừng.
+
+Đã tạo database test riêng trong `cinema-qa-postgres-1`, chạy migrations và seed (cả hai exit 0), rồi chạy Playwright với API/frontend current working tree trên host và PostgreSQL trong Docker. Kết quả **40/40 pass**, không fail/skip/flaky, exit 0; database tạm được drop sau test. Report: `reports/generated/docker-db-local-app-playwright-results.json`; hashes và scope ở [Docker recovery evidence](evidence/followup/2026-10-28-docker-runtime-recovery-browser.json). Đây chưa kiểm tra image API/web hoặc Nginx mới.
+
+Compose DAST chưa chạy vì pinned ZAP image chưa có local và ổ C chỉ còn khoảng 0.15 GB; tránh pull/build thêm image khi thiếu dung lượng. Remote GitHub Actions, manual WCAG/screen-reader, staging/production, gateway/refund thật, prolonged soak, PITR/RPO/RTO và exhaustive ASVS/BOLA vẫn là cổng mở.
+
+## Docker Compose DAST interruption and current runtime state — 28/10/2026
+
+Sau khi giải phóng dung lượng và dùng ZAP image local theo digest, Compose DAST đã build image API/seed riêng, migrate/seed thành công, import 35 URL từ OpenAPI và bắt đầu active scan. Không có report pass: Docker Engine trả HTTP 500 ở API `/containers/json`; dừng scan tạm vì host còn 0.44 GB RAM khả dụng và hai web port bắt đầu timeout. Cleanup của project DAST cũng không hoàn tất; runner được đặt `DAST_KEEP_VOLUMES=1`, không gọi `down --volumes`. Trạng thái resource test tạm chưa thể kiểm kê khi Engine lỗi.
+
+Thử `docker desktop restart` thất bại do các tiến trình còn chạy và `context deadline exceeded`. `docker desktop start --detach` được nhận, nhưng lần kiểm tra mới nhất cho thấy WSL distro `docker-desktop` và service `com.docker.service` vẫn `Stopped`; hai port 8080/8081 không kết nối được. Start-Service bị từ chối do phiên hiện tại không có quyền điều khiển service. Windows PostgreSQL `postgresql-x64-17` vẫn `Running`; không xóa/reset volume, factory reset hoặc sửa VHDX. Bằng chứng hiện trạng: [Docker Engine/DAST interruption](evidence/followup/2026-10-28-docker-engine-dast-interruption.json); log: `reports/generated/docker-compose-dast-20261028.log`.
+
+Docker container/image gates tạm thời chưa xác minh được. Sau khi Docker Engine phản hồi lại, `npm run scan:secrets` chạy bằng image v8.30.1 đã pin, quét 7 commit (~830 KB), 0 finding, exit 0. Current working tree cũng pass standalone Gitleaks v8.30.1 đã xác minh checksum trên 25 target source/config/docs, 0 finding. Hai scan này có scope riêng; current-tree scan loại `.git` và `reports/generated`. Evidence: [Gitleaks current-tree/history scans](evidence/followup/2026-10-28-gitleaks-current-working-tree.json). Remote GitHub Actions, manual WCAG/screen-reader, staging/production, gateway/refund thật, prolonged soak, PITR/RPO/RTO và exhaustive ASVS/BOLA vẫn mở.
+
+## Extended worker process soak gate — 28/10/2026
+
+Đã thêm cổng local opt-in TC-WORKER-06: `npm run test:worker-soak` chạy hai worker process trong 300 giây, chèn event mỗi 10 giây, kiểm tra từng event được xử lý một lần, graceful shutdown và worker mới bắt kịp event pending sau restart. Cổng yêu cầu URL PostgreSQL loopback của database riêng đã migrate, tên `cinema_worker_soak` hoặc `cinema_worker_soak_*`; preflight từ chối URL thiếu/remote/tên DB khác. Gate vẫn chưa chạy vì host chưa đạt khoảng trống RAM an toàn 1.5 GiB và chưa có URL database soak riêng. Đây là gate thực thi đã chuẩn bị, chưa phải kết quả pass hay bằng chứng cho staging/production.
+
+## Expanded authorization matrix — historical focused run — 28/10/2026
+
+Current working-tree tests expand the earlier narrow suite with Guest 401 checks for all 27 `requireAuth` routes; Customer and Staff denial across all 18 Admin routes using valid mutation payloads and fixture/audit snapshots; added foreign-order reads and fuller booking/payment side-effect snapshots; and Guest, Customer, wrong-cinema Staff, and unassigned Staff denial assertions for both ticket-ID and QR check-in. RTM/test-case links are recorded under TC-SEC-08 through TC-SEC-11.
+
+The earlier expanded authorization suite passed **7/7 tests across three files** on a loopback-only PostgreSQL cluster at port 55436. That result is historical; the updated current result is recorded below. The temporary server is stopped and verified offline; cleanup of its task-created directory was blocked by environment policy, so `E:\DGKDPM\_codex-authz-20261028-01` remains. The installed Windows PostgreSQL service and Docker databases were not used by that run.
+
+## Authorization route source review and token revocation fix — 28/10/2026
+
+A source review enumerated all **35 Express routes** in `backend/src/app.ts`: 27 require authentication and 18 are Admin-only. It found no missing route-level auth/owner/cinema guard, but did find that OpenAPI promised role changes would invalidate the current token while `requireAuth` ignored the already-maintained `authVersion`. I updated JWT creation and validation to bind each token to the account's current version; role or Staff cinema-assignment changes now invalidate existing tokens. The review also found no positive functional tests for Admin user listing or role updates. Details: [authorization route source review](evidence/followup/2026-10-28-authorization-route-source-review.json).
+
+The source review found a contract mismatch: OpenAPI states role changes invalidate the existing token, but the original middleware ignored `authVersion`. JWT creation and authentication now carry/compare this database version, so both role and Staff cinema-assignment changes invalidate stale tokens. The source review's runtime verification is recorded below. It does not close exhaustive ASVS/BOLA, manual accessibility, staging, or production gates.
+
+## Trạng thái mới nhất sau authVersion hardening — 28/10/2026
+
+- Focused authorization: **8/8** trên 3 files; bao gồm Admin user listing/role update, old-token rejection, refreshed role, và invalidation khi gán/bỏ gán cinema cho Staff. Log `reports/generated/authorization-matrix-20261028.log`; chi tiết tại [authorization evidence](evidence/followup/2026-10-28-local-postgres-authorization-matrix.json).
+- API integration: **28/28** trên 7 files, log `reports/generated/authversion-api-suite-20261028.log`.
+- Browser: **40/40**, không fail/skip/flaky, trên Chromium desktop và Pixel 7 mobile, log `reports/generated/authversion-playwright-20261028.log`; [browser evidence](evidence/followup/2026-10-28-local-postgres-authversion-browser.json).
+- Build backend/frontend, Prisma generate, TypeScript, Vite production build và OpenAPI lint đều pass; traceability **65/25**. Các lượt mới nhất và SHA-256 nằm trong manifest regression.
+- Đây chưa phải một lượt `npm test` tổng hợp sau authVersion: worker-process 1/1 là kết quả của full run trước hardening. Five-minute worker soak chưa chạy.
+- Docker Engine hiện phản hồi v29.7.2; Compose `dgkd_gk` và `cinema-qa` đang chạy, PostgreSQL healthy ở cổng 5434/5435 và truy vấn read-only trên DB demo xác nhận 16 bảng. Một project DAST cũ đã được dọn container/network bằng đúng tên project; volume của nó được giữ nguyên. DAST chưa chạy lại vì host vẫn dưới ngưỡng khoảng 1.5 GiB RAM trống. Gitleaks pass trên history 7 commit và current tree 25 target, đều 0 finding. Full composite `npm test`, clean-clone verification trên frozen commit hiện tại, remote CI, manual WCAG/screen-reader, staging/production, gateway/refund thật, PITR/RPO/RTO và exhaustive ASVS/BOLA còn mở. Chi tiết: [Docker runtime resume evidence](evidence/followup/2026-10-28-docker-runtime-resume.json).
+
+## Security configuration remediation — 28/10/2026
+
+Static review identified public fixed Compose secrets and a missing trusted-proxy setting for login rate limiting. Compose now requires PostgreSQL/JWT/mock-payment secrets, binds web/PostgreSQL to loopback by default, and configures exactly one Nginx proxy hop. Production API startup rejects missing, short, and published development/CI JWT or mock-payment values.
+
+`npm run env:compose` creates an ignored local `.env` once and refuses to overwrite it or generate a new database password when the current Compose project volume already exists.
+
+TC-SEC-13 configuration tests passed **4/4**; backend TypeScript build passed. `docker compose config --quiet` passed with the local ignored environment; the blank `.env.example` was rejected for missing required secrets. Current-tree Gitleaks v8.30.1 scanned 25 explicit source/config/documentation targets with 0 findings. Evidence and raw logs: [production config security follow-up](evidence/followup/2026-10-28-production-config-security.json). Existing demo/QA containers have not yet been recreated with the new Compose configuration; their PostgreSQL volumes were preserved. Full composite `npm test`, current-image/Compose DAST, five-minute worker soak, remote CI, clean-clone-on-final-commit, manual accessibility review, and staging/production gates remain open.

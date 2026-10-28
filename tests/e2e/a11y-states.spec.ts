@@ -1,0 +1,243 @@
+import { expect, test, type Page, type Route } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
+
+const movie = {
+  id: "a11y-movie",
+  slug: "a11y-feature-film",
+  title: "Accessibility Feature Film",
+  genre: "Drama",
+  synopsis: "A fixture movie for accessibility browser checks.",
+  runtimeMinutes: 100,
+  ageRating: "P",
+  posterUrl: null,
+  releaseDate: "2026-01-01",
+  status: "ACTIVE",
+};
+
+const cinema = {
+  id: "a11y-cinema",
+  name: "Accessibility Cinema",
+  city: "Test City",
+  address: "1 QA Street",
+  status: "ACTIVE",
+};
+
+const auditorium = {
+  id: "a11y-auditorium",
+  cinemaId: cinema.id,
+  cinemaName: cinema.name,
+  name: "Accessibility Room",
+  screenType: "STANDARD",
+  seatCount: 2,
+  seats: [
+    { id: "a11y-seat-1", label: "A1", row: "A", column: 1, type: "STANDARD", isAccessible: false },
+    { id: "a11y-seat-2", label: "A2", row: "A", column: 2, type: "ACCESSIBLE", isAccessible: true },
+  ],
+};
+
+const startAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+const endAt = new Date(Date.parse(startAt) + 100 * 60 * 1000).toISOString();
+const showtime = {
+  id: "a11y-showtime",
+  movieId: movie.id,
+  movieTitle: movie.title,
+  cinemaId: cinema.id,
+  cinemaName: cinema.name,
+  city: cinema.city,
+  auditoriumName: auditorium.name,
+  startAt,
+  endAt,
+  date: startAt.slice(0, 10),
+  priceVnd: 85_000,
+  premiumSurchargeVnd: 30_000,
+  screenType: "STANDARD",
+  status: "ACTIVE",
+};
+
+type MockOptions = {
+  loginError?: { status: number; error: string; message: string };
+  registrationError?: { status: number; error: string; message: string };
+};
+
+async function fulfillJson(route: Route, status: number, body: unknown) {
+  await route.fulfill({ status, contentType: "application/json", body: JSON.stringify(body) });
+}
+
+async function mockApi(page: Page, options: MockOptions = {}) {
+  const requests = { login: 0, registration: 0 };
+
+  await page.route("**/api/**", async (route) => {
+    const request = route.request();
+    const { pathname } = new URL(request.url());
+
+    if (request.method() === "GET" && pathname === "/api/movies") {
+      await fulfillJson(route, 200, [movie]);
+    } else if (request.method() === "GET" && pathname === "/api/showtimes") {
+      await fulfillJson(route, 200, [showtime]);
+    } else if (request.method() === "POST" && pathname === "/api/auth/login") {
+      requests.login += 1;
+      const error = options.loginError;
+      await fulfillJson(route, error?.status ?? 401, error ?? { error: "UNAUTHORIZED", message: "Email hoặc mật khẩu không đúng." });
+    } else if (request.method() === "POST" && pathname === "/api/auth/register") {
+      requests.registration += 1;
+      const error = options.registrationError;
+      await fulfillJson(route, error?.status ?? 409, error ?? { error: "EMAIL_TAKEN", message: "Email này đã được đăng ký." });
+    } else if (request.method() === "GET" && pathname === "/api/admin/summary") {
+      await fulfillJson(route, 200, {
+        movies: 1,
+        showtimes: 1,
+        orders: 0,
+        tickets: 0,
+        confirmedRevenueVnd: 0,
+        occupancy: { showtimeCount: 1, soldSeats: 0, capacitySeats: 2, fillRatePercent: 0, definition: "Fixture occupancy." },
+      });
+    } else if (request.method() === "GET" && pathname === "/api/admin/movies") {
+      await fulfillJson(route, 200, [movie]);
+    } else if (request.method() === "GET" && pathname === "/api/admin/cinemas") {
+      await fulfillJson(route, 200, [{ ...cinema, auditoriums: [{ id: auditorium.id, name: auditorium.name, screenType: auditorium.screenType, seatCount: auditorium.seatCount }] }]);
+    } else if (request.method() === "GET" && pathname === "/api/admin/auditoriums") {
+      await fulfillJson(route, 200, [auditorium]);
+    } else if (request.method() === "GET" && pathname === "/api/admin/showtimes") {
+      await fulfillJson(route, 200, [showtime]);
+    } else {
+      await fulfillJson(route, 404, { error: "NOT_FOUND", message: "Unexpected mocked API request." });
+    }
+  });
+
+  return requests;
+}
+
+function seriousAxeViolations(violations: Awaited<ReturnType<AxeBuilder["analyze"]>>["violations"]) {
+  return violations.filter((violation) => ["serious", "critical"].includes(violation.impact ?? ""))
+    .map(({ id, impact, nodes }) => ({ id, impact, targets: nodes.map((node) => node.target), failureSummaries: nodes.map((node) => node.failureSummary) }));
+}
+
+async function expectNoSeriousOrCriticalAxeViolations(page: Page, selector: string) {
+  const result = await new AxeBuilder({ page }).include(selector).analyze();
+  expect(seriousAxeViolations(result.violations)).toEqual([]);
+}
+
+async function openLogin(page: Page) {
+  const desktopButton = page.getByRole("button", { name: "Đăng nhập", exact: true });
+  if (await desktopButton.isVisible()) await desktopButton.click();
+  else await page.getByRole("button", { name: "Mở tài khoản" }).click();
+}
+
+async function tabUntilFocused(page: Page, target: import("@playwright/test").Locator, maxTabs = 80) {
+  for (let index = 0; index < maxTabs; index += 1) {
+    if (await target.evaluate((element) => document.activeElement === element)) return;
+    await page.keyboard.press("Tab");
+  }
+  throw new Error(`Could not reach the expected control using Tab within ${maxTabs} steps.`);
+}
+
+test("[TC-E2E-16] dialog đăng ký có tên trường và trạng thái validation/error dễ tiếp cận", async ({ page }) => {
+  const requests = await mockApi(page, {
+    registrationError: { status: 409, error: "EMAIL_TAKEN", message: "Email này đã được đăng ký." },
+  });
+  await page.goto("/");
+  await expect(page.getByTestId("movie-card").first()).toBeVisible();
+  await openLogin(page);
+  await page.getByRole("button", { name: "Tạo tài khoản mới" }).click();
+
+  const dialog = page.locator(".auth-dialog");
+  await expect(dialog.getByRole("heading", { name: "Tạo tài khoản mới" })).toBeVisible();
+  const name = dialog.getByLabel("Họ và tên");
+  const email = dialog.getByLabel("Email");
+  const password = dialog.getByLabel("Mật khẩu");
+  await expect(name).toHaveAccessibleName("Họ và tên");
+  await expect(email).toHaveAccessibleName("Email");
+  await expect(password).toHaveAccessibleName("Mật khẩu");
+  await expect(name).toHaveAttribute("required", "");
+  await expect(email).toHaveAttribute("required", "");
+  await expect(password).toHaveAttribute("required", "");
+  await expectNoSeriousOrCriticalAxeViolations(page, ".auth-dialog");
+
+  await dialog.getByRole("button", { name: "Tạo tài khoản", exact: true }).click();
+  expect(await name.evaluate((input: HTMLInputElement) => input.validity.valid)).toBe(false);
+  expect(await email.evaluate((input: HTMLInputElement) => input.validity.valid)).toBe(false);
+  expect(await password.evaluate((input: HTMLInputElement) => input.validity.valid)).toBe(false);
+  expect(requests.registration).toBe(0);
+
+  await name.fill("QA Accessibility User");
+  await email.fill("invalid-email");
+  await password.fill("short");
+  await dialog.getByRole("button", { name: "Tạo tài khoản", exact: true }).click();
+  expect(await email.evaluate((input: HTMLInputElement) => input.validity.valid)).toBe(false);
+  expect(await password.evaluate((input: HTMLInputElement) => input.validity.valid)).toBe(false);
+  expect(requests.registration).toBe(0);
+
+  await email.fill("existing@example.test");
+  await password.fill("CinemaQa123!");
+  await dialog.getByRole("button", { name: "Tạo tài khoản", exact: true }).click();
+  const alert = dialog.getByRole("alert");
+  await expect(alert).toBeVisible();
+  await expect(alert).toHaveText("Email này đã được đăng ký.");
+  expect(requests.registration).toBe(1);
+  await expectNoSeriousOrCriticalAxeViolations(page, ".auth-dialog");
+});
+
+test("[TC-E2E-17] lỗi đăng nhập được đưa vào live alert trong dialog", async ({ page }) => {
+  await mockApi(page, { loginError: { status: 401, error: "INVALID_CREDENTIALS", message: "Email hoặc mật khẩu không chính xác." } });
+  await page.goto("/");
+  await expect(page.getByTestId("movie-card").first()).toBeVisible();
+  await openLogin(page);
+
+  const dialog = page.locator(".auth-dialog");
+  await dialog.getByLabel("Email").fill("wrong@example.test");
+  await dialog.getByLabel("Mật khẩu").fill("wrong-password");
+  await dialog.getByRole("button", { name: "Đăng nhập", exact: true }).click();
+
+  const alert = dialog.getByRole("alert");
+  await expect(alert).toBeVisible();
+  await expect(alert).toHaveText("Email hoặc mật khẩu không chính xác.");
+  await expect(alert).toHaveAttribute("role", "alert");
+  await expectNoSeriousOrCriticalAxeViolations(page, ".auth-dialog");
+});
+
+test("[TC-E2E-18] Admin details mở rộng có thể truy cập bằng tên summary và axe", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("cinemabooking.session", JSON.stringify({
+      token: "a11y-admin-test-token",
+      user: { id: "a11y-admin", name: "Accessibility Admin", email: "admin@example.test", role: "ADMIN" },
+    }));
+  });
+  await mockApi(page);
+  await page.goto("/");
+  await expect(page.getByTestId("movie-card").first()).toBeVisible();
+  await page.getByRole("button", { name: "Quản trị" }).click();
+  await expect(page.getByRole("heading", { name: "Vận hành rạp phim" })).toBeVisible();
+
+  const movieSection = page.locator(".admin-section").filter({ has: page.getByRole("heading", { name: "Chỉnh sửa phim" }) });
+  const movieDetails = movieSection.locator("details.admin-record-detail").filter({ hasText: movie.title });
+  const movieSummary = movieDetails.locator("summary");
+  await expect(movieSummary).toHaveAccessibleName(new RegExp(movie.title));
+  await tabUntilFocused(page, movieSummary);
+  const summaryOutline = await movieSummary.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return { style: style.outlineStyle, width: Number.parseFloat(style.outlineWidth) };
+  });
+  expect(summaryOutline.style).not.toBe("none");
+  expect(summaryOutline.width).toBeGreaterThan(0);
+  await page.keyboard.press("Enter");
+  await expect(movieDetails).toHaveAttribute("open", "");
+  await page.keyboard.press("Enter");
+  await expect(movieDetails).not.toHaveAttribute("open", "");
+  await page.keyboard.press("Enter");
+  await expect(movieDetails.getByTestId(`admin-movie-edit-form-${movie.id}`)).toBeVisible();
+
+  const auditoriumSection = page.locator(".panel").filter({ has: page.getByRole("heading", { name: "Tạo phòng và sơ đồ ghế" }) });
+  const auditoriumDetails = auditoriumSection.locator("details.admin-record-detail").filter({ hasText: auditorium.name });
+  const auditoriumSummary = auditoriumDetails.locator("summary").first();
+  await expect(auditoriumSummary).toHaveAccessibleName(new RegExp(auditorium.name));
+  await auditoriumSummary.click();
+  const seatDetails = auditoriumDetails.locator("details.admin-seat-detail");
+  const seatSummary = seatDetails.locator("summary");
+  await expect(seatSummary).toHaveAccessibleName(/Quản lý sơ đồ ghế/);
+  await seatSummary.focus();
+  await page.keyboard.press("Enter");
+  await expect(seatDetails).toHaveAttribute("open", "");
+  await expect(page.getByTestId("admin-seat-edit-form-a11y-seat-1").getByLabel("Loại ghế")).toBeVisible();
+
+  await expectNoSeriousOrCriticalAxeViolations(page, ".admin-view");
+});

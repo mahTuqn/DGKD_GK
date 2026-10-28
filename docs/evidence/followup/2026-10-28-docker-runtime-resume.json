@@ -1,0 +1,63 @@
+{
+  "runId": "2026-10-28-docker-runtime-resume",
+  "capturedAt": "2026-10-28T02:06:42Z",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "sourceState": "Current working tree on codex/phase8-clean-clone; uncommitted changes; no commit or push.",
+  "trigger": "The user confirmed they would start Docker Desktop. The Docker Engine became reachable during this verification turn.",
+  "runtime": {
+    "dockerServerVersion": "29.7.2",
+    "dockerDesktopService": { "status": "Stopped", "startType": "Manual" },
+    "wslDistro": { "name": "docker-desktop", "state": "Running", "version": 2 },
+    "windowsPostgresqlService": "Running",
+    "freePhysicalMemoryMiB": 359,
+    "freeDiskGiB": { "C": 4.46, "E": 204.07 }
+  },
+  "composeProjects": {
+    "dgkd_gk": {
+      "runningContainers": 4,
+      "web": "healthy on host port 8080",
+      "api": "healthy on container port 4000",
+      "worker": "running",
+      "postgres": "healthy on host port 5434"
+    },
+    "cinema-qa": {
+      "runningContainers": 4,
+      "web": "healthy on host port 8081",
+      "api": "healthy on container port 4000",
+      "worker": "running",
+      "postgres": "healthy on host port 5435"
+    }
+  },
+  "databaseProbes": {
+    "demoPostgres": {
+      "command": "docker exec dgkd_gk-postgres-1 pg_isready -U cinema -d cinema",
+      "exitCode": 0,
+      "readOnlyQuery": "SELECT current_database(), count(*) FROM pg_tables WHERE schemaname='public'",
+      "result": "cinema|16"
+    },
+    "qaPostgres": {
+      "command": "docker exec cinema-qa-postgres-1 pg_isready -U cinema -d cinema",
+      "exitCode": 0
+    }
+  },
+  "interruptedDastProjectCleanup": {
+    "projectName": "cinema-dast-20261027221809-428657f7-unauth",
+    "action": "Ran docker compose down --remove-orphans for this exact run-owned project, without --volumes.",
+    "removedContainers": ["api", "migrate", "postgres"],
+    "removedNetworks": ["cinema-dast-20261027221809-428657f7-unauth_default"],
+    "retainedVolumes": ["cinema-dast-20261027221809-428657f7-unauth_cinema_postgres_data"],
+    "volumeDeletionRequested": false,
+    "verification": "No containers or networks remained for this exact project; its labeled PostgreSQL volume remained present."
+  },
+  "dastStatus": {
+    "result": "INCOMPLETE",
+    "previousRun": "The Compose DAST scan was interrupted by Docker Engine HTTP 500 and produced no passing report.",
+    "rerun": "Not started: free physical memory was approximately 359 MiB, below the safe headroom noted in the project evidence."
+  },
+  "limitations": [
+    "Docker Engine responds to the Docker CLI, but com.docker.service still reports Stopped/Manual.",
+    "Compose DAST and current production API/web image preview remain unverified.",
+    "No Docker volumes were deleted; the Windows PostgreSQL service was not stopped or modified.",
+    "The QA and demo database stacks are running, but no additional project data was queried beyond table count."
+  ]
+}

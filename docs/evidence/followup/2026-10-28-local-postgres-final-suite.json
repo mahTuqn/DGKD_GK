@@ -1,0 +1,97 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "runId": "2026-10-28-local-postgres-expanded-final-suite",
+  "capturedAt": "2026-10-28T01:36:30+07:00",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "baseCommit": "b03c99a917d5fd328dd08744fdd81bde2f7265ca",
+  "sourceState": "working tree contained uncommitted implementation and test changes",
+  "environment": {
+    "os": "Windows",
+    "node": "v26.7.0",
+    "npm": "12.0.2",
+    "postgresql": "17.11",
+    "databaseIsolation": "Temporary PostgreSQL cluster bound to 127.0.0.1:55432 with separate cinema_app and cinema_test_final databases; no Docker or existing PostgreSQL service database used",
+    "browserProjects": [
+      "chromium-desktop",
+      "chromium-mobile"
+    ]
+  },
+  "testRun": {
+    "command": "npm test",
+    "startedAtUtc": "2026-10-27T18:31:00Z",
+    "durationMs": 105839,
+    "exitCode": 0,
+    "apiTestFilesPassed": 6,
+    "apiTestsPassed": 21,
+    "apiTestsFailed": 0,
+    "browserCases": 16,
+    "browserProjects": 2,
+    "browserTestsPassed": 32,
+    "browserTestsFailed": 0,
+    "browserTestsSkipped": 0,
+    "browserTestsFlaky": 0,
+    "coverageNotes": [
+      "TC-E2E-14 verifies countdown and checkout recovery after the browser clock advances beyond the hold expiry; server/worker expiry is covered separately.",
+      "TC-E2E-15 creates and edits a movie, auditorium seats, showtime and price, then verifies persistence after reload.",
+      "Axe passes discovery, login dialog, seat map, checkout, ticket and Admin scopes on Chromium desktop and Pixel 7 mobile.",
+      "BUG-004 poster fallback label mismatch fixed; targeted TC-E2E-02/08 passed 4/4 before the full suite."
+    ]
+  },
+  "additionalChecks": {
+    "npmRunBuild": "PASS",
+    "npmRunLintOpenapi": "PASS: OpenAPI document valid",
+    "npmRunQaTrace": "PASS: 48 test cases and 25 requirements; all sources and links resolved",
+    "gitDiffCheck": "PASS (exit 0; Git emitted only LF-to-CRLF working-copy notices)",
+    "dastRunnerSyntax": "PASS: node --check",
+    "manifestJson": "PASS: parsed successfully",
+    "dastRuntime": "Not run; Docker Desktop unavailable"
+  },
+  "artifacts": [
+    {
+      "path": "reports/generated/local-postgres-20261028-final-npm-test.log",
+      "sha256": "EB6B093CE34B7C9758D1C67E439D1DEC014456054909DD409ECF919885084350",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/playwright-results.json",
+      "sha256": "8D41BFB22D7BFCBA86DF05351ECFC999930F6F953C36A76AAE5AFA074C701947",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-final-build.log",
+      "sha256": "5C68ED08935B86592202F6064ECDFFB2214A5282FEC9522457956AD48A5836D7",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-final-openapi.log",
+      "sha256": "9887D765E5A2119D841DE3DE685C2B51CCF80F868E247DEFA81DC4E3812D61EB",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-final-trace.log",
+      "sha256": "AE3BF73B97413B466ADACA83AB929239F331FE7A63406A0F7233B6158A46103B",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-a11y-fix-targeted.log",
+      "sha256": "21EBBEA21E879685D5C3F6C2FDC28D91037D0CF81AA20F885CB929B1AEAA46D2",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-final-docs-trace.log",
+      "sha256": "AE3BF73B97413B466ADACA83AB929239F331FE7A63406A0F7233B6158A46103B",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-final-diff-check.log",
+      "sha256": "0AD3ADCA52D296E99473F7FD0DF875ABD9F0566AC47D8D885556E9ACDF40CF5C",
+      "gitIgnored": true
+    }
+  ],
+  "limitations": [
+    "This verifies the current uncommitted working tree against an isolated local PostgreSQL cluster; it is not a Docker Compose or clean-clone run.",
+    "Docker Desktop is stopped, so the prepared unauthenticated API, authenticated API and built-preview DAST scans have not run; the demo database/container state is not verified.",
+    "Remote GitHub Actions, staging/production, manual WCAG and screen-reader review, worker soak/multi-instance, live five-minute HTTP timing, real payment gateway/refund, PITR/RPO/RTO, and exhaustive ASVS/BOLA review remain open."
+  ]
+}

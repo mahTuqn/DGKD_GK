@@ -1,0 +1,30 @@
+{
+  "runId": "2026-10-28-local-postgres-authversion-browser",
+  "project": "CinemaBooking QA",
+  "sourceState": "Uncommitted working-tree follow-up; no commit or push was made.",
+  "environment": {
+    "os": "Windows",
+    "node": "v26.7.0",
+    "playwright": "1.64.1",
+    "postgresql": "17.11",
+    "databaseIsolation": "Dedicated cinema_authz_matrix_20261028 database in a temporary loopback-only PostgreSQL cluster at 127.0.0.1:55436; installed Windows PostgreSQL service and Docker were not used. Temporary server is stopped after the run.",
+    "browserProjects": ["chromium-desktop", "chromium-mobile (Pixel 7)"],
+    "workers": 1
+  },
+  "databasePreparation": "Existing isolated schema was migrated; npm run db:seed --workspace backend completed successfully.",
+  "command": "npm run test:browser",
+  "exitCode": 0,
+  "expected": 40,
+  "passed": 40,
+  "failed": 0,
+  "skipped": 0,
+  "flaky": 0,
+  "durationMs": 134618.614,
+  "log": "reports/generated/authversion-playwright-20261028.log",
+  "playwrightJson": "reports/generated/playwright-results.json",
+  "scope": "Current working-tree API/frontend started by Playwright webServer; includes authentication, role-specific UI, payment recovery, Admin catalog, check-in, accessibility and security-header journeys.",
+  "limitations": [
+    "Chromium desktop and Pixel 7 mobile only; Firefox, WebKit, and native Docker API/web image preview were not tested.",
+    "Manual WCAG/screen-reader review, staging and production remain open."
+  ]
+}

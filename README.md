@@ -12,17 +12,20 @@
 Docker Desktop phải đang chạy. Từ thư mục gốc:
 
 ```powershell
+npm run env:compose
 docker compose up --build -d
 docker compose --profile seed run --rm seed
 ```
 
-Compose khởi chạy PostgreSQL, áp dụng migrations trước khi API và worker chạy, rồi phục vụ frontend qua Nginx. Worker dọn hold hết hạn và đưa callback thanh toán thành công đến muộn vào hàng đối soát thủ công. Lệnh seed tạo tài khoản demo, phim, rạp, phòng và suất chiếu mẫu.
+`npm run env:compose` tạo `.env` bị Git ignore với secret ngẫu nhiên riêng cho PostgreSQL, JWT và mock payment; lệnh từ chối ghi đè `.env` có sẵn hoặc tạo mật khẩu mới nếu volume PostgreSQL của project đã tồn tại. Hãy giữ `.env` cùng volume dữ liệu vì PostgreSQL không tự đổi mật khẩu role khi volume đã được khởi tạo. Cả web và PostgreSQL chỉ bind vào loopback theo mặc định. Compose bắt buộc cung cấp secret và không có giá trị production mặc định công khai.
+
+Compose khởi chạy PostgreSQL, áp dụng migrations trước khi API và worker chạy, rồi phục vụ frontend qua Nginx. Worker dọn hold hết hạn và đưa callback thanh toán thành công đến muộn vào hàng đối soát thủ công. Lệnh seed tạo tài khoản demo, phim, rạp, phòng và suất chiếu mẫu; không chạy profile seed với dữ liệu hoặc môi trường production.
 
 - Web: `http://localhost:8080`
 - API health: `http://localhost:8080/api/health`
 - PostgreSQL: `localhost:5434` (database `cinema`, user `cinema`, mật khẩu demo `cinema_dev`)
 
-Kiểm tra trạng thái bằng `docker compose ps`; xem log bằng `docker compose logs -f api worker web`. PostgreSQL lưu dữ liệu trong volume `cinema_postgres_data`. Các secret mặc định trong Compose chỉ dành cho demo local; hãy thay bằng secret riêng trước khi triển khai.
+Kiểm tra trạng thái bằng `docker compose ps`; xem log bằng `docker compose logs -f api worker web`. PostgreSQL lưu dữ liệu trong volume `cinema_postgres_data`. Khi triển khai ngoài local, tự quản lý secret qua secret manager, cấu hình đúng số proxy tin cậy và thay dữ liệu demo bằng dữ liệu phù hợp.
 
 ## Chạy ở chế độ phát triển trên máy host
 
@@ -59,12 +62,15 @@ Admin tạo hoặc sửa suất chiếu không thể xếp hai suất trong cùn
 npm run test:api
 npx playwright install chromium
 npm run test:browser
+npm run test:worker-live
 npm run build
 ```
 
 `npm test` chạy liền API/integration và browser E2E trên Chromium desktop + mobile. Trước khi chạy, hãy dựng database theo bước `npm run db:setup` ở trên; API integration cần `DATABASE_URL_TEST` trỏ tới database test đã migrate.
 
 Test browser chạy qua Playwright trên Chromium và tự khởi động web/API development server theo cấu hình E2E. Chạy `npm run test:browser:ui` để mở Playwright UI. Các test PostgreSQL trong API suite chỉ chạy khi đặt `DATABASE_URL_TEST` tới một database test đã migrate; nếu bỏ trống, Vitest sẽ skip các ca cần DB.
+
+`npm test` bao gồm API, worker process soak/restart và browser desktop/mobile. Bài live hold-expiry 5 phút được tách riêng để suite nhanh không phải chờ; chạy `npm run test:worker-live` với `DATABASE_URL_TEST` và `DATABASE_URL_WORKER_PROCESS_TEST` cùng trỏ tới một PostgreSQL database rehearsal đã migrate riêng, và `HOLD_TTL_SECONDS=300`.
 
 ```powershell
 $env:DATABASE_URL_TEST = "postgresql://cinema:cinema_dev@localhost:5434/cinema?schema=public"

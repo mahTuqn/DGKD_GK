@@ -1,0 +1,114 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "runId": "2026-10-28-local-postgres-multi-instance",
+  "capturedAt": "2026-10-28T01:53:00+07:00",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "baseCommit": "b03c99a917d5fd328dd08744fdd81bde2f7265ca",
+  "sourceState": "working tree contained uncommitted implementation, tests and plan updates",
+  "environment": {
+    "os": "Windows",
+    "node": "v26.7.0",
+    "npm": "12.0.2",
+    "postgresql": "17.11",
+    "databaseIsolation": "Temporary PostgreSQL cluster bound to 127.0.0.1:55432 with separate cinema_app and cinema_test_final databases; no Docker or existing PostgreSQL service database used",
+    "browserProjects": [
+      "chromium-desktop",
+      "chromium-mobile"
+    ]
+  },
+  "testRun": {
+    "command": "npm test",
+    "startedAtUtc": "2026-10-27T18:49:00Z",
+    "apiDurationMs": 3070,
+    "browserDurationMs": 110148,
+    "exitCode": 0,
+    "apiTestFilesPassed": 6,
+    "apiTestsPassed": 22,
+    "apiTestsFailed": 0,
+    "browserCases": 16,
+    "browserProjects": 2,
+    "browserTestsPassed": 32,
+    "browserTestsFailed": 0,
+    "browserTestsSkipped": 0,
+    "browserTestsFlaky": 0,
+    "coverageNotes": [
+      "TC-E2E-14 verifies countdown and checkout recovery after the browser clock advances beyond the hold expiry; server/worker expiry is covered separately.",
+      "TC-E2E-15 creates and edits a movie, auditorium seats, showtime and price, then verifies persistence after reload.",
+      "Axe passes discovery, login dialog, seat map, checkout, ticket and Admin scopes on Chromium desktop and Pixel 7 mobile.",
+      "TC-E2E-02 verifies login-dialog Shift+Tab focus wrapping, Escape close and restoration to the launcher on desktop and mobile.",
+      "TC-WORKER-04 runs outbox processing concurrently through two independent Prisma clients against isolated PostgreSQL and verifies one processed event and one reconciliation case.",
+      "TC-WORKER-04 is a multi-client concurrency check; it does not establish separate OS process behavior, soak, restart recovery, or production reliability."
+    ]
+  },
+  "additionalChecks": {
+    "workerTargetedTest": "PASS: 4/4 tests in backend/tests/worker.integration.test.ts",
+    "a11yFocusWrapTargetedTest": "PASS: TC-E2E-02 on desktop and mobile (2/2)",
+    "npmRunBuild": "PASS",
+    "npmRunLintOpenapi": "PASS: OpenAPI document valid",
+    "npmRunQaTrace": "PASS: 49 test cases and 25 requirements; all sources and links resolved",
+    "ciDastJob": "Configured as a separate 60-minute GitHub Actions job; uploads reports for 14 days; remote run pending",
+    "ciWorkflowYamlParse": "PASS: js-yaml 4.1.0",
+    "dastRunnerSyntax": "PASS: node --check",
+    "gitDiffCheck": "PASS (exit 0; Git emitted only LF-to-CRLF working-copy notices)",
+    "dastRuntime": "Not run; Docker Desktop unavailable",
+    "remoteCi": "Not run; no workflow was triggered"
+  },
+  "artifacts": [
+    {
+      "path": "reports/generated/local-postgres-20261028-final-expanded-npm-test.log",
+      "sha256": "00136C30E2531E91C2F2742206A2904E9017AA8756F265604071E87E44CE0F67",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/playwright-results.json",
+      "sha256": "2BE0203EA9A6E47CF2A0C5A41E6A2B6F8D31AECE37F455DB6AEC260BA433E08C",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-worker-multi-instance-targeted.log",
+      "sha256": "AB2356E1CDDCD399E106DF0D567CE046ABC14E9726ADE0B4C69729BFD76C7566",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-a11y-focus-wrap-targeted-rerun.log",
+      "sha256": "37B269E4BEA7C47ED2BAC6EE3AD99083A8C68CF63679CB7D49CAF3ECFAEC91EE",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-multi-instance-build.log",
+      "sha256": "848BA803F5271769E0D69B3BADA94AA3F0165A9E2C0A5BCEF81A404E90A9AE17",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-multi-instance-openapi.log",
+      "sha256": "D633BC2AF26CFF8494475B0A8D42B868498D53C845F0D28666A68DC91D50BCA2",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-multi-instance-final-trace.log",
+      "sha256": "88CD6E80A425FED45F665B3B1DE92D4D864FFDB49786636EC3612E6F1F1AD619",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-multi-instance-diff-check.log",
+      "sha256": "6FAC53D724335247609F235929658EBC011CF0ED07CBACA185B298D5D022065D",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-ci-yaml-parse.log",
+      "sha256": "A71E167DA6A5B407BC71372B12EB2764B553DFA543E46273FCF3F3053C876E12",
+      "gitIgnored": true
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "92A848C76A1D823BC27E0C57D1C90A5774AFB3CDDAF3860540DF266205148D6E",
+      "gitIgnored": false
+    }
+  ],
+  "limitations": [
+    "This verifies the current working tree against an isolated local PostgreSQL cluster; it is not a Docker Compose or clean-clone run.",
+    "Docker Desktop is stopped, so the prepared unauthenticated API, authenticated API and built-preview DAST scans have not run; the Docker demo database/container state is unverified.",
+    "Remote GitHub Actions, staging/production, manual WCAG and screen-reader review, process-level worker soak/multi-instance, live five-minute HTTP timing, real payment gateway/refund, PITR/RPO/RTO, and exhaustive ASVS/BOLA review remain open."
+  ]
+}

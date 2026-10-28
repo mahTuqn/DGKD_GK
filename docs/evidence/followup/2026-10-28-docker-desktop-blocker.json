@@ -1,0 +1,38 @@
+{
+  "capturedAt": "2026-10-28T04:10:00+07:00",
+  "dockerDesktopVersion": "4.88.0",
+  "launchAttempt": {
+    "launchedProcess": "Docker Desktop.exe",
+    "result": "Backend exited with an error; Docker Desktop service and Engine stayed stopped."
+  },
+  "service": {
+    "name": "com.docker.service",
+    "status": "Stopped",
+    "startType": "Manual"
+  },
+  "dockerApi": {
+    "result": "Unavailable",
+    "endpoint": "npipe:////./pipe/dockerDesktopLinuxEngine",
+    "message": "The system cannot find the file specified."
+  },
+  "backendError": {
+    "windowsErrorCode": 1920,
+    "message": "starting services: initializing Ingest server: listening on unix://%LOCALAPPDATA%/Docker/run/sailor-ingest.sock: remove %LOCALAPPDATA%/Docker/run/sailor-ingest.sock: The file cannot be accessed by the system."
+  },
+  "socketInspection": {
+    "path": "%LOCALAPPDATA%/Docker/run/sailor-ingest.sock",
+    "attributes": [
+      "Archive",
+      "ReparsePoint"
+    ],
+    "lengthBytes": 0,
+    "aclAndReparseQuery": "Both Get-Acl and fsutil reparsepoint query returned Windows error 1920."
+  },
+  "impact": "Compose postgres service and Docker volume/container state could not be inspected or started during this check. Earlier clean-clone Docker results remain historical evidence and do not prove the current Engine state.",
+  "dataSafety": {
+    "dockerVolumesDeleted": false,
+    "factoryResetRun": false,
+    "socketDeleted": false,
+    "installedPostgreSqlServiceStopped": false
+  }
+}

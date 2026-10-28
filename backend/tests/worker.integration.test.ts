@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { ClaimStatus, HoldStatus, OrderStatus, OutboxEventStatus, OutboxEventType, PaymentStatus, RecordStatus, ReconciliationCaseStatus, Role, SeatType } from "@prisma/client";
+import { ClaimStatus, HoldStatus, OrderStatus, OutboxEventStatus, OutboxEventType, PaymentStatus, PrismaClient, RecordStatus, ReconciliationCaseStatus, Role, SeatType } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 import { prisma } from "../src/db.js";
 import { enqueueOutboxEvent, expireDueHolds, processOutboxBatch } from "../src/worker.js";
@@ -18,6 +18,7 @@ workerDescribe("plan phase 5: expiration worker and payment reconciliation outbo
   let pendingHoldId: string | undefined;
   let pendingOrderId: string | undefined;
   let futureHoldId: string | undefined;
+  let boundaryHeldId: string | undefined;
 
   beforeAll(async () => {
     await prisma.$connect();
@@ -63,7 +64,7 @@ workerDescribe("plan phase 5: expiration worker and payment reconciliation outbo
     const orderIds = pendingOrderId ? [pendingOrderId] : [];
     if (orderIds.length) await prisma.reconciliationCase.deleteMany({ where: { orderId: { in: orderIds } } });
     if (orderIds.length) await prisma.outboxEvent.deleteMany({ where: { aggregateId: { in: orderIds } } });
-    const auditEntityIds = [expiredHeldId, pendingOrderId].filter((id): id is string => Boolean(id));
+    const auditEntityIds = [expiredHeldId, pendingOrderId, boundaryHeldId].filter((id): id is string => Boolean(id));
     if (auditEntityIds.length) await prisma.auditLog.deleteMany({ where: { entityId: { in: auditEntityIds } } });
     if (orderIds.length) {
       await prisma.paymentEvent.deleteMany({ where: { orderId: { in: orderIds } } });
@@ -110,6 +111,32 @@ workerDescribe("plan phase 5: expiration worker and payment reconciliation outbo
     expect(await prisma.seatClaim.count({ where: { showtimeId, seatId: { in: seatIds.slice(0, 2) }, status: ClaimStatus.EXPIRED } })).toBe(2);
   }, 30_000);
 
+  it("[TC-WORKER-03] expires a hold at the exact deadline but keeps one active 1ms later", async () => {
+    // Use a fixed sweep time so the equality boundary is deterministic.
+    const boundaryAt = new Date("2026-10-27T12:00:00.000Z");
+    const atBoundaryUser = await prisma.user.create({
+      data: { name: "Worker Boundary Customer", email: `worker-boundary-${fixture}@test.local`, passwordHash: "unused-test-only", role: Role.CUSTOMER }
+    });
+    const afterBoundaryUser = await prisma.user.create({
+      data: { name: "Worker After Boundary Customer", email: `worker-after-boundary-${fixture}@test.local`, passwordHash: "unused-test-only", role: Role.CUSTOMER }
+    });
+    userIds.push(atBoundaryUser.id, afterBoundaryUser.id);
+
+    const atBoundary = await prisma.seatHold.create({
+      data: { userId: atBoundaryUser.id, showtimeId: showtimeId!, status: HoldStatus.HELD, expiresAt: boundaryAt }
+    });
+    boundaryHeldId = atBoundary.id;
+    const afterBoundary = await prisma.seatHold.create({
+      data: { userId: afterBoundaryUser.id, showtimeId: showtimeId!, status: HoldStatus.HELD, expiresAt: new Date(boundaryAt.getTime() + 1) }
+    });
+
+    const sweep = await expireDueHolds(prisma, boundaryAt, 500);
+
+    expect(sweep.expiredHeldHolds).toBeGreaterThanOrEqual(1);
+    expect((await prisma.seatHold.findUniqueOrThrow({ where: { id: atBoundary.id } })).status).toBe(HoldStatus.EXPIRED);
+    expect((await prisma.seatHold.findUniqueOrThrow({ where: { id: afterBoundary.id } })).status).toBe(HoldStatus.HELD);
+  }, 30_000);
+
   it("[TC-WORKER-02] processes concurrent duplicate late-payment events into one OPEN manual case", async () => {
     const providerEventId = `late-${fixture}`;
     const event = {
@@ -149,4 +176,33 @@ workerDescribe("plan phase 5: expiration worker and payment reconciliation outbo
     expect(replay.processed).toBe(0);
     expect(await prisma.reconciliationCase.count({ where: { providerEventId } })).toBe(1);
   }, 30_000);
+
+  it("[TC-WORKER-04] independent worker instances process one outbox event exactly once", async () => {
+    const providerEventId = `multi-instance-${fixture}`;
+    const event = {
+      eventKey: `payment-reconciliation:${providerEventId}`,
+      eventType: OutboxEventType.PAYMENT_RECONCILIATION_REQUIRED,
+      aggregateId: pendingOrderId!,
+      payload: { providerEventId, orderId: pendingOrderId!, amountVnd: 100_000, currency: "VND", reason: "PAYMENT_AFTER_EXPIRY" } as const
+    };
+    await prisma.$transaction((tx) => enqueueOutboxEvent(tx, event));
+
+    const secondWorker = new PrismaClient({ datasourceUrl: process.env.DATABASE_URL_TEST! });
+    await secondWorker.$connect();
+    try {
+      const now = new Date();
+      const results = await Promise.all([
+        processOutboxBatch(prisma, now, 1),
+        processOutboxBatch(secondWorker, now, 1)
+      ]);
+
+      expect(results.reduce((total, result) => total + result.dead, 0)).toBe(0);
+      expect(results.reduce((total, result) => total + result.processed, 0)).toBe(1);
+      expect(await prisma.outboxEvent.count({ where: { eventKey: event.eventKey, status: OutboxEventStatus.PROCESSED } })).toBe(1);
+      expect(await prisma.reconciliationCase.count({ where: { providerEventId } })).toBe(1);
+    } finally {
+      await secondWorker.$disconnect();
+    }
+  }, 30_000);
+
 });

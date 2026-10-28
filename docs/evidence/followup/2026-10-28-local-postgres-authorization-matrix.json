@@ -1,0 +1,36 @@
+{
+  "runId": "2026-10-28-local-postgres-authorization-matrix",
+  "project": "CinemaBooking QA",
+  "sourceState": "Uncommitted working-tree follow-up; no commit or push was made.",
+  "environment": {
+    "os": "Windows",
+    "node": "v26.7.0",
+    "postgresqlMajorVersion": 17,
+    "databaseIsolation": "Temporary PostgreSQL 17.11 cluster bound only to 127.0.0.1:55436; dedicated cinema_authz_matrix_20261028 database; Windows PostgreSQL service and Docker databases were not used. The cluster is stopped and verified offline. Its exact task-created data directory remains at E:\\DGKDPM\\_codex-authz-20261028-01 because the environment blocked the recursive cleanup command.",
+    "workers": 1
+  },
+  "command": "npx vitest run --config vitest.config.ts --pool=threads --maxWorkers=1 --no-file-parallelism tests/authorization-regression.integration.test.ts tests/object-authorization.integration.test.ts tests/staff-scope.integration.test.ts",
+  "workingDirectory": "backend",
+  "databasePreparation": "npm run db:deploy --workspace backend; all four migrations applied successfully.",
+  "exitCode": 0,
+  "testFilesPassed": 3,
+  "testFilesFailed": 0,
+  "testsPassed": 8,
+  "testsFailed": 0,
+  "durationMs": 2910,
+  "log": "reports/generated/authorization-matrix-20261028.log",
+  "coverage": [
+    "Guest requests to protected route families return 401 without side effects.",
+    "Customer and Staff requests to all 18 Admin routes with valid mutation payloads return 403 without state or audit mutations.",
+    "Cross-customer order, hold, and payment access is denied with the recorded booking/payment side-effect snapshots unchanged.",
+    "Ticket ID and QR check-in enforce authentication, role, and cinema assignment; valid assigned Staff and Admin cases succeed.",
+    "Admin user listing omits passwordHash; role changes clear Staff assignment when appropriate, increment authVersion, and write audit. Old JWTs are rejected and refreshed tokens use the new role.",
+    "Staff cinema assignment and unassignment reject stale JWTs; a token with the current authVersion receives the updated cinema scope."
+  ],
+  "limitations": [
+    "This focused run covers the three authorization integration test files only; it is not a full API suite run.",
+    "The eight tests across these three files passed after JWT authVersion enforcement; this focused run is not the full API suite.",
+    "It does not constitute exhaustive BOLA/IDOR, ASVS, or API Top 10 review.",
+    "Compose DAST and GitHub Actions were not part of this run."
+  ]
+}

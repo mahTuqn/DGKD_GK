@@ -1,0 +1,220 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "runId": "2026-10-28-local-postgres-live-expiry-accessibility",
+  "capturedAt": "2026-10-27T19:50:20.757Z",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "baseCommit": "b03c99a917d5",
+  "branch": "codex/phase8-clean-clone",
+  "sourceState": "Uncommitted working-tree follow-up; no commit or push was made.",
+  "environment": {
+    "os": "Windows",
+    "node": "v26.7.0",
+    "npm": "12.0.2",
+    "postgresql": "17.11",
+    "databaseIsolation": "Temporary PostgreSQL cluster bound to 127.0.0.1:55432. API/browser full suite used cinema_test_final; worker process and live expiry suites used separately migrated cinema_worker_process_test. Both databases were fixture-clean after the run. The temporary cluster was stopped after evidence capture; Docker and the installed PostgreSQL service database were not used.",
+    "browserProjects": [
+      "chromium-desktop",
+      "chromium-mobile (Pixel 7)"
+    ]
+  },
+  "testRun": {
+    "command": "npm test",
+    "exitCode": 0,
+    "apiTestFilesPassed": 6,
+    "apiTestsPassed": 22,
+    "apiTestsFailed": 0,
+    "workerProcessCasesPassed": 1,
+    "workerProcessCasesFailed": 0,
+    "workerSoakDurationMs": 60000,
+    "workerProcessFullCaseDurationMs": 62380,
+    "browserCases": 19,
+    "browserProjects": 2,
+    "browserTestsExpected": 38,
+    "browserTestsPassed": 38,
+    "browserTestsFailed": 0,
+    "browserTestsSkipped": 0,
+    "browserTestsFlaky": 0,
+    "browserDurationMs": 129872
+  },
+  "liveExpiryRun": {
+    "command": "npm run test:worker-live --workspace backend",
+    "exitCode": 0,
+    "casesPassed": 1,
+    "casesFailed": 0,
+    "durationMs": 301600,
+    "holdTtlSeconds": 300,
+    "assertions": [
+      "A second customer receives HTTP 409 before expiry while the first hold and seat map remain HELD.",
+      "The running worker persists SeatHold=EXPIRED and releases SeatClaim references and expiry.",
+      "Exactly one SEAT_HOLD_EXPIRED audit row is recorded for the hold.",
+      "After worker sweep the seat map is AVAILABLE and another customer successfully creates a hold."
+    ]
+  },
+  "additionalChecks": {
+    "liveExpiryStrictTypecheck": "PASS",
+    "temporaryDatabaseMigrations": "PASS: four migrations applied; no pending migrations",
+    "build": "PASS",
+    "openApiLint": "PASS",
+    "traceability": "PASS: 53 test cases, 25 requirements, all sources and links resolved",
+    "ciWorkflowYaml": "PASS: parsed with js-yaml CLI; remote GitHub Actions result remains pending",
+    "gitDiffCheck": "PASS (LF-to-CRLF working-copy notices only)",
+    "fixtureCleanup": "PASS: no live-expiry users or cinemas remained",
+    "docker": "Not used; com.docker.service remained stopped.",
+    "dastRuntime": "Not run because Docker Desktop was stopped."
+  },
+  "planGaps": [
+    "Docker Compose demo database and API container state need Docker Desktop recovery and recheck.",
+    "Authenticated/unauthenticated ZAP and built-preview DAST runtime have not been rerun.",
+    "Remote GitHub Actions quality and DAST workflows have not run.",
+    "Manual WCAG 2.2 AA, screen-reader, and full manual keyboard review remain open.",
+    "Staging/production validation, prolonged reliability soak, real payment gateway/refund, PITR/RPO/RTO, and exhaustive ASVS/BOLA review remain open."
+  ],
+  "artifacts": [
+    {
+      "path": "reports/generated/local-postgres-20261028-final-full-suite.log",
+      "sha256": "A15A0D7B8BFCE281173A48DD1BE455FCCEF83E246D72B13DC01B9161541FC069",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/playwright-results.json",
+      "sha256": "1C8A742F6B7702962F21B224A754043685C59B521C5BBBDA64C2B458699EB975",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-live-expiry-targeted.log",
+      "sha256": "6D14AC0D99528B865ABE29308D384079210B5A9D252CB64E5D4771538A9D8D93",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-live-expiry-typecheck.log",
+      "sha256": "A30D816194D1460390402A617751E62FD451DA1E05CF6EB2EC22BDCB0D7BCB45",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-final-build.log",
+      "sha256": "BB62C85F1E063962923C44167A41BC16326068BDB66CEDCF545145CA5F180C41",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-final-openapi.log",
+      "sha256": "8E03B24D58DC3C5BFB9EDBF444E3B99D4AE7DD88380943CEB52833DF2635A438",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-final-trace.log",
+      "sha256": "3E947EF6974AFB4919B35F6541C15C975A1EE53020E66BCFF6292322BD1684D1",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-final-ci-yaml.log",
+      "sha256": "F47C5DC0359CDFDBFE46E542ACDA5CDFC090E97A9765347CF3A63A1D16E9C4B5",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-final-diff-check.log",
+      "sha256": "C63F7380E435A39EA6BA07AF4177655EE2974B3364E60338DE623280E77E19C8",
+      "gitIgnored": true
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "40181B997DFE750219A95257902E8A28431B4A87E19026C37FAB989CB3C7538B",
+      "gitIgnored": false
+    },
+    {
+      "path": "package.json",
+      "sha256": "859A5488CD98D4AC981873702CF5466D7F94DDA0D9DFE113C82A8B94E880FDAA",
+      "gitIgnored": false
+    },
+    {
+      "path": "backend/package.json",
+      "sha256": "92E01E709CAA891EB22F686E1AA1A2CBDE8718E30881C3F721ABDC721260B89B",
+      "gitIgnored": false
+    },
+    {
+      "path": "backend/vitest.config.ts",
+      "sha256": "70A4886E0401589827CA0B1E43C58053E86DCB2C56E04CA38B60B37121BF1348",
+      "gitIgnored": false
+    },
+    {
+      "path": "backend/vitest.worker-live.config.ts",
+      "sha256": "B127C490EE52429BC9D8BDCDC3BAF0AD39E09E5E12E622EE95FE4F4E24F0006F",
+      "gitIgnored": false
+    },
+    {
+      "path": "backend/vitest.worker-process.config.ts",
+      "sha256": "523EDC03BE3CA1A41F0C9650FD7347278CE4840905820515301771E086EF076D",
+      "gitIgnored": false
+    },
+    {
+      "path": "backend/src/app.ts",
+      "sha256": "78113D3320EE5FAF72CD0BF44EC20AC6796AA2ACC65D7D5877170D6ABD36B778",
+      "gitIgnored": false
+    },
+    {
+      "path": "backend/tests/api.integration.test.ts",
+      "sha256": "0EF1F727A36FE5D92D00FA5C9EE9B83C3872DFB9189DE0B4C3D5121C65A074DE",
+      "gitIgnored": false
+    },
+    {
+      "path": "backend/tests/worker.integration.test.ts",
+      "sha256": "616BC20D58AFE15880BD85F74BF584CABF050EF0C49278A3A6D4E572169A1E87",
+      "gitIgnored": false
+    },
+    {
+      "path": "backend/tests/worker.live-expiry.integration.test.ts",
+      "sha256": "F7E9D32D3AFF55A03BCE00D43F2A206DAF4D133AF3C7F90647A29F23DB591D60",
+      "gitIgnored": false
+    },
+    {
+      "path": "backend/tests/worker.process.integration.test.ts",
+      "sha256": "31179FF32BE382847AB3BA86951C36DD9CC10AB7F58D6E34F96CBE3269F2AF00",
+      "gitIgnored": false
+    },
+    {
+      "path": "backend/tests/worker-process-harness.ts",
+      "sha256": "E7782C47034F07984D30A98F70656EE867C39B41BD3ECCA44448EAAE8AD9B6CC",
+      "gitIgnored": false
+    },
+    {
+      "path": "frontend/src/App.tsx",
+      "sha256": "D051565FAA0796FC953326D11BE3B94D9B06E04DC94C6EE20E735F275500A87A",
+      "gitIgnored": false
+    },
+    {
+      "path": "tests/e2e/a11y-states.spec.ts",
+      "sha256": "E7F211A3B5F3408441130C873C515818D597FA3854B8565825B4E3217D8F7A34",
+      "gitIgnored": false
+    },
+    {
+      "path": "docs/02-test-plan.md",
+      "sha256": "1ACFD4626AC0E48C5BF8371B244E23EF63F366D372CF448E2AFF4E9BA97B687D",
+      "gitIgnored": false
+    },
+    {
+      "path": "docs/03-rtm.csv",
+      "sha256": "949D7002F73B14C8B42C598C10FD7DC39A9AEBF4FAAE7C94825684816AFCBAC7",
+      "gitIgnored": false
+    },
+    {
+      "path": "docs/04-test-cases.csv",
+      "sha256": "C5F3BA0D1FA951F057BD66803228681DE78702056DB6367B521E75C94F8645DD",
+      "gitIgnored": false
+    },
+    {
+      "path": "docs/05-bug-reports.md",
+      "sha256": "4288B1BA454D64AFE85B0CABE1B305F40640416BA42ED17F3559F3776E5B15FA",
+      "gitIgnored": false
+    },
+    {
+      "path": "docs/07-test-summary.md",
+      "sha256": "194438E199EE0FB546630EB0FA21AB709845A7BEFCFD3CEC5BC551D4790E944E",
+      "gitIgnored": false
+    },
+    {
+      "path": "docs/09-project-charter-risk-register.md",
+      "sha256": "A7A531352D8127079BFCF307346A9062EF28C0FF3898F9DB274DC23506FB90F6",
+      "gitIgnored": false
+    }
+  ]
+}

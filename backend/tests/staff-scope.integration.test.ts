@@ -33,6 +33,7 @@ staffScopeDescribe("REQ-TICKET-03: staff cinema-scoped check-in", () => {
   let staffAToken: string;
   let unassignedStaffToken: string;
   let adminToken: string;
+  let buyerToken: string;
 
   beforeAll(async () => {
     await prisma.$connect();
@@ -60,6 +61,7 @@ staffScopeDescribe("REQ-TICKET-03: staff cinema-scoped check-in", () => {
 
     const buyer = await prisma.user.create({ data: { name: "Scope Buyer", email: `buyer-${fixture}@test.local`, passwordHash: "unused-test-only", role: Role.CUSTOMER } });
     buyerId = buyer.id;
+    buyerToken = createToken({ id: buyer.id, authVersion: buyer.authVersion });
     const staffA = await prisma.user.create({ data: { name: "Assigned Staff", email: `staff-a-${fixture}@test.local`, passwordHash: "unused-test-only", role: Role.STAFF, assignedCinemaId: cinemaA.id } });
     staffAId = staffA.id;
     const unassignedStaff = await prisma.user.create({ data: { name: "Unassigned Staff", email: `staff-none-${fixture}@test.local`, passwordHash: "unused-test-only", role: Role.STAFF } });
@@ -67,9 +69,9 @@ staffScopeDescribe("REQ-TICKET-03: staff cinema-scoped check-in", () => {
     const admin = await prisma.user.create({ data: { name: "Scope Admin", email: `admin-${fixture}@test.local`, passwordHash: "unused-test-only", role: Role.ADMIN } });
     adminId = admin.id;
     userIds.push(buyer.id, staffA.id, unassignedStaff.id, admin.id);
-    staffAToken = createToken({ id: staffA.id });
-    unassignedStaffToken = createToken({ id: unassignedStaff.id });
-    adminToken = createToken({ id: admin.id });
+    staffAToken = createToken({ id: staffA.id, authVersion: staffA.authVersion });
+    unassignedStaffToken = createToken({ id: unassignedStaff.id, authVersion: unassignedStaff.authVersion });
+    adminToken = createToken({ id: admin.id, authVersion: admin.authVersion });
 
     async function createTicket(showtimeId: string, seatId: string, suffix: string) {
       const expiresAt = new Date(Date.now() + 600_000);
@@ -116,9 +118,9 @@ staffScopeDescribe("REQ-TICKET-03: staff cinema-scoped check-in", () => {
     await prisma.$disconnect();
   }, 30_000);
 
-  it("[TC-STAFF-01][TC-CAT-04][TC-AUTH-03] scopes both check-in routes, profile edits, and overlapping showtime changes", async () => {
+  it("[TC-STAFF-01][TC-SEC-10][TC-SEC-12][TC-CAT-04][TC-AUTH-03] scopes both check-in routes, profile edits, and overlapping showtime changes", async () => {
     const staffAuth = { Authorization: `Bearer ${staffAToken}` };
-    const unassignedAuth = { Authorization: `Bearer ${unassignedStaffToken}` };
+    let unassignedAuth = { Authorization: `Bearer ${unassignedStaffToken}` };
     const adminAuth = { Authorization: `Bearer ${adminToken}` };
     const startAt = (await prisma.showtime.findUniqueOrThrow({ where: { id: showtimeIds[0] }, select: { startAt: true } })).startAt;
     const overlapStart = new Date(startAt.getTime() + 90 * 60_000);
@@ -155,29 +157,66 @@ staffScopeDescribe("REQ-TICKET-03: staff cinema-scoped check-in", () => {
     const duplicateEmail = await request(app).patch("/api/auth/me").set(staffAuth).send({ email: `admin-${fixture}@test.local` });
     expect(duplicateEmail.status).toBe(409);
 
+    const expectForbiddenWithoutCheckInSideEffects = async (
+      actorId: string,
+      token: string | undefined,
+      ticket: { id: string; qrToken: string },
+      route: "id" | "qr",
+      expectedError: string
+    ) => {
+      const ticketBefore = await prisma.ticket.findUniqueOrThrow({ where: { id: ticket.id }, select: { id: true, orderId: true, checkedInAt: true } });
+      const auditBefore = await prisma.auditLog.count({ where: { actorId, action: "TICKET_CHECKED_IN", entityId: ticket.id } });
+      const pending = route === "id"
+        ? request(app).post(`/api/tickets/${ticket.id}/check-in`)
+        : request(app).post("/api/tickets/scan");
+      const authorized = token ? pending.set({ Authorization: `Bearer ${token}` }) : pending;
+      const response = route === "id"
+        ? await authorized.send({})
+        : await authorized.send({ qrToken: ticket.qrToken });
+      expect(response.status, `${route} check-in for ${actorId}`).toBe(expectedError === "AUTH_REQUIRED" ? 401 : 403);
+      expect(response.body.error).toBe(expectedError);
+      expect(await prisma.ticket.findUniqueOrThrow({ where: { id: ticket.id }, select: { id: true, orderId: true, checkedInAt: true } })).toEqual(ticketBefore);
+      expect(await prisma.auditLog.count({ where: { actorId, action: "TICKET_CHECKED_IN", entityId: ticket.id } })).toBe(auditBefore);
+    };
+
     expect((await request(app).post(`/api/tickets/${ticketA1.id}/check-in`).set(staffAuth).send({})).status).toBe(200);
-    expect((await request(app).post(`/api/tickets/${ticketB1.id}/check-in`).set(staffAuth).send({})).status).toBe(403);
-    expect((await request(app).post(`/api/tickets/${ticketA2.id}/check-in`).set(unassignedAuth).send({})).status).toBe(403);
-    expect((await request(app).post("/api/tickets/scan").set(unassignedAuth).send({ qrToken: ticketA3.qrToken })).status).toBe(403);
-    expect((await request(app).post("/api/tickets/scan").set(staffAuth).send({ qrToken: ticketB2.qrToken })).status).toBe(403);
+    await expectForbiddenWithoutCheckInSideEffects(staffAId!, staffAToken, ticketB1, "id", "CINEMA_FORBIDDEN");
+    await expectForbiddenWithoutCheckInSideEffects(unassignedStaffId!, unassignedStaffToken, ticketA2, "id", "CINEMA_FORBIDDEN");
+    await expectForbiddenWithoutCheckInSideEffects(unassignedStaffId!, unassignedStaffToken, ticketA3, "qr", "CINEMA_FORBIDDEN");
+    await expectForbiddenWithoutCheckInSideEffects(staffAId!, staffAToken, ticketB2, "qr", "CINEMA_FORBIDDEN");
+    await expectForbiddenWithoutCheckInSideEffects(buyerId!, buyerToken, ticketA3, "id", "ROLE_FORBIDDEN");
+    await expectForbiddenWithoutCheckInSideEffects(buyerId!, buyerToken, ticketB2, "qr", "ROLE_FORBIDDEN");
+    await expectForbiddenWithoutCheckInSideEffects("guest", undefined, ticketB1, "id", "AUTH_REQUIRED");
+    await expectForbiddenWithoutCheckInSideEffects("guest", undefined, ticketA2, "qr", "AUTH_REQUIRED");
+
+    expect((await request(app).post("/api/tickets/scan").set(staffAuth).send({ qrToken: ticketA3.qrToken })).status).toBe(200);
 
     const assigned = await request(app).patch(`/api/admin/users/${unassignedStaffId}/assigned-cinema`).set(adminAuth).send({ cinemaId: cinemaAId });
     expect(assigned.status).toBe(200);
     expect(assigned.body.assignedCinemaId).toBe(cinemaAId);
+    const staleAssignmentToken = await request(app).get("/api/auth/me").set(unassignedAuth);
+    expect(staleAssignmentToken.status).toBe(401);
+    expect(staleAssignmentToken.body.error).toBe("INVALID_TOKEN");
+    const assignedStaff = await prisma.user.findUniqueOrThrow({ where: { id: unassignedStaffId! }, select: { id: true, authVersion: true } });
+    unassignedStaffToken = createToken({ id: assignedStaff.id, authVersion: assignedStaff.authVersion });
+    unassignedAuth = { Authorization: `Bearer ${unassignedStaffToken}` };
     expect((await request(app).get("/api/auth/me").set(unassignedAuth)).body.assignedCinemaId).toBe(cinemaAId);
     expect((await request(app).post("/api/tickets/scan").set(unassignedAuth).send({ qrToken: ticketA2.qrToken })).status).toBe(200);
     const unassignedAgain = await request(app).patch(`/api/admin/users/${unassignedStaffId}/assigned-cinema`).set(adminAuth).send({ cinemaId: null });
     expect(unassignedAgain.status).toBe(200);
     expect(unassignedAgain.body.assignedCinemaId).toBeNull();
+    const staleUnassignmentToken = await request(app).get("/api/auth/me").set(unassignedAuth);
+    expect(staleUnassignmentToken.status).toBe(401);
+    expect(staleUnassignmentToken.body.error).toBe("INVALID_TOKEN");
 
     expect((await request(app).post(`/api/tickets/${ticketB1.id}/check-in`).set(adminAuth).send({})).status).toBe(200);
     expect((await request(app).post("/api/tickets/scan").set(adminAuth).send({ qrToken: ticketB2.qrToken })).status).toBe(200);
     const checkedIn = await prisma.ticket.findMany({ where: { id: { in: [ticketA1.id, ticketA2.id, ticketA3.id, ticketB1.id, ticketB2.id] } }, select: { id: true, checkedInAt: true } });
-    expect(checkedIn.filter((ticket) => ticket.checkedInAt !== null)).toHaveLength(4);
+    expect(checkedIn.filter((ticket) => ticket.checkedInAt !== null)).toHaveLength(5);
     const staffCheckins = await prisma.auditLog.count({ where: { actorId: staffAId, action: "TICKET_CHECKED_IN" } });
     const newlyAssignedStaffCheckins = await prisma.auditLog.count({ where: { actorId: unassignedStaffId, action: "TICKET_CHECKED_IN" } });
     const adminCheckins = await prisma.auditLog.count({ where: { actorId: adminId, action: "TICKET_CHECKED_IN" } });
-    expect(staffCheckins).toBe(1);
+    expect(staffCheckins).toBe(2);
     expect(newlyAssignedStaffCheckins).toBe(1);
     expect(adminCheckins).toBe(2);
     expect(await prisma.auditLog.count({ where: { actorId: adminId, action: "STAFF_CINEMA_ASSIGNED" } })).toBe(2);

@@ -57,8 +57,8 @@ authorizationDescribe("REQ-BOOK ownership: order and nested ticket object isolat
     userAId = users[0]!.id;
     userBId = users[1]!.id;
     userIds.push(...users.map((user) => user.id));
-    tokenA = createToken({ id: userAId });
-    tokenB = createToken({ id: userBId });
+    tokenA = createToken({ id: users[0]!.id, authVersion: users[0]!.authVersion });
+    tokenB = createToken({ id: users[1]!.id, authVersion: users[1]!.authVersion });
 
     async function createConfirmedOrder(userId: string, seatId: string) {
       const expiresAt = new Date(Date.now() + 600_000);

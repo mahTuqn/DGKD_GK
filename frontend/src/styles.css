@@ -259,6 +259,12 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .admin-record-detail summary { cursor: pointer; list-style-position: inside; }
 .admin-inline-form { margin-top: 12px; align-items: end; }
 .admin-inline-form .button { align-self: end; }
+  .admin-edit-form { margin-top: 12px; padding: 12px; border-top: 1px solid var(--line); }
+  .admin-edit-form .button { align-self: end; }
+  .admin-seat-detail { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); }
+  .admin-seat-detail > summary { color: var(--cream); cursor: pointer; font-size: 10px; }
+  .admin-seat-list { display: grid; gap: 8px; max-height: 320px; margin-top: 10px; overflow: auto; }
+  .admin-seat-form { display: grid; grid-template-columns: minmax(64px, .7fr) minmax(72px, .8fr) minmax(120px, 1fr) auto; align-items: end; gap: 8px; padding: 9px; border: 1px solid var(--line); border-radius: 5px; }
 .admin-section { margin-top: 16px; }
 .admin-showtime-list { display: grid; gap: 8px; max-height: 490px; overflow: auto; }
 .admin-showtime-row { display: grid; grid-template-columns: minmax(180px, 1.6fr) repeat(3, minmax(115px, .8fr)) auto; align-items: end; gap: 10px; padding: 11px; border: 1px solid var(--line); border-radius: 5px; }
@@ -364,6 +370,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .admin-showtime-row { grid-template-columns: 1fr 1fr; }
   .admin-showtime-title { grid-column: 1 / -1; }
   .admin-showtime-row > .button { grid-column: 1 / -1; }
+  .admin-seat-form { grid-template-columns: 1fr 1fr; }
+  .admin-seat-form .field-label:nth-child(3), .admin-seat-form > .button { grid-column: 1 / -1; }
   .admin-record-row { align-items: flex-start; }
   .admin-record-row .button { max-width: 145px; white-space: normal; }
   .panel { padding: 16px; }

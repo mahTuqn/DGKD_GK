@@ -1,0 +1,61 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "runId": "2026-10-28-local-postgres-final",
+  "capturedAt": "2026-10-28T01:05:02+07:00",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "baseCommit": "b03c99a917d5fd328dd08744fdd81bde2f7265ca",
+  "sourceState": "working tree contained uncommitted implementation and test changes",
+  "environment": {
+    "os": "Windows",
+    "node": "v26.7.0",
+    "npm": "12.0.2",
+    "postgresql": "17.11",
+    "databaseIsolation": "Fresh temporary PostgreSQL cluster bound to 127.0.0.1:55432; separate cinema_app and cinema_test_final databases; no Docker or existing PostgreSQL service database used",
+    "browserProjects": [
+      "chromium-desktop",
+      "chromium-mobile"
+    ]
+  },
+  "testRun": {
+    "command": "npm test",
+    "startedAtUtc": "2026-10-27T18:03:12Z",
+    "durationMs": 76339,
+    "exitCode": 0,
+    "apiTestFilesPassed": 6,
+    "apiTestsPassed": 21,
+    "apiTestsFailed": 0,
+    "browserCases": 14,
+    "browserProjects": 2,
+    "browserTestsPassed": 28,
+    "browserTestsFailed": 0,
+    "browserTestsSkipped": 0,
+    "browserTestsFlaky": 0,
+    "coverageNotes": [
+      "Worker TC-WORKER-03 expires a hold exactly at boundaryAt and preserves a hold expiring boundaryAt+1ms.",
+      "Browser axe checks pass for discovery, login dialog, seat map, checkout, ticket page, and Admin view on desktop and Pixel 7 mobile.",
+      "QR SVGs on the ticket page and payment success view now have descriptive titles."
+    ]
+  },
+  "additionalChecks": {
+    "npmRunBuild": "PASS",
+    "npmRunQaTrace": "PASS: 46 test cases and 25 requirements; all sources and links resolved",
+    "playwrightDiscovery": "PASS: 28 tests across chromium-desktop and chromium-mobile",
+    "nodeCheckDastRunner": "PASS",
+    "packageJsonParse": "PASS",
+    "gitDiffCheck": "PASS; Git emitted only expected LF-to-CRLF notices"
+  },
+  "artifacts": [
+    {
+      "path": "reports/generated/local-postgres-20261028-pre-expansion-npm-test.log",
+      "sha256": "126957A557CD5D0AEAC0D2E8AF01D4139897A813BD9FB2D42F6850A6F8A9DDA0",
+      "gitIgnored": true
+    }
+  ],
+  "limitations": [
+    "This run verifies the current working tree on isolated local PostgreSQL; it is not a Docker Compose or clean-clone run.",
+    "Docker Desktop remains unavailable, so the DAST runner and ZAP plans have not been executed.",
+    "Staging/production, manual WCAG and screen-reader review, worker soak/multi-instance, live five-minute timing, real gateway/refund, PITR/RPO/RTO, and exhaustive ASVS/BOLA review remain open."
+  ],
+  "artifactNote": "The original Playwright JSON from this run was overwritten by a later --list discovery invocation; the preserved npm test log remains the authoritative run summary. Original recorded JSON SHA-256: DDD6250D4B2284F242B912EC2941AB97EA0D790C464252BC99799E57C304C913."
+}

@@ -1,0 +1,180 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "runId": "2026-10-28-local-postgres-worker-process-soak",
+  "capturedAt": "2026-10-28T02:25:34+07:00",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "baseCommit": "b03c99a917d5fd328dd08744fdd81bde2f7265ca",
+  "sourceState": "Working tree contained uncommitted implementation, 60-second process worker soak/restart test, CI setup and documentation updates",
+  "environment": {
+    "os": "Windows",
+    "node": "v26.7.0",
+    "npm": "12.0.2",
+    "postgresql": "17.11",
+    "databaseIsolation": "Temporary PostgreSQL cluster bound to 127.0.0.1:55432. Browser/API used cinema_app and cinema_test_final; TC-WORKER-05 used separately migrated cinema_worker_process_test. Docker and existing PostgreSQL service databases were not used.",
+    "browserProjects": [
+      "chromium-desktop",
+      "chromium-mobile"
+    ]
+  },
+  "testRun": {
+    "command": "npm test",
+    "exitCode": 0,
+    "apiTestFilesPassed": 6,
+    "apiTestsPassed": 22,
+    "apiTestsFailed": 0,
+    "workerProcessCasesPassed": 1,
+    "workerProcessCasesFailed": 0,
+    "concurrentWorkerProcesses": 2,
+    "workerProcessStarts": 3,
+    "workerSoakDurationMs": 60000,
+    "soakOutboxEventsProcessed": 7,
+    "restartCatchupEventsProcessed": 1,
+    "totalOutboxEventsProcessed": 8,
+    "reconciliationCasesCreated": 8,
+    "workerProcessesExitCode0": 3,
+    "browserCases": 16,
+    "browserProjects": 2,
+    "browserTestsPassed": 32,
+    "browserTestsFailed": 0,
+    "browserTestsSkipped": 0,
+    "browserTestsFlaky": 0,
+    "browserDurationMs": 117851,
+    "coverageNotes": [
+      "TC-WORKER-05 runs two independent Node worker loops at 250ms intervals for 60 seconds against an isolated PostgreSQL database; it inserts one initial and six periodic outbox events and verifies each is processed exactly once with one reconciliation case.",
+      "Both soak processes stop gracefully over IPC; after inserting a new pending event, a replacement process starts and catches it up; all three process instances exit with code 0.",
+      "This is a local 60-second soak/restart rehearsal, not a prolonged load test, forced-crash recovery test, or production reliability claim.",
+      "Playwright reports 32 expected tests, no skipped, unexpected, or flaky tests across Chromium desktop and Pixel 7 mobile."
+    ]
+  },
+  "additionalChecks": {
+    "workerProcessTargetedTest": "PASS: 1/1; 60-second two-process loop soak and graceful restart catch-up",
+    "workerProcessTypecheck": "PASS: strict NodeNext TypeScript check for integration test and harness",
+    "workerProcessDatabaseMigrations": "PASS: four migrations applied; no pending migrations",
+    "npmRunBuild": "PASS",
+    "npmRunLintOpenapi": "PASS",
+    "npmRunQaTrace": "PASS: 50 test cases, 25 requirements, all sources and links resolved",
+    "ciWorkflowYamlParse": "PASS: js-yaml 4.1.0",
+    "gitDiffCheck": "PASS (exit 0; only LF-to-CRLF working-copy notices)",
+    "ciWorkerProcessDatabase": "Configured as a separate migrated database and run after API tests; remote Actions result pending",
+    "dastRuntime": "Not run; Docker Desktop service remains stopped."
+  },
+  "artifacts": [
+    {
+      "path": "reports/generated/local-postgres-20261028-final-process-worker-npm-test.log",
+      "sha256": "FC755ADCF71B73113AF5FFACDFA1807A7A73A96C2136D0512D056A69B5073C56",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/playwright-results.json",
+      "sha256": "8DF1F979C75532868E7B2646260A254107ADB89C9D774D73EA8BE4B12342156E",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-worker-process-targeted.log",
+      "sha256": "140698AD80D3677505277A4BBBD926A648AB127B2B3704E15C59D010F0448B43",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-worker-process-migrations.log",
+      "sha256": "B98CA5DD61AFF0B25986D651CDD2574247433A2814DCE910953A448D17881111",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-worker-process-typecheck.log",
+      "sha256": "51FB801365F79DF792CDADA718BB3DD318BC8CCA0191D5DB5156CC25E7FE6ADE",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-process-worker-build.log",
+      "sha256": "EF3869AADB30F96F41025399B3AFA02B9FFC743BA971E7BCB5DC8AF078B7B526",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-process-worker-openapi.log",
+      "sha256": "DBD3A8A4C2914C72ACB232E460DB0CFC4BF70D694E8292C18EF0505661FE6596",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-process-worker-trace.log",
+      "sha256": "A3F64BD38C43D9069C04D0A2D405B54804E1046DFEDF35B0C71199332646895D",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-process-worker-ci-yaml.log",
+      "sha256": "BF45CD3341F9FFAEE8A832E24320DAF88D013E135AA7B24E14D7CD47FA6A39D3",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-process-worker-diff-check.log",
+      "sha256": "43013AE6AC74F55FA933F26F54954C63164A84EE82767C177D3B390DE7955E03",
+      "gitIgnored": true
+    },
+    {
+      "path": "backend/tests/worker.process.integration.test.ts",
+      "sha256": "31179FF32BE382847AB3BA86951C36DD9CC10AB7F58D6E34F96CBE3269F2AF00",
+      "gitIgnored": false
+    },
+    {
+      "path": "backend/tests/worker-process-harness.ts",
+      "sha256": "E7782C47034F07984D30A98F70656EE867C39B41BD3ECCA44448EAAE8AD9B6CC",
+      "gitIgnored": false
+    },
+    {
+      "path": "backend/vitest.worker-process.config.ts",
+      "sha256": "523EDC03BE3CA1A41F0C9650FD7347278CE4840905820515301771E086EF076D",
+      "gitIgnored": false
+    },
+    {
+      "path": "backend/vitest.config.ts",
+      "sha256": "78445BA1F54E4EBD5483D4D0E514028C227B36D3115FE385240729EFC2A5AB2E",
+      "gitIgnored": false
+    },
+    {
+      "path": "backend/package.json",
+      "sha256": "941F34655B11511C051426675A9588843A21DFFE4A627FFE00574278467F2528",
+      "gitIgnored": false
+    },
+    {
+      "path": "package.json",
+      "sha256": "586525084978A9BCED759454749A47C3D79CE96DFE1FEF72FFDD328F4AE53E46",
+      "gitIgnored": false
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "90D8096E1AA546ADA19223117845EDCE7073AEBF0563C35075FFF5CBE6C00E72",
+      "gitIgnored": false
+    },
+    {
+      "path": "docs/02-test-plan.md",
+      "sha256": "0E1ADA295D7B8D2B6A5A61F2C945126A510221FD2F279DCF78D8AB4DA0B9D683",
+      "gitIgnored": false
+    },
+    {
+      "path": "docs/03-rtm.csv",
+      "sha256": "A322E0F9636398DD2D20C8044520915E4A7AB14BC0BC6B1B1B3F16103D804D47",
+      "gitIgnored": false
+    },
+    {
+      "path": "docs/04-test-cases.csv",
+      "sha256": "94536A60EE9AD26CCCCCD68CC3A980F30DD4F2FC007265D851CA66A011BA8EBB",
+      "gitIgnored": false
+    },
+    {
+      "path": "docs/07-test-summary.md",
+      "sha256": "6785DCB3EE21CA25F7F499EB1BE5A448DA733A3F2E68B2973018A5682B917E56",
+      "gitIgnored": false
+    },
+    {
+      "path": "docs/09-project-charter-risk-register.md",
+      "sha256": "F925509849D5B8CD03838475C027966E1D22B1571F8B2D46B823AE1A875FA1AF",
+      "gitIgnored": false
+    }
+  ],
+  "limitations": [
+    "All passing results are from the local working tree on an isolated PostgreSQL cluster; not a Docker Compose or clean-clone run.",
+    "Docker Desktop is stopped; DAST/ZAP, demo database/container state, and remote GitHub Actions remain unverified.",
+    "The worker rehearsal lasts 60 seconds with graceful restart; it does not establish prolonged soak, forced-crash recovery, high availability, or production reliability.",
+    "Manual WCAG and screen-reader review, staging/production, real gateway/refund, live five-minute expiry timing, backup schedule/PITR/RPO/RTO, and exhaustive ASVS/BOLA review remain open."
+  ]
+}

@@ -1,0 +1,77 @@
+# TC-PLAN-07: active scan the production-built frontend preview.
+# The DAST runner starts a unique disposable Compose project and reaches the
+# preview at http://web:8080 from its private network. API paths are excluded
+# because authenticated and unauthenticated API scans run as separate gates.
+env:
+  contexts:
+    - name: cinema-production-preview
+      urls:
+        - ${webBase}
+      includePaths:
+        - ${webBase}/.*
+      excludePaths:
+        - ${webBase}/api/.*
+  parameters:
+    failOnError: true
+    failOnWarning: true
+    continueOnFailure: false
+    progressToStdout: true
+  vars:
+    webBase: http://web:8080
+
+jobs:
+  - type: requestor
+    requests:
+      - url: ${webBase}/healthz
+        name: Verify production preview is healthy
+        method: GET
+        responseCode: 200
+      - url: ${webBase}/
+        name: Verify production preview serves the application
+        method: GET
+        responseCode: 200
+
+  - type: spider
+    parameters:
+      context: cinema-production-preview
+      url: ${webBase}/
+      maxDuration: 2
+      maxDepth: 5
+      maxChildren: 20
+      postForm: false
+      processForm: false
+
+  - type: passiveScan-wait
+    parameters:
+      maxDuration: 2
+
+  - type: activeScan-config
+    parameters:
+      maxRuleDurationInMins: 1
+      maxScanDurationInMins: 5
+      maxAlertsPerRule: 10
+      defaultPolicy: Default Policy
+
+  - type: activeScan
+    parameters:
+      context: cinema-production-preview
+      url: ${webBase}/
+      maxScanDurationInMins: 5
+
+  - type: passiveScan-wait
+    parameters:
+      maxDuration: 2
+
+  - type: report
+    parameters:
+      template: traditional-json
+      reportDir: ../../../reports/generated/dast
+      reportFile: preview-zap.json
+      reportTitle: CinemaBooking production preview scan
+      reportDescription: ZAP active scan against the disposable Docker Compose production-built frontend preview.
+    sites:
+      - ${webBase}
+
+  - type: exitStatus
+    parameters:
+      errorLevel: High

@@ -94,6 +94,9 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
     expect(registered.status).toBe(201);
     expect(registered.body.user.role).toBe("CUSTOMER");
     expect(registered.body.user).not.toHaveProperty("passwordHash");
+    const duplicateRegistration = await request(app).post("/api/auth/register").send({ name: "Duplicate Customer", email: `customer-a-${fixture}@test.local`, password: "CustomerIntegration123!" });
+    expect(duplicateRegistration.status).toBe(409);
+    expect(duplicateRegistration.body.error).toBe("EMAIL_TAKEN");
     const customerAId = registered.body.user.id as string;
     userIds.push(customerAId);
     const tokenA = registered.body.token as string;
@@ -283,7 +286,7 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
     userIds.push(...racers.map((user) => user.id));
     const raceResults = await Promise.all(racers.map((user) => request(app)
       .post("/api/holds")
-      .set({ Authorization: `Bearer ${createToken({ id: user.id })}` })
+      .set({ Authorization: `Bearer ${createToken({ id: user.id, authVersion: 0 })}` })
       .send({ showtimeId, seatIds: [seatIds[4]] })));
     expect(raceResults.filter((result) => result.status === 201)).toHaveLength(1);
     expect(raceResults.filter((result) => result.status === 409)).toHaveLength(99);

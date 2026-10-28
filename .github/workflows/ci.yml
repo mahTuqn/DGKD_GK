@@ -28,8 +28,7 @@ jobs:
     env:
       DATABASE_URL: postgresql://cinema:cinema_dev@localhost:5432/cinema?schema=public
       DATABASE_URL_TEST: postgresql://cinema:cinema_dev@localhost:5432/cinema?schema=public
-      JWT_SECRET: ci-only-secret-change-before-deployment
-      MOCK_PAYMENT_SECRET: ci-only-webhook-secret
+      DATABASE_URL_WORKER_PROCESS_TEST: postgresql://cinema:cinema_dev@localhost:5432/cinema_worker_process_test?schema=public
       CI: true
     steps:
       - uses: actions/checkout@v7
@@ -49,10 +48,24 @@ jobs:
       - run: npm audit --audit-level=moderate
       - run: npm run db:generate
       - run: npm run db:deploy
+      - name: Create isolated worker process database
+        run: node --input-type=module -e 'import { PrismaClient } from "@prisma/client"; const client = new PrismaClient(); try { await client.$executeRawUnsafe("CREATE DATABASE cinema_worker_process_test"); } finally { await client.$disconnect(); }'
+      - name: Apply migrations to worker process database
+        run: npm run db:deploy --workspace backend
+        env:
+          DATABASE_URL: postgresql://cinema:cinema_dev@localhost:5432/cinema_worker_process_test?schema=public
       - run: npm run db:seed
       - run: npm run lint:openapi
       - run: npm run qa:trace
       - run: npm run test:api
+      - name: Verify live five-minute hold expiry over HTTP
+        run: npm run test:worker-live --workspace backend
+        timeout-minutes: 8
+        env:
+          DATABASE_URL: postgresql://cinema:cinema_dev@localhost:5432/cinema_worker_process_test?schema=public
+          DATABASE_URL_TEST: postgresql://cinema:cinema_dev@localhost:5432/cinema_worker_process_test?schema=public
+          DATABASE_URL_WORKER_PROCESS_TEST: postgresql://cinema:cinema_dev@localhost:5432/cinema_worker_process_test?schema=public
+          HOLD_TTL_SECONDS: "300"
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:browser
@@ -62,6 +75,27 @@ jobs:
           name: cinema-booking-browser-results-${{ github.sha }}
           path: |
             reports/generated/playwright
+            reports/generated/playwright-results.json
             test-results
           if-no-files-found: warn
           retention-days: 30
+
+  security-dast:
+    name: DAST (isolated Docker Compose)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run scan:dast:api
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: cinema-booking-dast-reports-${{ github.sha }}
+          path: reports/generated/dast
+          if-no-files-found: warn
+          retention-days: 14

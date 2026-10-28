@@ -18,6 +18,12 @@ const businessDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value
 }, "Ngày lịch không tồn tại.");
 const apiContentSecurityPolicy = "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; img-src 'self' data: https:; object-src 'none'; script-src 'self'; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; connect-src 'self' http://localhost:4000 http://127.0.0.1:4000";
 const staffRoles = [Role.STAFF, Role.ADMIN] as const;
+const developmentMockPaymentSecret = "cinema-booking-local-mock-payment-secret-2026";
+const publicMockPaymentSecrets = new Set([
+  developmentMockPaymentSecret,
+  "local-mock-webhook-secret-change-before-deployment-2026",
+  "ci-only-webhook-secret"
+]);
 const mockPaymentEventSchema = z.object({
   eventId: z.string().trim().min(8).max(128),
   orderId: z.string().min(1),
@@ -28,8 +34,22 @@ const mockPaymentEventSchema = z.object({
 
 function getMockPaymentSecret() {
   const configured = process.env.MOCK_PAYMENT_SECRET;
-  if (process.env.NODE_ENV === "production" && (!configured || configured.length < 32)) throw new Error("MOCK_PAYMENT_SECRET must be configured with at least 32 characters in production.");
-  return configured || "cinema-booking-local-mock-payment-secret-2026";
+  if (process.env.NODE_ENV === "production") {
+    if (!configured) throw new Error("MOCK_PAYMENT_SECRET must be configured with at least 32 characters in production.");
+    if (publicMockPaymentSecrets.has(configured)) throw new Error("MOCK_PAYMENT_SECRET must not use a published development or CI value in production.");
+    if (configured.length < 32) throw new Error("MOCK_PAYMENT_SECRET must be configured with at least 32 characters in production.");
+    return configured;
+  }
+  return configured || developmentMockPaymentSecret;
+}
+
+function trustedProxyHops() {
+  const configured = process.env.TRUST_PROXY_HOPS;
+  if (configured === undefined || configured.trim() === "") return 0;
+  if (!/^(0|[1-9]\d*)$/.test(configured)) throw new Error("TRUST_PROXY_HOPS must be a non-negative integer.");
+  const hops = Number(configured);
+  if (!Number.isSafeInteger(hops)) throw new Error("TRUST_PROXY_HOPS must be a safe integer.");
+  return hops;
 }
 
 export function assertMockPaymentConfiguration() {
@@ -195,6 +215,9 @@ function toOrder(order: Prisma.CinemaOrderGetPayload<{ include: { showtime: { in
 
 export function createApp() {
   const app = express();
+  // Trust only the configured number of proxy hops. Compose sets one because
+  // the API receives public requests through the Nginx web container.
+  app.set("trust proxy", trustedProxyHops());
   app.disable("x-powered-by");
   app.use(helmet({ contentSecurityPolicy: false }));
   app.use((_req, res, next) => {
@@ -221,8 +244,17 @@ export function createApp() {
 
   app.post("/api/auth/register", asyncRoute(async (req, res) => {
     const input = z.object({ name: z.string().trim().min(2).max(80), email: z.string().trim().email().max(254), password: z.string().min(8).max(72) }).strict().parse(req.body);
-    const user = await prisma.user.create({ data: { name: input.name, email: input.email.toLowerCase(), passwordHash: await hashPassword(input.password) }, select: { id: true, name: true, email: true, role: true, assignedCinemaId: true } });
-    res.status(201).json({ token: createToken(user), user });
+    let user;
+    try {
+      user = await prisma.user.create({ data: { name: input.name, email: input.email.toLowerCase(), passwordHash: await hashPassword(input.password) }, select: { id: true, name: true, email: true, role: true, assignedCinemaId: true, authVersion: true } });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+        return res.status(409).json({ error: "EMAIL_TAKEN", message: "Email này đã được đăng ký." });
+      }
+      throw error;
+    }
+    const publicUser = { id: user.id, name: user.name, email: user.email, role: user.role, assignedCinemaId: user.assignedCinemaId };
+    res.status(201).json({ token: createToken({ id: user.id, authVersion: user.authVersion }), user: publicUser });
   }));
 
   app.post("/api/auth/login", loginLimiter, asyncRoute(async (req, res) => {
@@ -230,7 +262,7 @@ export function createApp() {
     const user = await prisma.user.findUnique({ where: { email: input.email.toLowerCase() } });
     if (!user || !(await verifyPassword(input.password, user.passwordHash))) return res.status(401).json({ error: "INVALID_CREDENTIALS", message: "Email hoặc mật khẩu không chính xác." });
     const publicUser = { id: user.id, name: user.name, email: user.email, role: user.role, assignedCinemaId: user.assignedCinemaId };
-    res.json({ token: createToken(publicUser), user: publicUser });
+    res.json({ token: createToken({ id: user.id, authVersion: user.authVersion }), user: publicUser });
   }));
 
   app.get("/api/auth/me", requireAuth, (req, res) => res.json(req.user));

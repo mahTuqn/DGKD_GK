@@ -1,29 +1,43 @@
 # TC-PLAN-07: authenticated ZAP API scan release gate.
+# `npm run scan:dast:api` starts ZAP in a unique disposable Compose network;
+# the API is reachable there as `http://api:4000`, not localhost in ZAP.
+# Pass ZAP_AUTH_HEADER_VALUE='Bearer <disposable Admin JWT>' into the ZAP
+# container before it starts; set ZAP_AUTH_HEADER=Authorization and
+# ZAP_AUTH_HEADER_SITE=api (hostname only; ZAP does not compare the port).
+# Never commit the token or copy it into this plan.
 env:
   contexts:
     - name: cinema-api-authenticated
       urls:
-        - http://127.0.0.1:4000
+        - ${apiBase}
       includePaths:
-        - http://127.0.0.1:4000/api/.*
+        - ${apiBase}/api/.*
       excludePaths: []
+      authentication:
+        method: manual
+        verification:
+          method: response
+          loggedInRegex: '"movies"\s*:'
+          loggedOutRegex: 'AUTH_REQUIRED|INVALID_TOKEN|ROLE_FORBIDDEN'
   parameters:
     failOnError: true
-    failOnWarning: false
+    failOnWarning: true
     continueOnFailure: false
     progressToStdout: true
+  vars:
+    apiBase: http://api:4000
 
 jobs:
   - type: openapi
     parameters:
       apiFile: ../../../docs/openapi.yaml
       context: cinema-api-authenticated
-      targetUrl: http://127.0.0.1:4000
+      targetUrl: ${apiBase}
 
   - type: requestor
     requests:
-      - url: http://127.0.0.1:4000/api/admin/summary
-        name: Verify API scan uses the seeded Admin token
+      - url: ${apiBase}/api/admin/summary
+        name: Verify API scan uses the seeded Admin token (must return 200)
         method: GET
         responseCode: 200
 
@@ -51,7 +65,7 @@ jobs:
       reportTitle: CinemaBooking authenticated API scan
       reportDescription: ZAP OpenAPI import and active scan using the disposable seeded Admin account.
     sites:
-      - http://127.0.0.1:4000
+      - ${apiBase}
 
   - type: exitStatus
     parameters:

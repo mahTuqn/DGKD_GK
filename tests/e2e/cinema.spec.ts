@@ -114,17 +114,36 @@ test("[TC-E2E-10][TC-PLAN-07] trang web gửi security headers cơ bản", async
   expect(headers["referrer-policy"]).toBe("strict-origin-when-cross-origin");
 });
 
-test("[TC-E2E-01] customer đăng ký, duyệt suất, giữ ghế, thanh toán demo và xem vé", async ({ page }) => {
+test("[TC-E2E-01] customer đăng ký, đặt vé, thanh toán demo, xem vé và kiểm tra axe", async ({ page }) => {
   await registerCustomer(page);
   await buyOneTicket(page);
+  expect(seriousAxeViolations((await new AxeBuilder({ page }).include(".content-page").analyze()).violations)).toEqual([]);
 });
 
-test("[TC-E2E-02] trang khám phá không có lỗi axe serious hoặc critical", async ({ page }) => {
+test("[TC-E2E-02] trang khám phá và dialog đăng nhập không có lỗi axe nghiêm trọng", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByTestId("movie-card").first()).toBeVisible();
   const result = await new AxeBuilder({ page }).analyze();
   const serious = result.violations.filter((violation) => ["serious", "critical"].includes(violation.impact ?? ""));
   expect(serious.map(({ id, impact, nodes }) => ({ id, impact, targets: nodes.map((node) => node.target) }))).toEqual([]);
+
+  const desktopLogin = page.getByRole("button", { name: "Đăng nhập", exact: true });
+  const restoreFocus = await desktopLogin.isVisible() ? desktopLogin : page.getByRole("button", { name: "Mở tài khoản" });
+  await openLogin(page);
+  const loginDialog = page.locator(".auth-dialog");
+  await expect(loginDialog).toBeVisible();
+  await waitForOverlayAnimations(page);
+  expect(seriousAxeViolations((await new AxeBuilder({ page }).include(".auth-dialog").analyze()).violations)).toEqual([]);
+
+  const email = loginDialog.getByLabel("Email");
+  await expect(email).toBeFocused();
+  await page.keyboard.press("Shift+Tab");
+  await expect(loginDialog.getByRole("button", { name: "Đóng" })).toBeFocused();
+  await page.keyboard.press("Shift+Tab");
+  await expect(loginDialog.getByRole("button", { name: "Tạo tài khoản mới" })).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(loginDialog).toBeHidden();
+  await expect(restoreFocus).toBeFocused();
 });
 
 test("[TC-E2E-03] staff soát QR vé một lần và từ chối lượt dùng lặp", async ({ page }) => {
@@ -168,6 +187,7 @@ test("[TC-E2E-04] Admin xem báo cáo tỉ lệ lấp đầy ở chế độ ch�
   await expect(occupancy.getByText(/[\d.,]+ \/ [\d.,]+ ghế đã bán/)).toBeVisible();
   await expect(occupancy.getByText(/\d+ suất đang mở/)).toBeVisible();
   await expect(occupancy.getByRole("progressbar", { name: "Tỉ lệ lấp đầy ghế" })).toHaveAttribute("value", /\d/);
+  expect(seriousAxeViolations((await new AxeBuilder({ page }).include(".admin-view").analyze()).violations)).toEqual([]);
 });
 
 test("[TC-E2E-05] Admin tạo rạp, cập nhật trạng thái và thấy trạng thái được lưu", async ({ page }) => {
@@ -202,16 +222,20 @@ test("[TC-E2E-11] dữ liệu quản trị có markup được hiển thị như
 
   const suffix = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
   const payload = `<img src=x data-qa="${suffix}" onerror="window.__cinemaXss=1">`;
+  const cityPayload = `<svg data-qa-city="${suffix}" onload="window.__cinemaXss=2">XSS City ${suffix}</svg>`;
+  const addressPayload = `<script data-qa-address="${suffix}">window.__cinemaXss=3</script>`;
   const cinemaPanel = page.locator(".panel").filter({ has: page.getByRole("heading", { name: "Quản lý rạp" }) });
   await cinemaPanel.getByLabel("Tên rạp").fill(payload);
-  await cinemaPanel.getByLabel("Thành phố").fill("XSS Test City");
-  await cinemaPanel.getByLabel("Địa chỉ").fill(`XSS fixture address ${suffix}`);
+  await cinemaPanel.getByLabel("Thành phố").fill(cityPayload);
+  await cinemaPanel.getByLabel("Địa chỉ").fill(addressPayload);
   await cinemaPanel.getByRole("button", { name: "Thêm rạp" }).click();
 
   const row = cinemaPanel.locator(".admin-record-row").filter({ hasText: payload });
   await expect(row).toBeVisible();
   await expect(row.getByText(payload, { exact: true })).toBeVisible();
-  await expect(row.locator("img, script")).toHaveCount(0);
+  await expect(row.locator("span")).toContainText(cityPayload);
+  await expect(row.locator("span")).toContainText(addressPayload);
+  await expect(row.locator("img, script, svg")).toHaveCount(0);
 });
 
 test("[TC-E2E-06] Bộ lọc phim và rạp cập nhật đúng các suất đang hiển thị", async ({ page }) => {

@@ -1,0 +1,41 @@
+{
+  "runId": "2026-10-28-authorization-route-source-review",
+  "sourceState": "Read-only review of uncommitted working tree on branch codex/phase8-clean-clone; base commit b03c99a917d5.",
+  "reviewMethod": "Enumerated Express route registrations and traced authentication, role, owner, and cinema-scope guards through handlers and current test IDs. No database, Docker, or test execution was used.",
+  "sourceFiles": [
+    "backend/src/app.ts",
+    "backend/src/auth.ts",
+    "backend/src/domain/mock-payment-signature.ts",
+    "backend/tests/authorization-regression.integration.test.ts",
+    "backend/tests/object-authorization.integration.test.ts",
+    "backend/tests/staff-scope.integration.test.ts"
+  ],
+  "inventory": {
+    "expressRoutes": 35,
+    "authenticationRequiredRoutes": 27,
+    "adminOnlyRoutes": 18,
+    "publicRoutes": 8,
+    "guest401Coverage": "TC-SEC-08 enumerates all 27 requireAuth routes.",
+    "customerAndStaffAdminDenialCoverage": "TC-SEC-06/09 send valid payloads to all 18 Admin routes and assert 403 with unchanged state/audit snapshots.",
+    "customerOwnershipCoverage": "TC-SEC-03/04/07/11 cover order listing/detail, hold-to-order, payment completion, and related booking/payment side effects.",
+    "staffCinemaScopeCoverage": "TC-STAFF-01/TC-SEC-10 cover both ticket-ID and QR check-in, Guest/Customer denials, assigned/unassigned/cross-cinema Staff, Admin, and no-side-effect assertions."
+  },
+  "sourceFindings": [
+    "No obvious missing authentication, Admin-role, customer-owner, or Staff cinema-scope guard was found in the 35-route inventory.",
+    "Hold creation binds the authenticated user; order and mock-payment reads constrain owner ID; order list/detail queries are scoped to the authenticated user.",
+    "Both check-in handlers enforce Staff/Admin and Staff cinema assignment before mutating check-in state.",
+    "The public mock webhook verifies HMAC with constant-time comparison; production startup requires a configured secret.",
+    "QR scan distinguishes unknown tokens from known tickets outside a Staff member's assigned cinema. Tokens are high entropy and no ticket details are returned before the cinema guard; retain as a low-priority information-oracle observation for future review.",
+    "The OpenAPI contract said role changes invalidate the current token, but the original auth middleware ignored authVersion despite role and assignment handlers incrementing it. JWT issuance and validation were updated to carry and compare authVersion; the post-change focused authorization suite passed 8/8, including role and cinema-assignment stale-token assertions."
+  ],
+  "coverageGap": {
+    "description": "GET /api/admin/users and PATCH /api/admin/users/:id/role had negative-role coverage but no positive Admin behavior test.",
+    "action": "Added TC-API-01 assertions for Admin user listing without passwordHash, role change, assignment clearing, authVersion increment, audit, rejection of the stale token, and role enforcement with a refreshed version token. TC-STAFF-01 now checks token invalidation on assignment and unassignment.",
+    "verification": "Passed after authVersion enforcement: focused authorization suite 8/8 across three files, including Admin user listing/role update, assignment clearing, authVersion increment, audit, stale-token rejection, and refreshed-role enforcement. Log: reports/generated/authorization-matrix-20261028.log."
+  },
+  "limitations": [
+    "This is a source-level route review, not an exhaustive ASVS/API Top 10 assessment or a full runtime BOLA test.",
+    "Staff/Admin cross-role ownership variants are not separately tested, although owner queries use the authenticated user ID.",
+    "The focused authorization suite does not cover every possible cross-role ownership combination and is not exhaustive ASVS/API Top 10 review."
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "runId": "2026-10-28-native-zap-dast",
+  "capturedAt": "2026-10-28",
+  "tool": {
+    "name": "OWASP ZAP",
+    "version": "2.17.0",
+    "distribution": "Official cross-platform release archive",
+    "archiveSha256": "94c8f767b1c2e94f0db66b3ae56514d5e3f5a728ee1b6c798e0c8fe2d61fbff0",
+    "releaseUrl": "https://github.com/zaproxy/zaproxy/releases/download/v2.17.0/ZAP_2.17.0_Crossplatform.zip",
+    "java": "17.0.12"
+  },
+  "environment": {
+    "os": "Windows",
+    "runtime": "Native ZAP Automation Framework; Docker was not used",
+    "database": "Temporary PostgreSQL 17 cluster bound to 127.0.0.1:55433 with a seeded disposable database",
+    "api": "Working-tree backend on 127.0.0.1:4000",
+    "preview": "Working-tree frontend production build served by Vite preview on 127.0.0.1:5173",
+    "scopeLimitations": [
+      "This does not verify Docker Compose service networking, the Nginx container image, or Docker demo database state.",
+      "Vite SPA fallback returned 200 for /healthz; this does not verify the production container health endpoint.",
+      "Active scans mutated only the disposable DAST database; no production or Docker database was used."
+    ]
+  },
+  "scans": {
+    "unauthenticatedApi": {
+      "report": "reports/generated/dast-native/native-unauthenticated-api.json",
+      "openApiUrlsImported": 35,
+      "control": "GET /api/auth/me returned HTTP 401",
+      "exitCode": 0,
+      "riskCounts": { "high": 0, "medium": 0, "low": 0, "informational": 2 },
+      "alerts": [
+        "Authentication Request Identified (informational)",
+        "User Agent Fuzzer (informational)"
+      ]
+    },
+    "authenticatedApi": {
+      "report": "reports/generated/dast-native/native-authenticated-host-filter.json",
+      "openApiUrlsImported": 35,
+      "control": "Seeded Admin GET /api/admin/summary returned HTTP 200",
+      "authHeader": "Disposable Admin JWT passed through the ZAP process environment; ZAP_AUTH_HEADER_SITE was hostname-only",
+      "exitCode": 0,
+      "riskCounts": { "high": 0, "medium": 0, "low": 1, "informational": 2 },
+      "lowFinding": {
+        "name": "Cross Site Scripting Weakness (Persistent in JSON Response)",
+        "confidence": "Low",
+        "instances": [
+          "GET /api/admin/cinemas parameter name",
+          "GET /api/admin/cinemas parameter city",
+          "GET /api/admin/cinemas parameter address"
+        ],
+        "triage": "The active scan stored markup in disposable cinema fields and read it back as application/json. TC-E2E-11 verifies all three fields render as text in the React Admin UI without img/script/svg nodes on Chromium desktop and mobile. Other JSON consumers must still apply context-appropriate output encoding."
+      },
+      "alerts": [
+        "Authentication Request Identified (informational)",
+        "User Agent Fuzzer (informational)"
+      ]
+    },
+    "productionBuiltFrontendPreview": {
+      "report": "reports/generated/dast-native/native-preview.json",
+      "server": "Vite preview of the production build, not the Docker Nginx image",
+      "healthAndRootControls": "Both returned HTTP 200; Vite SPA fallback serves the app for /healthz",
+      "spiderUrlsFound": 13,
+      "exitCode": 0,
+      "riskCounts": { "high": 0, "medium": 0, "low": 0, "informational": 2 },
+      "triage": [
+        "Information Disclosure - Suspicious Comments: low-confidence informational match on the literal SVG namespace URL http://www.w3.org/2000/svg in the minified bundle.",
+        "Modern Web Application: informational scanner observation."
+      ]
+    }
+  },
+  "configurationFinding": {
+    "issue": "ZAP compares ZAP_AUTH_HEADER_SITE to the hostname, not hostname:port; api:4000 did not match.",
+    "fix": "scripts/run-dast-api.mjs now sets ZAP_AUTH_HEADER_SITE=api.",
+    "verification": "Native requestor check passed with ZAP_AUTH_HEADER_SITE=127.0.0.1; full authenticated scan and its HTTP 200 control passed with the same hostname-only behavior."
+  },
+  "overall": "Native local DAST completed in the three requested scopes with no High/Medium alerts. Docker Compose and remote GitHub Actions DAST remain unverified."
+}

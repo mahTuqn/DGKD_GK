@@ -1,0 +1,49 @@
+{
+  "capturedAt": "2026-10-28T06:05:13+07:00",
+  "scope": "Docker Compose DAST interruption and Docker Desktop recovery attempt",
+  "dast": {
+    "composeProject": "cinema-dast-20261027221809-428657f7-unauth",
+    "stateBeforeInterruption": "Built isolated API/PostgreSQL image, migrations and seed completed; ZAP imported 35 OpenAPI URLs and started activeScan.",
+    "runnerResult": "Exit code 1; the scan did not create a pass report.",
+    "log": "reports/generated/docker-compose-dast-20261028.log",
+    "cleanup": "ZAP container removal timed out; docker compose down returned HTTP 500 from Docker Engine API /containers/json.",
+    "volumePolicy": "DAST_KEEP_VOLUMES=1; compose cleanup did not request --volumes. Current run-owned resource state could not be enumerated after Engine failure."
+  },
+  "dockerDesktop": {
+    "version": "4.88.0",
+    "engineBeforeFailure": "29.7.2",
+    "restart": "docker desktop restart failed: processes remained running and the CLI reported context deadline exceeded.",
+    "start": "docker desktop start --detach returned Starting Docker Desktop; a later foreground start reported Docker Desktop is already running.",
+    "latestObserved": {
+      "wslDockerDesktopDistro": "Stopped",
+      "dockerDesktopService": "Stopped (Manual)",
+      "dockerEngineApi": "Unavailable or unresponsive; desktop status and engine queries did not return.",
+      "backendStartupError": "Current backend.error.json/log repeats Windows error 1920 while initializing Ingest and removing %LOCALAPPDATA%/Docker/run/sailor-ingest.sock.",
+      "runtimeSocket": {
+        "path": "%LOCALAPPDATA%/Docker/run/sailor-ingest.sock",
+        "sizeBytes": 0,
+        "attributes": ["Archive", "ReparsePoint"],
+        "aclAndReparseQueries": "Get-Acl and fsutil reparsepoint query fail with Windows error 1920. This supports a stale/inaccessible socket diagnosis; it does not establish VHDX corruption."
+      },
+      "webPorts": {
+        "8080": "Connection refused after restart attempt",
+        "8081": "Connection refused after restart attempt"
+      }
+    },
+    "resourceObservationDuringScan": "Windows reported 0.44 GB free physical memory before restart. This is correlated with the interruption but is not established as the root cause.",
+    "serviceStartAttempt": "Start-Service com.docker.service was denied with Cannot open service; the current session lacks rights to control this service."
+  },
+  "dataSafety": {
+    "dockerVolumesDeletedOrReset": false,
+    "factoryResetRun": false,
+    "dockerVhdxModified": false,
+    "installedPostgreSqlService": "Running; never stopped"
+  },
+  "latestSecurityScanAttempt": {
+    "command": "npm run scan:secrets",
+    "result": "Failed before scanning because the Docker Desktop Linux Engine named pipe was missing.",
+    "scannerRequirement": "scripts/scan-secrets.mjs runs pinned Gitleaks v8.30.1 as a Docker container; no standalone gitleaks executable is available on PATH.",
+    "coverageCaveat": "Earlier Gitleaks pass remains historical evidence and does not cover source/evidence files added after that scan."
+  },
+  "requiredFollowup": "Restore Docker Desktop Engine with sufficient Windows service privileges, verify existing Compose containers/volumes, then rerun Compose DAST only when host resources are adequate."
+}

@@ -1,0 +1,110 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "runId": "2026-10-28-production-config-security",
+  "capturedAt": "2026-10-28T03:45:39.747Z",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "baseCommit": "b03c99a917d5",
+  "branch": "codex/phase8-clean-clone",
+  "sourceState": "Uncommitted working-tree follow-up; no commit or push was made.",
+  "findings": [
+    {
+      "id": "BUG-008",
+      "severity": "P1",
+      "summary": "Compose previously supplied published fixed JWT/mock-payment secrets to an API running with NODE_ENV=production and used a published database password."
+    },
+    {
+      "id": "BUG-009",
+      "severity": "P2",
+      "summary": "Login rate limiting used req.ip without configuring the single Nginx proxy hop, so Compose clients could share one limiter key."
+    }
+  ],
+  "changes": [
+    "Compose requires POSTGRES_PASSWORD, JWT_SECRET, and MOCK_PAYMENT_SECRET; the production API rejects missing, short, and known published development/CI JWT or mock-payment values.",
+    "Compose binds web and PostgreSQL host ports to 127.0.0.1 by default; API trusts only the configured number of proxy hops, set to one for the Nginx-to-API Compose path and zero by default.",
+    "npm run env:compose writes independent random values to a Git-ignored .env, does not print secret values, refuses overwrite, and refuses to generate a new DB password when the current Compose project volume exists.",
+    "The isolated DAST runner generates independent ephemeral DB/JWT/mock-payment secrets and assigns loopback host bindings for each uniquely named project."
+  ],
+  "verification": {
+    "configurationSuite": {
+      "command": "npm run test --workspace backend -- tests/configuration.test.ts",
+      "exitCode": 0,
+      "testFilesPassed": 1,
+      "testsPassed": 4,
+      "testsFailed": 0,
+      "log": "reports/generated/security-config-test-20261028.log"
+    },
+    "backendBuild": {
+      "command": "npm run build --workspace backend",
+      "exitCode": 0,
+      "result": "Prisma Client generation and backend TypeScript build passed.",
+      "log": "reports/generated/security-config-backend-build-20261028.log"
+    },
+    "composeInterpolation": {
+      "validLocalEnvironment": {
+        "command": "docker compose config --quiet",
+        "exitCode": 0,
+        "log": "reports/generated/security-config-compose-valid-20261028.log"
+      },
+      "blankExampleEnvironment": {
+        "command": "docker compose --env-file .env.example config --quiet",
+        "exitCode": 1,
+        "expectedRequiredVariables": [
+          "POSTGRES_PASSWORD",
+          "JWT_SECRET",
+          "MOCK_PAYMENT_SECRET"
+        ],
+        "log": "reports/generated/security-config-compose-missing-secrets-20261028.log"
+      }
+    },
+    "currentTreeSecretScan": {
+      "version": "8.30.1",
+      "releaseAssetSha256": "d29144deff3a68aa93ced33dddf84b7fdc26070add4aa0f4513094c8332afc4e",
+      "binarySha256": "17157E2EE8B76FC8B1D8BEE607A250E34B8A8023C8BC81822D4B5EE4D78FCB7C",
+      "scope": "25 explicit source/config/documentation targets",
+      "targetCount": 25,
+      "findings": 0,
+      "exitCode": 0,
+      "summary": "reports/generated/gitleaks-current-final-v2-summary.json",
+      "reports": "reports/generated/gitleaks-current-final-v2-source-01.json through gitleaks-current-final-v2-source-25.json",
+      "logs": "reports/generated/gitleaks-current-final-v2-source-01.log through gitleaks-current-final-v2-source-25.log"
+    },
+    "traceability": {
+      "command": "npm run qa:trace",
+      "exitCode": 0,
+      "testCases": 65,
+      "requirements": 25,
+      "log": "reports/generated/security-config-traceability-final-20261028.log"
+    },
+    "diffCheck": {
+      "command": "git diff --check",
+      "exitCode": 0,
+      "log": "reports/generated/security-config-diff-check-final-20261028.log",
+      "note": "Only Git LF-to-CRLF working-copy warnings; no whitespace errors."
+    }
+  },
+  "runtime": {
+    "dockerEngine": "29.7.2",
+    "observedStacks": [
+      "dgkd_gk",
+      "cinema-qa"
+    ],
+    "observedState": "Web/API/PostgreSQL containers healthy; PostgreSQL and worker containers remain running.",
+    "updatedComposeAppliedToExistingContainers": false,
+    "databaseVolumesChangedOrDeleted": false,
+    "note": "The new Compose configuration was validated but not applied to the existing user stacks in this resource-constrained turn; applying it later will recreate API/web/DB configuration without deleting data, and requires checking the initialized database password first.",
+    "lastResourceCheck": {
+      "freePhysicalMemoryMiB": 481,
+      "workerSoakDatabaseUrlConfigured": false,
+      "requiredHeadroomMiB": 1536
+    }
+  },
+  "planGaps": [
+    "Full composite npm test after authVersion and the security configuration changes; current API/auth/browser suites were separate.",
+    "Apply and verify the new Compose configuration against the existing demo/QA runtime without deleting PostgreSQL volumes.",
+    "Current-image/Compose production-preview DAST and report pass.",
+    "Five-minute TC-WORKER-06 soak on a dedicated loopback PostgreSQL database.",
+    "Clean-clone verification and final manifest after an explicitly authorized frozen commit.",
+    "Remote GitHub Actions, manual WCAG/screen-reader/full keyboard review, staging/production, real gateway/refund, PITR/RPO/RTO, prolonged soak, and exhaustive ASVS/BOLA review."
+  ]
+}

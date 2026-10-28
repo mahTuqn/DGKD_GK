@@ -5,11 +5,21 @@ import { Role } from "@prisma/client";
 import { prisma } from "./db.js";
 
 const developmentSecret = "cinema-booking-local-secret-change-before-deploy-2026";
+const publicJwtSecrets = new Set([
+  developmentSecret,
+  "local-development-secret-change-before-deployment",
+  "ci-only-secret-change-before-deployment"
+]);
 
 function jwtSecret() {
   const configured = process.env.JWT_SECRET;
+  if (process.env.NODE_ENV === "production") {
+    if (!configured) throw new Error("JWT_SECRET must be configured with at least 32 characters in production.");
+    if (publicJwtSecrets.has(configured)) throw new Error("JWT_SECRET must not use a published development or CI value in production.");
+    if (configured.length < 32) throw new Error("JWT_SECRET must be configured with at least 32 characters in production.");
+    return configured;
+  }
   if (configured && configured.length >= 32) return configured;
-  if (process.env.NODE_ENV === "production") throw new Error("JWT_SECRET must be configured with at least 32 characters in production.");
   return configured || developmentSecret;
 }
 
@@ -25,8 +35,8 @@ export async function verifyPassword(password: string, passwordHash: string) {
   return bcrypt.compare(password, passwordHash);
 }
 
-export function createToken(user: { id: string }) {
-  return jwt.sign({}, jwtSecret(), { subject: user.id, expiresIn: "8h", issuer: "cinema-booking" });
+export function createToken(user: { id: string; authVersion: number }) {
+  return jwt.sign({ authVersion: user.authVersion }, jwtSecret(), { subject: user.id, expiresIn: "8h", issuer: "cinema-booking" });
 }
 
 export const requireAuth: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
@@ -35,9 +45,12 @@ export const requireAuth: RequestHandler = async (req: Request, res: Response, n
   try {
     const payload = jwt.verify(token, jwtSecret(), { issuer: "cinema-booking" }) as jwt.JwtPayload;
     if (!payload.sub) return res.status(401).json({ error: "INVALID_TOKEN", message: "Phiên đăng nhập không hợp lệ." });
-    const user = await prisma.user.findUnique({ where: { id: payload.sub }, select: { id: true, name: true, email: true, role: true, assignedCinemaId: true } });
+    const user = await prisma.user.findUnique({ where: { id: payload.sub }, select: { id: true, name: true, email: true, role: true, assignedCinemaId: true, authVersion: true } });
     if (!user) return res.status(401).json({ error: "INVALID_TOKEN", message: "Tài khoản không còn tồn tại." });
-    req.user = user;
+    if (typeof payload.authVersion !== "number" || !Number.isSafeInteger(payload.authVersion) || payload.authVersion !== user.authVersion) {
+      return res.status(401).json({ error: "INVALID_TOKEN", message: "Phiên đăng nhập không hợp lệ hoặc đã bị thu hồi." });
+    }
+    req.user = { id: user.id, name: user.name, email: user.email, role: user.role, assignedCinemaId: user.assignedCinemaId };
     next();
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError || error instanceof jwt.TokenExpiredError) {

@@ -1,0 +1,1538 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "runId": "2026-10-28-local-postgres-p0-gap-regression",
+  "capturedAt": "2026-10-28T03:51:26.982Z",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "baseCommit": "b03c99a917d5",
+  "branch": "codex/phase8-clean-clone",
+  "sourceState": "Uncommitted working-tree follow-up; no commit or push was made.",
+  "environment": {
+    "os": "Windows",
+    "node": "v26.7.0",
+    "npm": "12.0.2",
+    "postgresql": "17.11",
+    "databaseIsolation": "The historical composite npm test used a temporary PostgreSQL 17.11 cluster at 127.0.0.1:55434 and is stopped. Current focused authorization and browser runs after authVersion used the dedicated cinema_authz_matrix_20261028 database in a temporary loopback cluster at 127.0.0.1:55436; the server is stopped and its data directory remains at E:\\DGKDPM\\_codex-authz-20261028-01 because environment policy blocked recursive cleanup. Current API suite used an isolated test database. A separate Docker-backed browser run used a disposable database in cinema-qa-postgres-1 and dropped it after the run. The installed Windows PostgreSQL service database was not used for the recorded tests.",
+    "browserProjects": [
+      "chromium-desktop",
+      "chromium-mobile (Pixel 7)"
+    ]
+  },
+  "testRun": {
+    "scopeStatus": "Historical combined npm test before authVersion hardening; post-hardening API, focused authorization, browser, build, and OpenAPI checks are separate runs recorded under authVersionFollowUp.",
+    "command": "npm test",
+    "exitCode": 0,
+    "apiTestFilesPassed": 7,
+    "apiTestsPassed": 26,
+    "apiTestsFailed": 0,
+    "workerProcessCasesPassed": 1,
+    "workerProcessCasesFailed": 0,
+    "browserCases": 20,
+    "browserProjects": 2,
+    "browserTestsExpected": 40,
+    "browserTestsPassed": 40,
+    "browserTestsFailed": 0,
+    "browserTestsSkipped": 0,
+    "browserTestsFlaky": 0,
+    "coverageNotes": [
+      "TC-E2E-19 simulates payment/ticket commit followed by a lost browser response, then same-order idempotent retry with one ticket.",
+      "TC-SEC-04 denies cross-customer payment completion with no order/payment/ticket/event side effects.",
+      "TC-SEC-05 rejects role and assignedCinemaId profile mass assignment; TC-SEC-06 returns 403 on all 18 Admin routes for Customer and Staff with valid mutation payloads.",
+      "TC-SEC-07 rejects another Customer's holdId when creating an order, with no hold/order/payment/claim/audit side effects.",
+      "TC-E2E-15 edits the auditorium name and verifies persistence after reload on desktop and mobile.",
+      "TC-E2E-18 verifies Admin disclosure keyboard access with Tab, visible focus, and Enter open/close behavior.",
+      "TC-E2E-11 verifies stored markup in cinema name/city/address renders as text and creates no img/script/svg DOM nodes on desktop/mobile.",
+      "Axe and accessibility state checks run across desktop Chromium and Pixel 7 mobile; manual WCAG and screen-reader review remain open."
+    ]
+  },
+  "liveExpiryRun": {
+    "command": "npm run test:worker-live --workspace backend",
+    "exitCode": 0,
+    "casesPassed": 1,
+    "casesFailed": 0,
+    "durationMs": 301600,
+    "holdTtlSeconds": 300,
+    "assertions": [
+      "A second customer receives HTTP 409 before expiry while the first hold and seat map remain HELD.",
+      "The running worker persists SeatHold=EXPIRED and releases SeatClaim references and expiry.",
+      "Exactly one SEAT_HOLD_EXPIRED audit row is recorded for the hold.",
+      "After worker sweep the seat map is AVAILABLE and another customer successfully creates a hold."
+    ]
+  },
+  "dockerPostgresBrowserRun": {
+    "command": "npm run test:browser -- --reporter=json --output=reports/generated/docker-db-local-app-playwright-artifacts",
+    "exitCode": 0,
+    "database": "cinema_browser_docker_20261028_01 inside cinema-qa-postgres-1; migrate and seed passed; disposable database dropped after the run",
+    "application": "Current working-tree API/frontend served by local Playwright webServer processes against PostgreSQL in Docker",
+    "expected": 40,
+    "passed": 40,
+    "failed": 0,
+    "skipped": 0,
+    "flaky": 0,
+    "durationMs": 147268.813,
+    "scopeLimit": "This does not verify current Docker API/web images or the Nginx production preview."
+  },
+  "authVersionFollowUp": {
+    "sourceChange": "JWT issuance and requireAuth now bind a token to the account authVersion; role and Staff cinema-assignment changes invalidate stale tokens.",
+    "authorizationSuite": {
+      "command": "npx vitest run --config vitest.config.ts --pool=threads --maxWorkers=1 --no-file-parallelism tests/authorization-regression.integration.test.ts tests/object-authorization.integration.test.ts tests/staff-scope.integration.test.ts",
+      "exitCode": 0,
+      "testFilesPassed": 3,
+      "testsPassed": 8,
+      "testsFailed": 0,
+      "log": "reports/generated/authorization-matrix-20261028.log",
+      "evidence": "docs/evidence/followup/2026-10-28-local-postgres-authorization-matrix.json"
+    },
+    "apiSuite": {
+      "command": "npx vitest run --config vitest.config.ts --pool=threads --maxWorkers=1 --no-file-parallelism",
+      "exitCode": 0,
+      "testFilesPassed": 7,
+      "testsPassed": 28,
+      "testsFailed": 0,
+      "log": "reports/generated/authversion-api-suite-20261028.log"
+    },
+    "browserSuite": {
+      "command": "npm run test:browser",
+      "exitCode": 0,
+      "projects": [
+        "chromium-desktop",
+        "chromium-mobile (Pixel 7)"
+      ],
+      "expected": 40,
+      "passed": 40,
+      "failed": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "durationMs": 134618.614,
+      "log": "reports/generated/authversion-playwright-20261028.log",
+      "evidence": "docs/evidence/followup/2026-10-28-local-postgres-authversion-browser.json"
+    },
+    "build": {
+      "command": "npm run build",
+      "exitCode": 0,
+      "result": "Prisma generate, backend TypeScript, frontend TypeScript and Vite production build passed.",
+      "log": "reports/generated/authversion-build-20261028.log"
+    },
+    "openApiLint": {
+      "command": "npm run lint:openapi",
+      "exitCode": 0,
+      "result": "Redocly validation passed.",
+      "log": "reports/generated/authversion-openapi-lint-20261028.log"
+    },
+    "traceability": {
+      "command": "npm run qa:trace",
+      "exitCode": 0,
+      "testCases": 64,
+      "requirements": 25,
+      "log": "reports/generated/authorization-matrix-traceability-20261028.log"
+    },
+    "combinedRunStatus": "The full composite npm test has not been rerun after authVersion hardening. Its previous worker-process case 1/1 is historical; latest API, authorization and browser runs passed separately."
+  },
+  "additionalChecks": {
+    "build": "PASS after authVersion token-revocation changes; Prisma generate, backend/frontend TypeScript and Vite production build passed.",
+    "openApiLint": "PASS after current OpenAPI token-revocation description update.",
+    "traceability": "PASS: 65 test cases, 25 requirements, all sources and links resolved",
+    "dependencyAudit": "PASS: npm audit --audit-level=high; 0 vulnerabilities",
+    "mutation": "PASS: 81.82%; 153 killed, 34 survived, 0 timeout/errors; threshold 70%",
+    "ciWorkflowYaml": "PASS: parsed with js-yaml CLI; remote GitHub Actions result remains pending",
+    "gitDiffCheck": "PASS",
+    "sourceSecretScan": "PASS: standalone official Gitleaks v8.30.1 Windows x64 binary was checksum-verified and scanned 25 initial source/config/docs targets and 36 final source/config/hand-authored-documentation targets with 0 findings. After Docker Engine resumed, npm run scan:secrets using the pinned v8.30.1 image scanned 7 Git commits (~830 KB), 0 findings, exit 0. Reports are in reports/generated/gitleaks-current-final-v3-summary.json and its 36 per-target files, reports/generated/final-gitleaks.json and reports/generated/authversion-gitleaks-docker-history-20261028.log. Remote GitHub Actions has not run.",
+    "docker": "PARTIALLY RECOVERED: Docker CLI responds with Engine 29.7.2 and docker-desktop WSL distro is Running; com.docker.service still reports Stopped/Manual. Compose projects dgkd_gk and cinema-qa each have four running containers, web/API healthy and PostgreSQL healthy on host ports 5434/5435. Read-only pg_isready passed for both databases and the demo database reports 16 public tables. Windows postgresql-x64-17 remains running. See docs/evidence/followup/2026-10-28-docker-runtime-resume.json.",
+    "dastRuntime": "INCOMPLETE: Prior Compose DAST built/seeded an isolated API/PostgreSQL project, imported 35 OpenAPI URLs, and entered activeScan before Docker Engine HTTP 500; no report passed. After Docker became reachable, the exact orphaned unauth project containers/network were removed without --volumes; its run-owned database volume remains. DAST was not retried because host memory remained below the roughly 1.5 GiB headroom target. Native ZAP scans remain separate historical evidence.",
+    "authVersionRevocation": "PASS: focused authorization suite passed 8/8 after authVersion enforcement, including TC-SEC-12 stale-token rejection and refreshed-role/scope behavior after role and cinema-assignment updates.",
+    "expandedAuthorizationMatrix": "PASS: focused run passed 8/8 after JWT authVersion enforcement and the positive Admin user-route test. It covers Guest route access, Customer/Staff Admin denial, ownership snapshots, role/cinema check-in, Admin user listing/role change, audit, and stale-token rejection. This is not exhaustive ASVS/BOLA review.",
+    "extendedWorkerSoak": "IMPLEMENTED BUT NOT RUN: opt-in TC-WORKER-06 runs two independent workers for five minutes with periodic events and graceful restart catch-up. It requires a dedicated loopback cinema_worker_soak database; it was not launched because safe host memory headroom and the dedicated database URL are still unavailable.",
+    "productionConfigSecurity": {
+      "status": "PASS IN TARGETED LOCAL SCOPE; existing Compose containers not yet recreated",
+      "evidence": "docs/evidence/followup/2026-10-28-production-config-security.json",
+      "configurationSuite": "4/4 passed in reports/generated/security-config-test-20261028.log",
+      "traceability": "PASS: 65 test cases/25 requirements in reports/generated/security-config-traceability-20261028.log",
+      "diffCheck": "PASS in reports/generated/security-config-diff-check-20261028.log",
+      "backendBuild": "PASS in reports/generated/security-config-backend-build-20261028.log",
+      "composeInterpolation": "Valid with local ignored .env; empty .env.example rejected for missing POSTGRES_PASSWORD/JWT_SECRET/MOCK_PAYMENT_SECRET.",
+      "changes": "No fixed Compose secrets; production rejects missing/short/published JWT and mock-payment values; Compose trusts one Nginx proxy hop; web/PostgreSQL bind loopback by default; env generator refuses overwrite and protects existing project volumes."
+    }
+  },
+  "planGaps": [
+    "Keep Docker Engine responsive and free adequate host memory, then rerun current-image preview and Compose DAST; the prior scan has no passing report.",
+    "Apply the updated Compose configuration to the existing demo/QA runtime and verify health without deleting PostgreSQL volumes.",
+    "Rerun the full composite npm test after authVersion and security-config changes; latest API, focused authorization, browser, build and OpenAPI checks passed separately, while the worker-process case is only verified by the pre-hardening composite run.",
+    "Freeze the current working tree in an explicitly authorized commit, then perform the plan-required clean-clone install/migrate/seed/build/test run and produce a final manifest tied to that commit.",
+    "Run the opt-in five-minute worker soak against a dedicated isolated PostgreSQL database after safe host resource headroom is available.",
+    "Remote GitHub Actions quality and DAST workflows have not run.",
+    "Manual WCAG 2.2 AA, screen-reader, and full manual keyboard review remain open.",
+    "Staging/production validation, prolonged reliability soak, real payment gateway/refund, PITR/RPO/RTO, and exhaustive ASVS/BOLA review remain open."
+  ],
+  "artifacts": [
+    {
+      "path": "reports/generated/local-postgres-20261028-current-full-regression.log",
+      "sha256": "90BAEA105F2FB55E92DF888075AA35D428181E8CA2E4D3550A41946892DFC200",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/playwright-results.json",
+      "sha256": "525CD9ACD56BBA0C2DAF3B92135E02D2D4038C6C31EB04982D6F127880175EF2",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/docker-db-local-app-playwright-results.json",
+      "sha256": "8CC459AD4B1E5610524D7A0E19C6910CB93CAA514FAB4193EC684B3707D4445F",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/playwright-admin-catalog-targeted-results.json",
+      "sha256": "DBC1D47E32CFCE2DDF1F3E69B533346C40FF19EA8A0E70A1C94A4D7C86E53921",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-current-build.log",
+      "sha256": "86D9B04E52BA30A6935EBA6C936BEA64B8B3450BB62051A45CDA494164571783",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-current-openapi.log",
+      "sha256": "89B9DD494C84C3CC55D11DC858F1DD7E6588418C1E136814E694571DC25B3B74",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-current-trace.log",
+      "sha256": "85F3965C3AEF56A894B29D18BC5360D3FEB9FBD9C75134215D68D09B3767442D",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-current-audit.log",
+      "sha256": "4B02D4A3C23D969C46BD2041360F80BFCB1FE760D9DB864009ACDD710F9DE601",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-current-ci-yaml.log",
+      "sha256": "B8E9FD02D7C92765051C640BC5464BA83E2220A5EA413E93CAEE1A3F3EE0A638",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-current-diff-check.log",
+      "sha256": "E36A3CB8E504F0B7E307AD2DBD4E6D91D7AE3C4614B6657A06E399D2FF647813",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-authorization-regression-targeted.log",
+      "sha256": "FFA72A5D33BBED6202E0856F9814FEF777F27CF7D5F136196A86021C5CAD612C",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/authorization-matrix-20261028.log",
+      "sha256": "0407EF6D2895DB5F52692980B031BFAFE3923BC46D89AFDA022871D00D1D41E4",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/authversion-api-suite-20261028.log",
+      "sha256": "4DEA98212071D2BBF89D50856B58C7AE077A4CFEEA81CD7D99C56F5A96744872",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/authversion-playwright-20261028.log",
+      "sha256": "DF03B7D230AA000CAF6A59630935C8264B425ADF1C7D0A8768E091701B74A6A8",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/authversion-build-20261028.log",
+      "sha256": "60D8F9AA3EC67AC2512B0C2FCB036D871B0C9C91A090C4B6FF4A69A7E972E5F3",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/authversion-openapi-lint-20261028.log",
+      "sha256": "ADC002E2086EB542E327BCC4B0BDF915E87DE07C18356D166F90A3CF7E06B04D",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/authversion-browser-seed-20261028.log",
+      "sha256": "44CBFB7E798E381305AE52BF4199F3E78594B0FF007273DBC6FDA61C55E1A7C1",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/authversion-gitleaks-docker-history-20261028.log",
+      "sha256": "DD5B5A8F2FFD7E0868E9651E14FF0AFF2D4201C4EE16B1D96CD6D59F55F6E702",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/final-gitleaks.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/authorization-matrix-traceability-20261028.log",
+      "sha256": "7F5DBF097C5EA3F798FC50D17E912F1E0976CF1E4FACBF423711502DEE1347FB",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/playwright-tc-e2e-19-fixed.log",
+      "sha256": "635B79533EDC757BB4AF579CE94BF955A4D33E15AA6368BD25B7653F67CE5391",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-current-mutation.log",
+      "sha256": "09A2DAB031287D776519FA5938DF69F016DA8472A94409F16042C476D11B80C2",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-live-expiry-targeted.log",
+      "sha256": "6D14AC0D99528B865ABE29308D384079210B5A9D252CB64E5D4771538A9D8D93",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/local-postgres-20261028-live-expiry-typecheck.log",
+      "sha256": "A30D816194D1460390402A617751E62FD451DA1E05CF6EB2EC22BDCB0D7BCB45",
+      "gitIgnored": true
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "5884075C14D6F8EAD56D39141F4BF0DBD653FB7A5C2356E5806F0A65451242CE",
+      "gitIgnored": false
+    },
+    {
+      "path": "README.md",
+      "sha256": "6FE69B0600B3288B0D845F3FBB68AF9CC8C669BFF43C45CD7AF684254DDC4EDE",
+      "gitIgnored": false
+    },
+    {
+      "path": "backend/README.md",
+      "sha256": "EFDC4FEC6C72A8B71E2DC1A7F90783623EF3BA0F3923614AFB265F669F9C8C0C",
+      "gitIgnored": false
+    },
+    {
+      "path": "package.json",
+      "sha256": "4CBD2773BCE21247E1D42DA7AE7C26D92F2E67D3DE8EC6DB72989824552FB0A5",
+      "gitIgnored": false
+    },
+    {
+      "path": "backend/package.json",
+      "sha256": "BC5F3F3A3C729F8DE50A348C5024A9F517FB8B19A64E9ED9037AB1BFB432D635",
+      "gitIgnored": false
+    },
+    {
+      "path": "backend/vitest.config.ts",
+      "sha256": "70A4886E0401589827CA0B1E43C58053E86DCB2C56E04CA38B60B37121BF1348",
+      "gitIgnored": false
+    },
+    {
+      "path": "backend/vitest.worker-live.config.ts",
+      "sha256": "B127C490EE52429BC9D8BDCDC3BAF0AD39E09E5E12E622EE95FE4F4E24F0006F",
+      "gitIgnored": false
+    },
+    {
+      "path": "backend/vitest.worker-process.config.ts",
+      "sha256": "540EFE58CD87A05F407BF4BEC47F8DCF027752B43CE7C4963971A86A495CAD2E",
+      "gitIgnored": false
+    },
+    {
+      "path": "backend/src/app.ts",
+      "sha256": "0B4C1F34F6468D7C3A1A47F88DD6E4B7FECDE06CE0F77FE182F0AB0B7E56DEDC",
+      "gitIgnored": false
+    },
+    {
+      "path": "backend/src/auth.ts",
+      "sha256": "B6B6FE58F6B41BCE6EFA9678476026D40DE12ABC031BCD01633C76B33AD44399",
+      "gitIgnored": false
+    },
+    {
+      "path": "backend/tests/api.integration.test.ts",
+      "sha256": "42601AEA2DC1A240387A28082EC6219E67EF3FC80D6F921A43C5548EF2AAA13A",
+      "gitIgnored": false
+    },
+    {
+      "path": "backend/tests/authorization-regression.integration.test.ts",
+      "sha256": "DC311B8B698B72CC19EB493E272DFD846023B99BBE1E3DC54A5A3D5D8E0D54E3",
+      "gitIgnored": false
+    },
+    {
+      "path": "backend/tests/object-authorization.integration.test.ts",
+      "sha256": "DEF47D567C3643D6F0D1B214F9E82B1F6D3FF745BA44E1981E6B5303C43E9554",
+      "gitIgnored": false
+    },
+    {
+      "path": "backend/tests/staff-scope.integration.test.ts",
+      "sha256": "26FD8DEDFB0BAE9A74CD0139AD3DB14E2A1C89590425B672EED69B13A28ABCC1",
+      "gitIgnored": false
+    },
+    {
+      "path": "backend/tests/worker.integration.test.ts",
+      "sha256": "616BC20D58AFE15880BD85F74BF584CABF050EF0C49278A3A6D4E572169A1E87",
+      "gitIgnored": false
+    },
+    {
+      "path": "backend/tests/worker.live-expiry.integration.test.ts",
+      "sha256": "F7E9D32D3AFF55A03BCE00D43F2A206DAF4D133AF3C7F90647A29F23DB591D60",
+      "gitIgnored": false
+    },
+    {
+      "path": "backend/tests/worker.process.integration.test.ts",
+      "sha256": "94D44CADEC963EDCEBF7A280BDF4CF79CEEA34D3E18B6B6F092E3957EF54974E",
+      "gitIgnored": false
+    },
+    {
+      "path": "backend/tests/worker-process-harness.ts",
+      "sha256": "E7782C47034F07984D30A98F70656EE867C39B41BD3ECCA44448EAAE8AD9B6CC",
+      "gitIgnored": false
+    },
+    {
+      "path": "backend/tests/worker-process-soak-config.ts",
+      "sha256": "9DB4DD1F9FC7392D46CAC8EDE3DBA88D1D5397C4001AEED6FFC4AAD855FB927A",
+      "gitIgnored": false
+    },
+    {
+      "path": "backend/scripts/require-worker-soak-db.mjs",
+      "sha256": "C53C667280C7E4F1185CFDD941BAEC7FC48ADAA371D3B740DCD45508F76C84A8",
+      "gitIgnored": false
+    },
+    {
+      "path": "frontend/src/App.tsx",
+      "sha256": "D003B6271B21A70C5CBD5923039C8F702976822DE818ABF5B0173CC4ADE08970",
+      "gitIgnored": false
+    },
+    {
+      "path": "tests/e2e/a11y-states.spec.ts",
+      "sha256": "46C1F456EC01D4C11D75DFA33C05EEC366DBC5C3601D09CF1EB9F37D3CC17764",
+      "gitIgnored": false
+    },
+    {
+      "path": "tests/e2e/admin-catalog.spec.ts",
+      "sha256": "3EF9AE7BB71CB73B80FF55FFFABA408B3EE66EF24C359A58BA65F7FCB0807EA2",
+      "gitIgnored": false
+    },
+    {
+      "path": "tests/e2e/hold-expiry-ui.spec.ts",
+      "sha256": "63A2D73B8A3DB95089F4F46A6BF657CA42DD485BE83CF2F9194A5737BDA2F0E1",
+      "gitIgnored": false
+    },
+    {
+      "path": "tests/e2e/plan-gaps-followup.spec.ts",
+      "sha256": "101EBEDAED78961AB5206AE71001C33493FC64AD8E5F791F97BF5BB9343D8B75",
+      "gitIgnored": false
+    },
+    {
+      "path": "docs/02-test-plan.md",
+      "sha256": "1E320E24E257935AF9CB0C851062398CC5803DEC3CFDE74BC0B41A7C8D6A1217",
+      "gitIgnored": false
+    },
+    {
+      "path": "docs/dast-local-runbook.md",
+      "sha256": "AF9921E894719255157EB364E99C7B732756603B95050733E6905C20F8756BAE",
+      "gitIgnored": false
+    },
+    {
+      "path": "docs/03-rtm.csv",
+      "sha256": "CDF421A887A3BD3323AF75FC88655A8706DD4D8AA44FAB2323B55D901B61CEE2",
+      "gitIgnored": false
+    },
+    {
+      "path": "docs/04-test-cases.csv",
+      "sha256": "93DF52C883620204DB2E1FD38399C8DDDDCCF02F932064C409A4C9013279458C",
+      "gitIgnored": false
+    },
+    {
+      "path": "docs/05-bug-reports.md",
+      "sha256": "1AF1CF1D41ACA76889D84EE047D02183B6B2D4567F116D7E7EB7B4B47A322F49",
+      "gitIgnored": false
+    },
+    {
+      "path": "docs/06-iso25010.md",
+      "sha256": "1F78BE381ED6B29BB6F9A35159F1A449A2FE5506A6911FA8AB45B48A2C61C647",
+      "gitIgnored": false
+    },
+    {
+      "path": "docs/07-test-summary.md",
+      "sha256": "03F36BF8EF9E26D979CE08D26C2DA8E1D9FF700299804296BAEF816FD1C26491",
+      "gitIgnored": false
+    },
+    {
+      "path": "docs/08-architecture.md",
+      "sha256": "3488BAD613D5F8CDCB303DEC0CB445AB0CBFAC70A42713F050092A49D0A39E9F",
+      "gitIgnored": false
+    },
+    {
+      "path": "docs/09-project-charter-risk-register.md",
+      "sha256": "36F7A70D249F0335327F1CFC2013C26B491354486775C5DBCD4366058564FF4F",
+      "gitIgnored": false
+    },
+    {
+      "path": "docs/openapi.yaml",
+      "sha256": "B6982E2C5682542B6EB110ED98F97117CB997A31C85586B5D9426528FF7E4D03",
+      "gitIgnored": false
+    },
+    {
+      "path": "reports/generated/write-p0-gap-regression-manifest.mjs",
+      "sha256": "6F1CA1F5241E9DB683542A3DC8C3678FBF6EF122A26BF10EDC01288D0A04C1B3",
+      "gitIgnored": true
+    },
+    {
+      "path": "docs/evidence/followup/2026-10-28-gitleaks-current-working-tree.json",
+      "sha256": "93CCA185C155BD106384E95B0B855D39BED927AB136E9D737F2FDCB3015A97A1",
+      "gitIgnored": false
+    },
+    {
+      "path": "docs/evidence/followup/2026-10-28-native-zap-dast.json",
+      "sha256": "AB9B9874F4C32176C7B566F3C921424A107E3223ED8E8447A4B9C4B67ED0B388",
+      "gitIgnored": false
+    },
+    {
+      "path": "docs/evidence/followup/2026-10-28-docker-desktop-blocker.json",
+      "sha256": "C24287106D5748D23A084DB62E699B6BE5DDC59A3D513E0C69DE9D5477723B2C",
+      "gitIgnored": false
+    },
+    {
+      "path": "docs/evidence/followup/2026-10-28-docker-runtime-recovery-browser.json",
+      "sha256": "84AFED25B45B337E3ED37592B891307164368D936FFABD69C3DE9C4512A6BF98",
+      "gitIgnored": false
+    },
+    {
+      "path": "docs/evidence/followup/2026-10-28-docker-engine-dast-interruption.json",
+      "sha256": "1F3BE74D8438E022855E2F3E188B9C17F6A5FCFF16B1CD4D0F04E2C823428B71",
+      "gitIgnored": false
+    },
+    {
+      "path": "docs/evidence/followup/2026-10-28-docker-runtime-resume.json",
+      "sha256": "15832BAEE3A6794CEE7CF2852DC9BF93510FC839DFA92662AE1FB637C68055DD",
+      "gitIgnored": false
+    },
+    {
+      "path": "docs/evidence/followup/2026-10-28-local-postgres-authorization-matrix.json",
+      "sha256": "FD134A22D3577B9E0F4EC8D781EC2B8857171905921BC3D0A1B268F6F71B19A3",
+      "gitIgnored": false
+    },
+    {
+      "path": "docs/evidence/followup/2026-10-28-local-postgres-authversion-browser.json",
+      "sha256": "4C6209BCCF3938835E55A95232E198C841543852D5BBFA2D78E9AF6AA4E0D849",
+      "gitIgnored": false
+    },
+    {
+      "path": "docs/evidence/followup/2026-10-28-authorization-route-source-review.json",
+      "sha256": "9D0860698D652204D0E81E129642BBDD59C9A80C9385C479FBCECDEE3FE0B913",
+      "gitIgnored": false
+    },
+    {
+      "path": "docs/evidence/followup/2026-10-28-production-config-security.json",
+      "sha256": "B10D9D8629BB3AFEB836DAC4E75E7EBB239635B51F0ED0E22FB972960D2C5359",
+      "gitIgnored": false
+    },
+    {
+      "path": "reports/generated/docker-compose-dast-20261028.log",
+      "sha256": "0CAE68BF3B4CFD44666B8E87C1B884A4E8EB5113E8952C40CEE470D2675981DE",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/security-config-test-20261028.log",
+      "sha256": "61EBD0A2BB45C673B65E97B987FEB39A01E94A98BED723B1908E90569C11D466",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/security-config-backend-build-20261028.log",
+      "sha256": "FC6990561EBA7153218D1BEB42CB9431C4F893F78C1302457D193F7A7C8E632A",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/security-config-compose-valid-20261028.log",
+      "sha256": "E05222033CD2C7B46B6FAD5EC87B44B62F844DBB6F004476498F71D0E3C9875B",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/security-config-compose-missing-secrets-20261028.log",
+      "sha256": "2EE03CED84BB35F69103B18F6DA9BA26A720D049423479E0B6432ACB4E23DD5D",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/security-config-traceability-20261028.log",
+      "sha256": "7FF621FB03E282DB65CC6D40091EBC347149075DC52BC5994AB90456C3DD2F4B",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/security-config-diff-check-20261028.log",
+      "sha256": "84A3BDACB81B2D3610025055A4ECF41034914E71CA17252316CFB2E26009610F",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/authorization-matrix-traceability-20261028.log",
+      "sha256": "7F5DBF097C5EA3F798FC50D17E912F1E0976CF1E4FACBF423711502DEE1347FB",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/docker-browser-db-deploy-20261028.log",
+      "sha256": "E4939E824ED565197C36BF60C46B8443806CC8F483B1018EAB0249118536A080",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/docker-browser-db-seed-20261028.log",
+      "sha256": "44CBFB7E798E381305AE52BF4199F3E78594B0FF007273DBC6FDA61C55E1A7C1",
+      "gitIgnored": true
+    },
+    {
+      "path": "scripts/run-dast-api.mjs",
+      "sha256": "2B8573802733361FDD381C552E4410D9F4D13BBE10BDA7981B220D5CC7FC8465",
+      "gitIgnored": false
+    },
+    {
+      "path": "scripts/create-compose-env.mjs",
+      "sha256": "51FBF3C0D1EEB2FEF30FEDADECFD9FFBB217860A73A996A1120F9D2DE5E2569C",
+      "gitIgnored": false
+    },
+    {
+      "path": "docker-compose.yml",
+      "sha256": "95E0936ADD25C9FC6F65CE601D4B3E83A6606EF9F6AFA9215A998B04B57D518B",
+      "gitIgnored": false
+    },
+    {
+      "path": ".env.example",
+      "sha256": "7303470F108D7A98E35E48C5147B44AA8D368A5C8C6307A3761BE037D5D3FE96",
+      "gitIgnored": false
+    },
+    {
+      "path": "backend/.env.example",
+      "sha256": "1A65330346C62F737186F9B07E658E5F42928C42AD260A4291882F847CA16AE0",
+      "gitIgnored": false
+    },
+    {
+      "path": "backend/tests/configuration.test.ts",
+      "sha256": "50746A927F7F636413D57AAB1DEEBBFD4818A7FE37546F0DC8916A7B38F56B19",
+      "gitIgnored": false
+    },
+    {
+      "path": "frontend/nginx.conf",
+      "sha256": "B75A04D49DC541CD4A93EB7B7D97E2A841A1BC243174D19519E2AF14C9F2746C",
+      "gitIgnored": false
+    },
+    {
+      "path": "tests/e2e/cinema.spec.ts",
+      "sha256": "67DE2DE59E35A7F3369D9B1C669D9309E29F9AD8901A63F193967809D3906C87",
+      "gitIgnored": false
+    },
+    {
+      "path": "tests/non-functional/security/zap-api-authenticated.yaml",
+      "sha256": "A19180C502D46B2551707ED1BD9CDDE0D0C3133EA03067D0769A0D6231C8526A",
+      "gitIgnored": false
+    },
+    {
+      "path": "reports/generated/dast-native/native-unauthenticated-api.json",
+      "sha256": "82AE88F8A1B88692AAE20D82C9823B065D664094524989BCA36A2BCB944B77AA",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/dast-native/native-authenticated-host-filter.json",
+      "sha256": "606A09CEA00DD89FC1DDC7A2DF589D669C0B6BF79E627A77CA75F98CEF7FA58D",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/dast-native/native-preview.json",
+      "sha256": "9FF1022B8C871EBB908AE381791AF327F5C0DB3C70C8E5499876B4DAAD1375E2",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-dast-native-reports.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-post-team-summary.json",
+      "sha256": "B0C8ADF275BFA9FAE532B0333F2DEECD8175F2DAB096A18943615EA5D4921D2E",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-working-tree-summary.json",
+      "sha256": "BE0902F1BAA878720A713DF9CDA07A60C9EF51E25BA5077BE22BE78EFDC29FF8",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-summary.json",
+      "sha256": "8F91A1C32AC1548D3B4FD079019508B9E7D865E6DBA65EF4D0F50A69CBA9577B",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-01.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-02.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-03.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-04.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-05.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-06.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-07.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-08.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-09.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-10.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-11.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-12.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-13.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-14.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-15.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-16.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-17.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-18.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-19.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-20.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-21.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-22.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-23.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-24.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-25.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-01.log",
+      "sha256": "1E51B7A814434F5603DFBB7DE00D9EBCD9C662A7F3A91073C3405B156E1D8740",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-02.log",
+      "sha256": "0EE8A8FFD0BEEC9C8926E9DD995995195632620A46CB961DAD787DBFBF6A7DD0",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-03.log",
+      "sha256": "B05B5720BD1C1E177DAA687F12C39FAC1110DC2B19634F51A42ED94BE272A9FC",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-04.log",
+      "sha256": "6C4576D0D82E21EB82EEA720E1EE792E244CE91953D7EEAFCBBC7A15A41C5EF3",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-05.log",
+      "sha256": "26D67FEA4CC7D8A8C71D80CE1C8DA31B069CB66E4EA31ED3BA77F25C644D3205",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-06.log",
+      "sha256": "D21FF7837DDA63D6A0D3C66EACFF9E1715315FAB5FDC11D42DA8A4E64D957158",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-07.log",
+      "sha256": "5E8FDD6BD0045B2657A383C8040EB363EE1805EBBD991A6C8AFF29683D3CF0B9",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-08.log",
+      "sha256": "E400E640DF85857999543318BF76962AA1CDEC6F995907EB6D5337F569762016",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-09.log",
+      "sha256": "A4DE4F95E024F084C4B7B57F89D10EC76FB15F73E72794A889EA2410CD5518F5",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-10.log",
+      "sha256": "C2A336A72FAD4D7B3030F2E7AE915A111D0634EFE1203C292AAB4247395E71F3",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-11.log",
+      "sha256": "08F5C89A62FE4F6EC6D3C42440EC3C5CA7CEFAAB11942DB6AA18D0DDC8FE1C25",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-12.log",
+      "sha256": "41CEA9293A987AD954EBD6238C0FF282369789EA233983E7B3928E2826F0935B",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-13.log",
+      "sha256": "1A74B6491F7F33AF3F432A03A3608C3F792C8605883C341A738AC7F0901678CE",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-14.log",
+      "sha256": "F2691BF668F9D45111B6DF0A6FA1C909D7F0577EC25B819795481F0C57AF97B0",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-15.log",
+      "sha256": "CE70EAE48BA2A9A486F184D3539BEF1F0865678CD59881F2962091E357F01BC8",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-16.log",
+      "sha256": "802FE33CB39BA84D05516DA15FC88C8D6FECE57FE6C829B14E46727DB91A501C",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-17.log",
+      "sha256": "F62485EB538182BD7907BAF7375BEF2EFB57996F6C47F0D1A89E2D40A22C7ACC",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-18.log",
+      "sha256": "8EE7BEA880AA84AAC4CBF6ABDB0A727EDB83727B3A7292BBD12B1CE02542BB65",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-19.log",
+      "sha256": "CF74CD1AD2E078A97BF46CCAB03844F1B1BD5FFC8198EE0E1E6A780EBBC9A280",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-20.log",
+      "sha256": "3FF4814D2AB9C3966E176222558EE00AFED4A0D7F6B4CC53D3A95FF58FD1A1E7",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-21.log",
+      "sha256": "F4ED406F516355906784DA200E4814EC4B0CA60B0F24A2B505E81B2398BA46C5",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-22.log",
+      "sha256": "380D5F9088F1CADAE7A06AB353244221711FADD80F02476E8E905FCE1B2E8ABC",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-23.log",
+      "sha256": "9B87643A97ADADE4213CD84C6E81D12DD003B25237565DD9B1B9F04E9BEBD4BB",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-24.log",
+      "sha256": "30C4298853838CDB0B5F2A32C88610CB646C447FB65A619F411C0827B307F693",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v2-source-25.log",
+      "sha256": "B889A5D5A653D472739048EA083B6FCDC464A78E2F141FA0BC75D4FC7AC6845F",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-summary.json",
+      "sha256": "10B72097EF7DFC67551ECC711E7639B1A367A792F3741558F5DD4C54AD77BFEB",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-01.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-02.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-03.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-04.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-05.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-06.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-07.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-08.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-09.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-10.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-11.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-12.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-13.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-14.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-15.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-16.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-17.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-18.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-19.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-20.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-21.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-22.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-23.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-24.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-25.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-26.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-27.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-28.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-29.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-30.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-31.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-32.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-33.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-34.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-35.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-36.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-01.log",
+      "sha256": "17D79BA9AB804E43678E41ADA5BCD2636B6CACD95E77B33970B8263787508902",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-02.log",
+      "sha256": "8E6529E165BEC2ED69A38CE13CD975FA4D6EA319227E953532439DB29E3328E4",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-03.log",
+      "sha256": "0CB9306406C9659EB36B60E4017208C3B55227441E3AA95E384F5B6CA40ACA97",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-04.log",
+      "sha256": "B94A121C73BBF0FA51938F2467D594B045B433A6F5C1F422C480174569F8C713",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-05.log",
+      "sha256": "AE9E23A14A9BFB6AD8EA0694B49FCAA7140E341EE1F20F18E62FE214A976C9FD",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-06.log",
+      "sha256": "78EDB60AF9E7CB00B365943EA3DF5825F8DBE6B899CF9D23F84457AC1C754469",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-07.log",
+      "sha256": "2A8F700FFC49557384BB9DC36368A3CF30C6D704E36BBD8A271353F726C7A5C9",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-08.log",
+      "sha256": "7EC319C4907D4CEEE08B619301D322E5A2022CF0DE2C2DA5559AD01A1EC56179",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-09.log",
+      "sha256": "AD0E045C79C4BE88A3117FC53F38E2F4977463E0289FF55E5F12DDAACD691D8A",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-10.log",
+      "sha256": "6374AC8CA2DFEBE06800BE62F6E54F48381DF460373E65DD3CFEE933AD9DC271",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-11.log",
+      "sha256": "5926085019D1527FC02FA6B670FEE93D14F5CE2C84B4508F95366B1F1444E88D",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-12.log",
+      "sha256": "74B805DF8A10B84DBF7E7C84895D436D28CD5941170A3D9C3672789CCD08A522",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-13.log",
+      "sha256": "78C463F37B3153F3B02826EC99007BE3E57EEBA83C55A70CF29DDE355B0BADBF",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-14.log",
+      "sha256": "0DBACF4C3B518929E7AC20EC53BEE02C1D37F93042080EBBC79378BF268856EA",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-15.log",
+      "sha256": "52197DCD97749D970986C9E5A00BA986E6EECD56063A517BC14B5A8FDDBE71BB",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-16.log",
+      "sha256": "06ADD45C93BE7B7C998E084C78849EB31C66BA5B265B5CD33C56C3167573B714",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-17.log",
+      "sha256": "F432AC2F9CB5422C3F3429F89F72144022709BB6293E2912A00D45C0FE4550A0",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-18.log",
+      "sha256": "47B3B38282AAACD05A1292335D94057B8A601E36D4B6DFB32084DEEF7F1E5C93",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-19.log",
+      "sha256": "9D161A428B892D537B0673049814DB80F0CACB9C483BD9D982B67886B965764D",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-20.log",
+      "sha256": "8A5074072802D29CC587E13E9B547CAFDB223C3E376D6419FC44D0EE7D658C4A",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-21.log",
+      "sha256": "20E2E81867374C9080A64A32162E37FDDC85E3C5D3911C8A0EECFDD68D386E2A",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-22.log",
+      "sha256": "713739D276B650B6E50AE8B4B0B4CD54F8A33C904AA6F271302BA4BFB87B390B",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-23.log",
+      "sha256": "42A4E1E9995FB9D27A9AF3E23B50ED0D4F6852D8BB5BE7DAFD9CF84D608EFED2",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-24.log",
+      "sha256": "9A798BDDB23538C58885B66661472CDEE5E165642BC5778CE777EC7540F8C1DD",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-25.log",
+      "sha256": "A23A8BEDA589E3F2CC840342A8078858AEBDF60AC81E21003BBE20F022284A57",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-26.log",
+      "sha256": "A63DBD64664E1C5648ABE701102FDAF0159006328A0A6E9C16BF3B1E744279AF",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-27.log",
+      "sha256": "17ABFC50179AE958A5DE53278482271E5EBA43A7FF7AF9F9F53CE3E4145F5826",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-28.log",
+      "sha256": "E6EC21384E6E4EBCFD8BDD5B01B574B956FAADEED2D511CBADEDF32FB7DC199F",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-29.log",
+      "sha256": "A13499CEB55462ADB9390F4D101EEFD81421C2563E966D4BE2BC53935A7BCCAA",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-30.log",
+      "sha256": "D99221DE8BA2AFC43A25A60DE0F6F013807CAFF018FA9A697ACBC3B2A1667CE0",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-31.log",
+      "sha256": "886BF1780C0515BD96170035F6A0CEACCBD7D3A1587738F5FFE836A5D83C6DED",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-32.log",
+      "sha256": "E7A32809AEE911895486BB3CE113EDC5BBFE788DAD468DD764E4A893D5479076",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-33.log",
+      "sha256": "CFF5C3857AA95562CE20DA46DB0532AEE3B25B4E89F933735FDD7AA13E073FE7",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-34.log",
+      "sha256": "40EE96712AAB34B6F035333B7331D3CEE6BAA9426209F8612C13EF6212F6F076",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-35.log",
+      "sha256": "076C4519C72DD0A2F409C633AB3DE0F12A96218CFDC8348F0A1D2872E7F70F9C",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-current-final-v3-source-36.log",
+      "sha256": "7401DAAD4F0F03EB97247BD364CE5FCEBE4EC4E036E11F83BE6687DBBCB74715",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/current-gitleaks-git-history.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-source-1.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-source-2.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-source-3.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-source-4.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-source-5.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-source-6.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-source-7.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-source-8.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-source-9.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-source-10.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-source-11.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-source-12.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-source-13.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-source-14.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-source-15.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-source-16.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-source-17.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-source-18.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-1.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-2.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-3.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-4.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-5.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-6.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-7.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-8.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-9.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-10.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-11.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-12.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-13.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-14.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-15.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-16.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-17.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-18.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-1.log",
+      "sha256": "035D3BA7C7E3BC775F02F08BF24A19C61F9796BF887AA9F56565BAB80B0168CD",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-2.log",
+      "sha256": "D0237573D6760DFBE8C8ABE67C2A34584C54AB0A9D64DEEDC80A90DA0A486615",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-3.log",
+      "sha256": "3DA7C32E3B2499802FCADDCF4B167A0B53C4095E1A64E64C3CB86855AFE29EDF",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-4.log",
+      "sha256": "5FA4A81D6A6C56EBF60551B31DC8CE8625908A0D5508F6B75B3C0D5A231A27FF",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-5.log",
+      "sha256": "6F3B42BA71A77AED51F06DCE1C21F1C6F31BEAE2D813B1BC2D46D8AB7BC575F1",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-6.log",
+      "sha256": "21D5E449BDCAB6658ADCBB636EF7A8B3D4877B6B286E2020516E0F4EA44323C1",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-7.log",
+      "sha256": "EE8CEA4E698109F52C16CEA7A29210F07C414B386327332831AC7E1D8D4939E9",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-8.log",
+      "sha256": "0A0D55BDE6A13C079EB72087AEB49723445972964D3F0692CDE3C2D22816ACC1",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-9.log",
+      "sha256": "920AF2E19214F9DEDE572EB7C700B38C63084A66FC3EE70DA2BE8C901BFAA062",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-10.log",
+      "sha256": "C9D00A65C1E9BF296288E8C0EE88669953E6E42B02DAC0BFFCC731AE59802717",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-11.log",
+      "sha256": "4889A41F700DB0607057A5E96C45534E7D251A5BD03049449CC43263919BF76D",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-12.log",
+      "sha256": "EF129D446D1DCA5BB5BDC89282AF4230EB2CFE96BE69F40F9099BF42647E7224",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-13.log",
+      "sha256": "F19FEB5255D1895BAC920755FA889358A9458BCAC686614441EC41534ABF27B7",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-14.log",
+      "sha256": "87D21ACA69347307B1E665353EC96F805E08A6AF1716A7A53F380A77269AA9F5",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-15.log",
+      "sha256": "82982A0949C25883B6B15E9A1933140113FD371542F158647DE7EB2A7AC9A41B",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-16.log",
+      "sha256": "9DF2766816113AA5A1A690181F828CD07B4DA3B6D4D6F980465305BA5FD3BE88",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-17.log",
+      "sha256": "8803290A5309CD823CFFE045E8E92E49E0D4F6E2F36C863D08C3AAFF0207E99C",
+      "gitIgnored": true
+    },
+    {
+      "path": "reports/generated/gitleaks-authversion-source-18.log",
+      "sha256": "7182FD355F4128D98A93CC40F6245EAA8121679CEAA58C1E946A18BB012BC9EE",
+      "gitIgnored": true
+    }
+  ]
+}

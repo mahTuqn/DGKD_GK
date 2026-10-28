@@ -756,7 +756,7 @@ paths:
       tags: [Admin]
       operationId: assignStaffCinema
       summary: Phân công hoặc bỏ phân công rạp cho STAFF
-      description: Chỉ ADMIN; tài khoản đích phải có role STAFF; cinemaId null dùng để bỏ phân công. Staff chưa phân công hoặc thao tác ngoài rạp được phân công sẽ nhận 403 trên cả hai route check-in; ADMIN không bị giới hạn theo rạp.
+      description: Chỉ ADMIN; tài khoản đích phải có role STAFF; cinemaId null dùng để bỏ phân công. Thay đổi phân công làm mất hiệu lực token hiện tại của Staff. Staff chưa phân công hoặc thao tác ngoài rạp được phân công sẽ nhận 403 trên cả hai route check-in; ADMIN không bị giới hạn theo rạp.
       parameters:
         - $ref: '#/components/parameters/Id'
       requestBody:
