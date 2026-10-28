@@ -13,10 +13,11 @@ const publicJwtSecrets = new Set([
 
 function jwtSecret() {
   const configured = process.env.JWT_SECRET;
-  if (process.env.NODE_ENV === "production") {
-    if (!configured) throw new Error("JWT_SECRET must be configured with at least 32 characters in production.");
-    if (publicJwtSecrets.has(configured)) throw new Error("JWT_SECRET must not use a published development or CI value in production.");
-    if (configured.length < 32) throw new Error("JWT_SECRET must be configured with at least 32 characters in production.");
+  const isLocalEnvironment = process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test";
+  if (!isLocalEnvironment) {
+    if (!configured) throw new Error("JWT_SECRET must be configured with at least 32 characters outside development and test.");
+    if (publicJwtSecrets.has(configured)) throw new Error("JWT_SECRET must not use a published development or CI value outside development and test.");
+    if (configured.length < 32) throw new Error("JWT_SECRET must be configured with at least 32 characters outside development and test.");
     return configured;
   }
   if (configured && configured.length >= 32) return configured;

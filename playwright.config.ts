@@ -51,7 +51,7 @@ export default defineConfig({
   workers: 1,
   reporter: [["list"], ["html", { outputFolder: "reports/generated/playwright", open: "never" }], ["json", { outputFile: "reports/generated/playwright-results.json" }]],
   use: {
-    baseURL: externalBaseUrl || "http://127.0.0.1:5173",
+    baseURL: externalBaseUrl || (isGitHubActions ? "http://127.0.0.1:5174" : "http://127.0.0.1:5173"),
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
@@ -67,17 +67,19 @@ export default defineConfig({
       ],
   webServer: externalBaseUrl ? undefined : [
     {
-      command: "npm run dev --workspace backend",
+      command: isGitHubActions ? "npm start --workspace backend" : "npm run dev --workspace backend",
       url: "http://127.0.0.1:4000/api/health",
       reuseExistingServer: false,
       timeout: 60_000,
       env: {
+        NODE_ENV: "test",
         DATABASE_URL: browserApiDatabaseUrl,
         DATABASE_URL_TEST: browserApiDatabaseUrl,
+        CORS_ORIGIN: "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174",
         E2E_REGISTRATION_RATE_LIMIT: "100"
       }
     },
     { command: "npm run dev --workspace frontend", url: "http://127.0.0.1:5173", reuseExistingServer: false, timeout: 60_000 },
-    { command: "npm run preview --workspace frontend -- --port 5174", url: "http://127.0.0.1:5174", reuseExistingServer: false, timeout: 60_000 },
+    { command: "npm run preview --workspace frontend", url: "http://127.0.0.1:5174", reuseExistingServer: false, timeout: 60_000 },
   ],
 });

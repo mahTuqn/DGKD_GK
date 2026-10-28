@@ -13,7 +13,7 @@ function restoreEnvironment() {
   }
 }
 
-describe("TC-SEC-13 production secrets and trusted proxy configuration", () => {
+describe("TC-SEC-13 deployment secrets and trusted proxy configuration", () => {
   afterEach(restoreEnvironment);
 
   it("keeps five registrations per window by default and ignores the E2E override in production", () => {
@@ -24,46 +24,68 @@ describe("TC-SEC-13 production secrets and trusted proxy configuration", () => {
     expect(() => getRegistrationRateLimit({ NODE_ENV: "test", E2E_REGISTRATION_RATE_LIMIT: "1001" })).toThrow("no greater than 1000");
   });
 
-  it("requires a long JWT secret and rejects published development/CI values in production", () => {
-    process.env.NODE_ENV = "production";
-    delete process.env.JWT_SECRET;
-    expect(assertAuthenticationConfiguration).toThrow("JWT_SECRET must be configured");
+  it("requires a long JWT secret in deployment modes and rejects published development/CI values", () => {
+    const deploymentModes = ["production", "staging", "preview", undefined];
+    for (const mode of deploymentModes) {
+      if (mode === undefined) delete process.env.NODE_ENV;
+      else process.env.NODE_ENV = mode;
 
-    process.env.JWT_SECRET = "short-secret";
-    expect(assertAuthenticationConfiguration).toThrow("JWT_SECRET must be configured");
+      delete process.env.JWT_SECRET;
+      expect(assertAuthenticationConfiguration).toThrow("JWT_SECRET must be configured");
 
-    for (const secret of [
-      "cinema-booking-local-secret-change-before-deploy-2026",
-      "local-development-secret-change-before-deployment",
-      "ci-only-secret-change-before-deployment",
-    ]) {
-      process.env.JWT_SECRET = secret;
-      expect(assertAuthenticationConfiguration).toThrow("published development or CI value");
+      process.env.JWT_SECRET = "short-secret";
+      expect(assertAuthenticationConfiguration).toThrow("JWT_SECRET must be configured");
+
+      for (const secret of [
+        "cinema-booking-local-secret-change-before-deploy-2026",
+        "local-development-secret-change-before-deployment",
+        "ci-only-secret-change-before-deployment",
+      ]) {
+        process.env.JWT_SECRET = secret;
+        expect(assertAuthenticationConfiguration).toThrow("published development or CI value");
+      }
+
+      process.env.JWT_SECRET = "a".repeat(64);
+      expect(assertAuthenticationConfiguration).not.toThrow();
     }
 
-    process.env.JWT_SECRET = "a".repeat(64);
-    expect(assertAuthenticationConfiguration).not.toThrow();
+    for (const mode of ["development", "test"]) {
+      process.env.NODE_ENV = mode;
+      delete process.env.JWT_SECRET;
+      expect(assertAuthenticationConfiguration).not.toThrow();
+    }
   });
 
-  it("requires a long mock-payment secret and rejects published development values in production", () => {
-    process.env.NODE_ENV = "production";
-    delete process.env.MOCK_PAYMENT_SECRET;
-    expect(assertMockPaymentConfiguration).toThrow("MOCK_PAYMENT_SECRET must be configured");
+  it("requires a long mock-payment secret in deployment modes and rejects published development/CI values", () => {
+    const deploymentModes = ["production", "staging", "preview", undefined];
+    for (const mode of deploymentModes) {
+      if (mode === undefined) delete process.env.NODE_ENV;
+      else process.env.NODE_ENV = mode;
 
-    process.env.MOCK_PAYMENT_SECRET = "short-secret";
-    expect(assertMockPaymentConfiguration).toThrow("MOCK_PAYMENT_SECRET must be configured");
+      delete process.env.MOCK_PAYMENT_SECRET;
+      expect(assertMockPaymentConfiguration).toThrow("MOCK_PAYMENT_SECRET must be configured");
 
-    for (const secret of [
-      "cinema-booking-local-mock-payment-secret-2026",
-      "local-mock-webhook-secret-change-before-deployment-2026",
-      "ci-only-webhook-secret",
-    ]) {
-      process.env.MOCK_PAYMENT_SECRET = secret;
-      expect(assertMockPaymentConfiguration).toThrow("published development or CI value");
+      process.env.MOCK_PAYMENT_SECRET = "short-secret";
+      expect(assertMockPaymentConfiguration).toThrow("MOCK_PAYMENT_SECRET must be configured");
+
+      for (const secret of [
+        "cinema-booking-local-mock-payment-secret-2026",
+        "local-mock-webhook-secret-change-before-deployment-2026",
+        "ci-only-webhook-secret",
+      ]) {
+        process.env.MOCK_PAYMENT_SECRET = secret;
+        expect(assertMockPaymentConfiguration).toThrow("published development or CI value");
+      }
+
+      process.env.MOCK_PAYMENT_SECRET = "b".repeat(64);
+      expect(assertMockPaymentConfiguration).not.toThrow();
     }
 
-    process.env.MOCK_PAYMENT_SECRET = "b".repeat(64);
-    expect(assertMockPaymentConfiguration).not.toThrow();
+    for (const mode of ["development", "test"]) {
+      process.env.NODE_ENV = mode;
+      delete process.env.MOCK_PAYMENT_SECRET;
+      expect(assertMockPaymentConfiguration).not.toThrow();
+    }
   });
 
   it("trusts exactly the configured proxy hops for client-IP rate limiting", () => {

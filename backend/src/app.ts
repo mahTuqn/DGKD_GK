@@ -34,10 +34,11 @@ const mockPaymentEventSchema = z.object({
 
 function getMockPaymentSecret() {
   const configured = process.env.MOCK_PAYMENT_SECRET;
-  if (process.env.NODE_ENV === "production") {
-    if (!configured) throw new Error("MOCK_PAYMENT_SECRET must be configured with at least 32 characters in production.");
-    if (publicMockPaymentSecrets.has(configured)) throw new Error("MOCK_PAYMENT_SECRET must not use a published development or CI value in production.");
-    if (configured.length < 32) throw new Error("MOCK_PAYMENT_SECRET must be configured with at least 32 characters in production.");
+  const isLocalEnvironment = process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test";
+  if (!isLocalEnvironment) {
+    if (!configured) throw new Error("MOCK_PAYMENT_SECRET must be configured with at least 32 characters outside development and test.");
+    if (publicMockPaymentSecrets.has(configured)) throw new Error("MOCK_PAYMENT_SECRET must not use a published development or CI value outside development and test.");
+    if (configured.length < 32) throw new Error("MOCK_PAYMENT_SECRET must be configured with at least 32 characters outside development and test.");
     return configured;
   }
   return configured || developmentMockPaymentSecret;
@@ -339,7 +340,7 @@ export function createApp() {
 
   app.get("/api/showtimes/:id/seats", asyncRoute(async (req, res) => {
     const showtime = await prisma.showtime.findFirst({
-      where: { id: String(req.params.id), status: RecordStatus.ACTIVE, movie: { status: RecordStatus.ACTIVE } },
+      where: { id: String(req.params.id), status: RecordStatus.ACTIVE, movie: { status: RecordStatus.ACTIVE }, auditorium: { cinema: { status: RecordStatus.ACTIVE } } },
       include: { movie: true, auditorium: { include: { cinema: true, seats: { orderBy: [{ row: "asc" }, { column: "asc" }] } } }, claims: true }
     });
     if (!showtime) throw new DomainError("SHOWTIME_NOT_FOUND", "Không tìm thấy suất chiếu.", 404);
@@ -356,13 +357,13 @@ export function createApp() {
     });
   }));
 
-  app.post("/api/holds", requireAuth, asyncRoute(async (req, res) => {
+  app.post("/api/holds", requireAuth, requireRole(Role.CUSTOMER), asyncRoute(async (req, res) => {
     const input = z.object({ showtimeId: z.string().min(1), seatIds: z.array(z.string().min(1)).min(1).max(8) }).strict().parse(req.body);
     const seatIds = uniqueSeatIds(input.seatIds);
     const now = new Date();
     const expiresAt = new Date(now.getTime() + HOLD_TTL_SECONDS * 1000);
     const hold = await prisma.$transaction(async (tx) => {
-      const showtime = await tx.showtime.findFirst({ where: { id: input.showtimeId, status: RecordStatus.ACTIVE, startAt: { gt: now }, movie: { status: RecordStatus.ACTIVE } }, include: { auditorium: { include: { seats: { where: { id: { in: seatIds } } } } } } });
+      const showtime = await tx.showtime.findFirst({ where: { id: input.showtimeId, status: RecordStatus.ACTIVE, startAt: { gt: now }, movie: { status: RecordStatus.ACTIVE }, auditorium: { cinema: { status: RecordStatus.ACTIVE } } }, include: { auditorium: { include: { seats: { where: { id: { in: seatIds } } } } } } });
       if (!showtime) throw new DomainError("SHOWTIME_UNAVAILABLE", "Suất chiếu không còn mở bán.", 404);
       if (showtime.auditorium.seats.length !== seatIds.length) throw new DomainError("SEAT_NOT_FOUND", "Một hoặc nhiều ghế không thuộc phòng chiếu này.", 422);
 
@@ -396,7 +397,7 @@ export function createApp() {
     res.status(201).json(hold);
   }));
 
-  app.post("/api/orders", requireAuth, asyncRoute(async (req, res) => {
+  app.post("/api/orders", requireAuth, requireRole(Role.CUSTOMER), asyncRoute(async (req, res) => {
     const { holdId } = z.object({ holdId: z.string().min(1) }).strict().parse(req.body);
     const result = await prisma.$transaction(async (tx) => {
       await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`SELECT "id" FROM "SeatHold" WHERE "id" = ${holdId} FOR UPDATE`);
@@ -433,7 +434,7 @@ export function createApp() {
     res.json({ accepted: true, idempotent: result.idempotent, orderId: order.id, status: order.status, totalVnd: order.totalVnd, tickets: order.tickets });
   }));
 
-  app.post("/api/payments/mock/complete", requireAuth, asyncRoute(async (req, res) => {
+  app.post("/api/payments/mock/complete", requireAuth, requireRole(Role.CUSTOMER), asyncRoute(async (req, res) => {
     if (process.env.NODE_ENV === "production") {
       throw new DomainError("MOCK_PAYMENT_DISABLED", "Thanh toán mô phỏng không khả dụng trong production.", 404);
     }
@@ -711,8 +712,11 @@ export function createApp() {
     const input = z.object({ movieId: z.string().min(1), auditoriumId: z.string().min(1), startAt: z.string().datetime({ offset: true }), priceVnd: z.number().int().min(1000).max(1_000_000), premiumSurchargeVnd: z.number().int().min(0).max(500_000).default(30_000) }).strict().parse(req.body);
     const created = await prisma.$transaction(async (tx) => {
       const movie = await tx.movie.findUnique({ where: { id: input.movieId } });
-      const auditorium = await tx.auditorium.findUnique({ where: { id: input.auditoriumId } });
+      const auditorium = await tx.auditorium.findUnique({ where: { id: input.auditoriumId }, include: { cinema: true } });
       if (!movie || !auditorium) throw new DomainError("CATALOG_NOT_FOUND", "Không tìm thấy phim hoặc phòng chiếu.", 404);
+      if (movie.status !== RecordStatus.ACTIVE || auditorium.cinema.status !== RecordStatus.ACTIVE) {
+        throw new DomainError("INACTIVE_CATALOG", "Không thể mở bán với phim hoặc rạp đã ngừng hoạt động.", 422);
+      }
       const startAt = new Date(input.startAt);
       const endAt = new Date(startAt.getTime() + movie.runtimeMinutes * 60_000);
       const cleanupEnd = new Date(endAt.getTime() + 20 * 60_000);
@@ -747,12 +751,12 @@ export function createApp() {
       const movie = await tx.movie.findUnique({ where: { id: movieId } });
       const auditorium = await tx.auditorium.findUnique({ where: { id: auditoriumId }, include: { cinema: true } });
       if (!movie || !auditorium) throw new DomainError("CATALOG_NOT_FOUND", "Không tìm thấy phim hoặc phòng chiếu.", 404);
-      if (input.status === RecordStatus.ACTIVE && (movie.status !== RecordStatus.ACTIVE || auditorium.cinema.status !== RecordStatus.ACTIVE)) {
-        throw new DomainError("INACTIVE_CATALOG", "Không thể mở bán với phim hoặc rạp đã ngừng hoạt động.", 422);
-      }
       const startAt = input.startAt ? new Date(input.startAt) : current.startAt;
       const endAt = new Date(startAt.getTime() + movie.runtimeMinutes * 60_000);
       const status = input.status ?? current.status;
+      if (status === RecordStatus.ACTIVE && (movie.status !== RecordStatus.ACTIVE || auditorium.cinema.status !== RecordStatus.ACTIVE)) {
+        throw new DomainError("INACTIVE_CATALOG", "Không thể mở bán với phim hoặc rạp đã ngừng hoạt động.", 422);
+      }
       if (status === RecordStatus.ACTIVE) {
         const cleanupEnd = new Date(endAt.getTime() + 20 * 60_000);
         const conflict = await tx.showtime.findFirst({

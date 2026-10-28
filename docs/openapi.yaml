@@ -206,7 +206,7 @@ paths:
       tags: [Booking]
       operationId: createSeatHold
       summary: Giữ từ 1 đến 8 ghế trong 5 phút
-      description: Giá được tính ở server; mỗi tài khoản chỉ có thể có một lượt giữ ghế đang hoạt động.
+      description: Chỉ Customer được giữ ghế; Staff/Admin nhận 403. Giá được tính ở server; mỗi Customer chỉ có thể có một lượt giữ ghế đang hoạt động.
       requestBody:
         required: true
         content:
@@ -219,6 +219,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Hold' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
         '422': { $ref: '#/components/responses/ValidationError' }
@@ -228,7 +229,7 @@ paths:
       tags: [Booking]
       operationId: createOrderFromHold
       summary: Tạo đơn chờ thanh toán từ lượt giữ ghế
-      description: Lượt giữ ghế phải thuộc người dùng hiện tại và còn hạn. Gọi lại với holdId đã có đơn trả lại đơn đó.
+      description: Chỉ Customer được tạo đơn. Lượt giữ ghế phải thuộc Customer hiện tại và còn hạn. Gọi lại với holdId đã có đơn trả lại đơn đó.
       requestBody:
         required: true
         content:
@@ -246,6 +247,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Order' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
         '422': { $ref: '#/components/responses/ValidationError' }
@@ -287,7 +289,7 @@ paths:
       operationId: completeMockPayment
       summary: Hoàn tất thanh toán mô phỏng cho đơn của người dùng
       description: >-
-        Endpoint demo tự ký và áp dụng một sự kiện thành công hoặc thất bại.
+        Chỉ Customer được gọi endpoint demo này; Staff/Admin nhận 403. Endpoint tự ký và áp dụng một sự kiện thành công hoặc thất bại.
         Không xử lý dữ liệu thẻ và không kết nối nhà cung cấp thanh toán thật.
       requestBody:
         required: true
@@ -307,6 +309,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/MockPaymentCompleteResponse' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
         '402': { $ref: '#/components/responses/PaymentFailed' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }

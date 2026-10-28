@@ -389,6 +389,35 @@ regressionDescribe("authorization regression coverage", () => {
     expect(await protectedOrderState()).toEqual(relatedBefore);
   }, 30_000);
 
+  it("[TC-SEC-21] denies Staff and Admin from Customer-only booking/payment APIs without side effects", async () => {
+    const stateBefore = await protectedOrderState();
+    const holdCountBefore = await prisma.seatHold.count({ where: { showtimeId } });
+    const claimCountBefore = await prisma.seatClaim.count({ where: { showtimeId } });
+    const staffAuditsBefore = await prisma.auditLog.findMany({ where: { actorId: staffId! }, orderBy: { id: "asc" } });
+    const adminAuditsBefore = await prisma.auditLog.findMany({ where: { actorId: adminId! }, orderBy: { id: "asc" } });
+
+    for (const actor of [
+      { role: "Staff", token: staffToken },
+      { role: "Admin", token: adminToken }
+    ]) {
+      for (const route of [
+        { method: "POST" as const, path: "/api/holds", body: { showtimeId, seatIds: [seatId] } },
+        { method: "POST" as const, path: "/api/orders", body: { holdId } },
+        { method: "POST" as const, path: "/api/payments/mock/complete", body: { orderId } }
+      ]) {
+        const response = await sendAs(app, actor.token, route);
+        expect(response.status, `${actor.role}: ${route.path}`).toBe(403);
+        expect(response.body.error, `${actor.role}: ${route.path}`).toBe("ROLE_FORBIDDEN");
+      }
+    }
+
+    expect(await protectedOrderState()).toEqual(stateBefore);
+    expect(await prisma.seatHold.count({ where: { showtimeId } })).toBe(holdCountBefore);
+    expect(await prisma.seatClaim.count({ where: { showtimeId } })).toBe(claimCountBefore);
+    expect(await prisma.auditLog.findMany({ where: { actorId: staffId! }, orderBy: { id: "asc" } })).toEqual(staffAuditsBefore);
+    expect(await prisma.auditLog.findMany({ where: { actorId: adminId! }, orderBy: { id: "asc" } })).toEqual(adminAuditsBefore);
+  }, 30_000);
+
   it("[TC-API-01][TC-SEC-12] lets Admin inspect users and change a Staff role with audit and immediate permission update", async () => {
     const before = await prisma.user.findUniqueOrThrow({ where: { id: staffId! } });
     expect(before.role).toBe(Role.STAFF);

@@ -29,6 +29,7 @@ jobs:
       DATABASE_URL: postgresql://cinema:cinema_dev@localhost:5432/cinema?schema=public
       DATABASE_URL_TEST: postgresql://cinema:cinema_dev@localhost:5432/cinema?schema=public
       DATABASE_URL_WORKER_PROCESS_TEST: postgresql://cinema:cinema_dev@localhost:5432/cinema_worker_process_test?schema=public
+      VITE_API_URL: http://127.0.0.1:4000/api
       CI: true
     steps:
       - uses: actions/checkout@v7
@@ -110,5 +111,30 @@ jobs:
         with:
           name: cinema-booking-dast-reports-${{ github.sha }}
           path: reports/generated/dast
+          if-no-files-found: warn
+          retention-days: 14
+
+  domain-thresholds:
+    name: Domain coverage and mutation thresholds
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Verify domain line and branch coverage thresholds
+        run: npm run test:coverage --workspace backend
+      - name: Verify hold/payment mutation threshold
+        run: npm run test:mutation --workspace backend
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: cinema-booking-domain-quality-${{ github.sha }}
+          path: |
+            reports/generated/coverage
+            reports/generated/mutation
           if-no-files-found: warn
           retention-days: 14

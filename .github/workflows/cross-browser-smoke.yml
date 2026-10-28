@@ -36,6 +36,7 @@ jobs:
       DATABASE_URL_TEST: postgresql://cinema:cinema_dev@localhost:5432/cinema?schema=public
       E2E_API_URL: http://127.0.0.1:4000/api
       E2E_PREVIEW_URL: http://127.0.0.1:5174/
+      VITE_API_URL: http://127.0.0.1:4000/api
       PLAYWRIGHT_CROSS_BROWSER_SMOKE: "true"
     steps:
       - uses: actions/checkout@v7

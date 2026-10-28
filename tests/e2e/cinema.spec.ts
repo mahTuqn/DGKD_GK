@@ -175,6 +175,64 @@ test("[TC-E2E-03] staff soát QR vé một lần và từ chối lượt dùng l
   await expect(page.getByRole("alert")).toContainText("đã được sử dụng");
 });
 
+test("[TC-E2E-23] hai lượt quét QR đồng thời chỉ ghi nhận một vé", async ({ page }) => {
+  await registerCustomer(page);
+  await buyOneTicket(page);
+  const qrToken = await getNewestTicketQrToken(page);
+
+  await page.evaluate(() => localStorage.removeItem("cinemabooking.session"));
+  await page.reload();
+  await openLogin(page);
+  await page.getByLabel("Email").fill("staff@cinema.local");
+  await page.getByLabel("Mật khẩu").fill("CinemaStaff123!");
+  await page.getByRole("dialog").getByRole("button", { name: "Đăng nhập", exact: true }).click();
+  await page.getByRole("button", { name: "Soát vé" }).click();
+
+  const competingPage = await page.context().newPage();
+  await competingPage.goto("/");
+  await expect(competingPage.getByTestId("movie-card").first()).toBeVisible();
+  await expect(competingPage.getByRole("button", { name: "Soát vé", exact: true })).toBeVisible();
+  await competingPage.getByRole("button", { name: "Soát vé", exact: true }).click();
+
+  const scannerPages = [page, competingPage];
+  for (const scannerPage of scannerPages) {
+    await scannerPage.getByLabel("Mã QR vé").fill(qrToken);
+  }
+
+  let releaseConcurrentScans!: () => void;
+  const bothScansQueued = new Promise<void>((resolve) => {
+    releaseConcurrentScans = resolve;
+  });
+  let queuedScanCount = 0;
+  await page.context().route("**/api/tickets/scan", async (route) => {
+    if (route.request().method() !== "POST") {
+      await route.continue();
+      return;
+    }
+
+    queuedScanCount += 1;
+    if (queuedScanCount === 2) releaseConcurrentScans();
+    await bothScansQueued;
+    await route.continue();
+  });
+
+  const responsePromises = scannerPages.map((scannerPage) => scannerPage.waitForResponse((response) =>
+    response.request().method() === "POST" && new URL(response.url()).pathname === "/api/tickets/scan",
+  ));
+  await Promise.all(scannerPages.map((scannerPage) =>
+    scannerPage.getByRole("button", { name: "Xác nhận vào rạp" }).click(),
+  ));
+  const scanResponses = await Promise.all(responsePromises);
+
+  expect(scanResponses.map((response) => response.status()).sort()).toEqual([200, 409]);
+  const winnerIndex = scanResponses.findIndex((response) => response.status() === 200);
+  const conflictIndex = scanResponses.findIndex((response) => response.status() === 409);
+  expect(winnerIndex).toBeGreaterThanOrEqual(0);
+  expect(conflictIndex).toBeGreaterThanOrEqual(0);
+  await expect(scannerPages[winnerIndex]!.getByRole("status")).toContainText("Vé hợp lệ");
+  await expect(scannerPages[conflictIndex]!.getByRole("alert")).toContainText("đã được sử dụng");
+});
+
 
 
 

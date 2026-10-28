@@ -10,8 +10,8 @@ CinemaBooking là ứng dụng web responsive đặt vé cho một cụm rạp, 
 |---|---|
 | Guest | Xem phim, rạp, suất và sơ đồ ghế; đăng ký/đăng nhập |
 | Customer | Tất cả quyền Guest; giữ ghế, thanh toán demo, xem vé/đơn của mình |
-| Staff | Quét/soát vé tại quầy trong demo, chỉ tại rạp được phân công; tài khoản chưa được phân công không thể check-in |
-| Admin | Quản lý danh mục, suất chiếu, giá, người dùng và báo cáo; có thể check-in vé tại mọi rạp |
+| Staff | Quét/soát vé tại quầy trong demo, chỉ tại rạp được phân công; không dùng API booking/payment của Customer |
+| Admin | Quản lý danh mục, suất chiếu, giá, người dùng và báo cáo; có thể check-in vé tại mọi rạp; booking/payment dùng tài khoản Customer riêng |
 
 ## 3. Quy tắc nghiệp vụ
 
@@ -20,6 +20,7 @@ CinemaBooking là ứng dụng web responsive đặt vé cho một cụm rạp, 
 - Chỉ một hold còn hiệu lực hoặc một vé bán được cho cùng ghế/suất. Tranh chấp trả `409`.
 - Giá tính ở backend, lưu nguyên VND và snapshot theo đơn; không tin tổng giá gửi từ browser.
 - Demo payment không nhận thông tin thẻ. Lặp request cùng đơn không phát nhiều vé.
+- Chỉ role Customer được tạo hold, tạo order và gọi endpoint tự hoàn tất mock payment; Guest bị yêu cầu đăng nhập, Staff/Admin nhận `403 ROLE_FORBIDDEN` trước khi đọc hoặc thay đổi booking/payment state.
 - Customer chỉ xem đơn/vé của mình. Staff chỉ được soát vé tại rạp được phân công; Staff chưa có rạp và Staff khác rạp bị từ chối. Admin được soát vé toàn cục. Vé đã soát một lần không thể soát lại.
 - Hai suất cùng phòng chiếu phải cách nhau ít nhất 20 phút sau thời lượng suất trước để dành thời gian vệ sinh/chuyển ca. Tạo hoặc cập nhật lịch chồng lấn bị từ chối.
 - Hủy/hoàn, phân loại độ tuổi và cổng thanh toán thật chưa hỗ trợ trong bản demo; không được ngụ ý đã kiểm định.
@@ -29,18 +30,18 @@ CinemaBooking là ứng dụng web responsive đặt vé cho một cụm rạp, 
 | ID | Yêu cầu | Tiêu chí chấp nhận |
 |---|---|---|
 | REQ-AUTH-01 | Đăng ký/đăng nhập | Dữ liệu sai bị từ chối; mật khẩu không trả về API; phiên cần xác thực cho thao tác đặt vé |
-| REQ-AUTH-02 | Phân quyền | Guest bị từ chối thao tác cần đăng nhập; Customer bị từ chối admin/soát vé; Staff/Admin có quyền đúng chức năng |
+| REQ-AUTH-02 | Phân quyền | Guest bị từ chối thao tác cần đăng nhập; Customer bị từ chối admin/soát vé; Staff/Admin bị từ chối hold/order/user-initiated mock payment; mỗi role chỉ dùng đúng chức năng |
 | REQ-AUTH-03 | Đọc và cập nhật hồ sơ | `GET /api/auth/me` trả thông tin tài khoản đã xác thực nhưng không lộ mật khẩu; `PATCH /api/auth/me` chỉ cập nhật name/email, cần ít nhất một trường, không cho tự sửa role hoặc rạp được phân công |
 | REQ-CAT-01 | Xem phim | Danh sách phim có tiêu đề, thông tin và CTA đến suất chiếu |
 | REQ-CAT-02 | Tìm suất chiếu | Lọc theo phim, ngày và rạp; chỉ hiển thị suất còn hiệu lực |
 | REQ-CAT-03 | Xem sơ đồ ghế | Ghế khả dụng/đang giữ/đã bán có nhãn truy cập được; không chỉ phân biệt bằng màu |
 | REQ-CAT-04 | Ngăn lịch suất chiếu chồng lấn | Admin không thể tạo hoặc cập nhật suất chiếu để hai lịch trong cùng auditorium giao nhau hoặc cách nhau dưới 20 phút; lịch cách nhau đủ buffer được chấp nhận |
-| REQ-BOOK-01 | Tạo hold | Hold thành công trả thời hạn, ghế và tổng giá; quá 8 ghế hoặc ghế không khả dụng bị từ chối |
+| REQ-BOOK-01 | Tạo hold | Chỉ Customer tạo được hold; hold thành công trả thời hạn, ghế và tổng giá; quá 8 ghế hoặc ghế không khả dụng bị từ chối |
 | REQ-BOOK-02 | Chống bán trùng | Nhiều yêu cầu đồng thời cùng ghế cho tối đa một hold/sale; phần còn lại `409` |
 | REQ-BOOK-03 | Hết hạn hold | Sau 5 phút ghế giải phóng theo đồng hồ backend; hold hết hạn không thể checkout |
 | REQ-OPS-01 | Thu hồi hold và đối soát callback muộn | Worker định kỳ hết hạn hold/đơn đang chờ và giải phóng claim an toàn, có thể chạy lặp; callback thanh toán thành công hợp lệ đến sau hạn tạo outbox idempotent và hồ sơ đối soát thủ công, không tự xác nhận đơn hoặc hoàn tiền |
-| REQ-BOOK-04 | Tạo đơn | Đơn tham chiếu hold còn hiệu lực; tổng tiền khớp giá server; thao tác idempotent |
-| REQ-PAY-01 | Thanh toán demo | Thành công xác nhận đơn và phát vé; thất bại không phát vé; không có dữ liệu thẻ |
+| REQ-BOOK-04 | Tạo đơn | Chỉ Customer tạo order từ hold còn hiệu lực; tổng tiền khớp giá server; thao tác idempotent |
+| REQ-PAY-01 | Thanh toán demo | Chỉ Customer gọi endpoint tự hoàn tất cho đơn của mình; thành công xác nhận đơn và phát vé; thất bại không phát vé; không có dữ liệu thẻ |
 | REQ-PAY-02 | Xử lý lặp | Retry thanh toán cùng đơn không tạo vé/giao dịch logic trùng |
 | REQ-TICKET-01 | Xem vé | Customer chỉ xem vé thuộc đơn mình; vé chứa mã QR demo và thông tin suất/ghế |
 | REQ-TICKET-02 | Soát vé | Staff/Admin soát một lần; lần tiếp theo trả trạng thái đã dùng; Customer không được soát |
