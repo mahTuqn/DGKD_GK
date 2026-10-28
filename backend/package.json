@@ -20,7 +20,7 @@
     "prisma:migrate:dev": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:seed": "tsx prisma/seed.ts",
-    "test": "vitest run",
+    "test": "vitest run --pool=threads --maxWorkers=1 --no-file-parallelism",
     "test:domain": "vitest run tests/domain.test.ts",
     "test:coverage": "vitest run tests/domain.test.ts --coverage",
     "test:mutation": "stryker run"

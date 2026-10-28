@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { createServer } from "node:net";
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -316,6 +316,9 @@ function cleanupProject(projectName) {
 try {
   run("docker", ["info", "--format", "{{.ServerVersion}}"], { timeoutMs: 30_000 });
   mkdirSync(reportDirectory, { recursive: true });
+  // The ZAP image runs as UID 1000 while hosted runner workspaces belong to
+  // the runner user. Grant write access only to this ignored report directory.
+  if (process.platform !== "win32") chmodSync(reportDirectory, 0o777);
 
   for (const scenario of scenarios) {
     const projectName = createProjectName(scenario);
