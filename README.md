@@ -36,7 +36,7 @@ if (-not (Test-Path .env)) { npm run env:compose }
 npm run compose:qa:up
 ```
 
-Lệnh này dùng project `cinema-qa`, bind PostgreSQL ở `127.0.0.1:5435` và web ở `127.0.0.1:8081`, rồi chờ PostgreSQL/API/web health checks. CORS tự thêm origin QA. Worker chưa có Docker healthcheck; trạng thái `Up` chỉ xác nhận container đang chạy, không xác nhận job đã được xử lý. Với một volume QA mới, nạp dữ liệu demo một lần:
+Lệnh này dùng project `cinema-qa`, bind PostgreSQL ở `127.0.0.1:5435` và web ở `127.0.0.1:8081`, rồi chờ PostgreSQL/API/web health checks. Worker có healthcheck nội bộ tại `127.0.0.1:4001/healthz`; endpoint chỉ trả healthy sau khi một chu kỳ xử lý DB/outbox hoàn tất thành công trong vòng 30 giây gần nhất. Cổng này không publish ra host. Docker đánh dấu worker unhealthy sau các lần probe liên tiếp thất bại; restart policy vẫn chỉ tự khởi động lại khi process thoát. CORS tự thêm origin QA. Với một volume QA mới, nạp dữ liệu demo một lần:
 
 ```powershell
 docker compose -p cinema-qa --profile seed run --rm seed

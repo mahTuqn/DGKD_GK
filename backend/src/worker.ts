@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { HoldStatus, OrderStatus, OutboxEventStatus, OutboxEventType, PaymentStatus, Prisma, ReconciliationCaseStatus, type OutboxEvent, type PrismaClient } from "@prisma/client";
 import { prisma } from "./db.js";
+import { createWorkerHealthServer, WORKER_HEALTH_PATH, type WorkerHealthSnapshot } from "./worker-health.js";
 
 const DEFAULT_BATCH_SIZE = 100;
 const DEFAULT_INTERVAL_MS = 1_000;
@@ -262,6 +263,7 @@ export type StartWorkerOptions = {
   intervalMs?: number;
   batchSize?: number;
   onError?: (error: unknown) => void;
+  onCycleSuccess?: (result: WorkerCycleResult, completedAt: number) => void;
 };
 
 /** Start a non-overlapping worker loop; row locks allow multiple instances safely. */
@@ -279,7 +281,9 @@ export function startWorker(options: StartWorkerOptions = {}): { stop: () => Pro
 
   const loop = async () => {
     if (stopping) return;
-    currentCycle = runWorkerCycle(database, new Date(), batchSize).catch((error: unknown) => onError(error));
+    currentCycle = runWorkerCycle(database, new Date(), batchSize)
+      .then((result) => options.onCycleSuccess?.(result, Date.now()))
+      .catch((error: unknown) => onError(error));
     await currentCycle;
     if (!stopping) timer = setTimeout(() => void loop(), intervalMs);
   };
@@ -295,13 +299,29 @@ export function startWorker(options: StartWorkerOptions = {}): { stop: () => Pro
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
-  const worker = startWorker();
+  const healthPort = Number(process.env.WORKER_HEALTH_PORT ?? "4001");
+  if (!Number.isInteger(healthPort) || healthPort < 1 || healthPort > 65_535) {
+    throw new RangeError("WORKER_HEALTH_PORT must be an integer from 1 to 65535.");
+  }
+  const healthSnapshot: WorkerHealthSnapshot = { lastSuccessfulCycleAt: null, lastErrorAt: null };
+  const healthServer = createWorkerHealthServer(() => healthSnapshot);
+  healthServer.listen(healthPort, "127.0.0.1");
+  const worker = startWorker({
+    onCycleSuccess: (_result, completedAt) => {
+      healthSnapshot.lastSuccessfulCycleAt = completedAt;
+    },
+    onError: (error) => {
+      healthSnapshot.lastErrorAt = Date.now();
+      console.error("CinemaBooking worker cycle failed.", error);
+    }
+  });
   const shutdown = async () => {
+    await new Promise<void>((resolveClose) => healthServer.close(() => resolveClose()));
     await worker.stop();
     await prisma.$disconnect();
     process.exit(0);
   };
   process.once("SIGINT", () => void shutdown());
   process.once("SIGTERM", () => void shutdown());
-  console.info("CinemaBooking expiration and reconciliation worker started.");
+  console.info(`CinemaBooking expiration and reconciliation worker started; health endpoint on 127.0.0.1:${healthPort}${WORKER_HEALTH_PATH}.`);
 }

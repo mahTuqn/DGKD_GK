@@ -19,6 +19,16 @@
 | BUG-013 | P2, modal focus restoration | Chọn ghế, mở checkout, nhấn Escape; nút ghế gốc đã bị bỏ khỏi DOM khi checkout mở. | Focus phải trở về control còn tồn tại mở luồng đặt vé. | Đã thêm fallback về nút chọn suất chiếu và mở rộng TC-E2E-09 cho Tab/Shift+Tab, Escape và focus return ở cả seat/checkout dialog. TC-E2E-09 pass 2/2 desktop/mobile trong exact-head CI 40749428850. |
 | SEC-OBS-01 | Low, confidence thấp; auth đã xác minh | Native ZAP authenticated scan đăng nhập seeded Admin, kiểm tra `/api/admin/summary` nhận 200, sau đó tạo payload thử trong fixture và đọc `/api/admin/cinemas`. | API JSON có thể giữ dữ liệu gốc; giao diện phải encode nội dung theo context và không parse markup. | ZAP ghi `Cross Site Scripting Weakness (Persistent in JSON Response)` ở `name`, `city`, `address`, Low/Low confidence vì response là JSON. `TC-E2E-11` hiện kiểm tra markup ở cả ba trường: Chromium desktop/mobile hiển thị text và không tạo node `img`/`script`/`svg`. Không thấy thực thi script trong giao diện này; consumer khác của JSON vẫn cần encode theo output context. Được triage là observation Low-confidence, không có exploit xác nhận trong UI này. |
 
+## Disposition inventory — exact source `ce16d19`
+
+| Trạng thái | Mã | Evidence và phần còn lại |
+|---|---|---|
+| Code fix và regression automation đã đạt trong quality/browser suites | BUG-001–BUG-007; BUG-009–BUG-015 | Exact-source run 40775913260 passed API/Chromium; Firefox/WebKit smoke run 40775913086 also passed. The existing test IDs and earlier per-bug reports retain the detailed scenarios. |
+| Code fix validated; deployed-image parity still unverified | BUG-008 | TC-SEC-13 passed in the exact-source API suite, but local `dgkd_gk`/`cinema-qa` images predate `ce16d19` and have not been recreated from this source. |
+| Triaged low-confidence observation; exploit not confirmed in tested Admin UI | SEC-OBS-01 | Historical native ZAP report and TC-E2E-11 document the known JSON markup case. The latest DAST artifact for run 40775913260 was not inspectable without GitHub sign-in, so no current severity count or repeat/clear claim is made. |
+
+This inventory only covers tracked findings in this file; it is not a comprehensive assertion that no unreported Critical/High issue exists. The latest DAST workflow gates on High alerts, while its detailed report and lower-severity findings still need review.
+
 ## Kết quả scan bảo mật
 
 - Native ZAP 2.17.0 API unauthenticated: 0 High/Medium/Low; 2 informational (`Authentication Request Identified`, `User Agent Fuzzer`); `/api/auth/me` control returned 401.

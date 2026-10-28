@@ -142,3 +142,40 @@ jobs:
             backend/stryker.log
           if-no-files-found: warn
           retention-days: 14
+
+  docker-worker-health:
+    name: Compose worker health smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      COMPOSE_PROJECT_NAME: cinema-worker-health-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Create disposable Compose secrets
+        run: npm run env:compose
+      - name: Build Compose services
+        run: docker compose --project-name "$COMPOSE_PROJECT_NAME" up --detach --build postgres worker
+      - name: Verify worker health endpoint
+        run: |
+          container_id=""
+          for attempt in $(seq 1 90); do
+            container_id="$(docker compose --project-name "$COMPOSE_PROJECT_NAME" ps --all --quiet worker)"
+            if [[ -n "$container_id" ]]; then
+              container_state="$(docker inspect --format '{{.State.Status}}' "$container_id")"
+              health_state="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "$container_id")"
+              if [[ "$health_state" == "healthy" ]]; then break; fi
+              if [[ "$container_state" == "exited" ]]; then docker compose --project-name "$COMPOSE_PROJECT_NAME" logs worker; exit 1; fi
+            fi
+            sleep 2
+          done
+          test -n "$container_id"
+          test "$(docker inspect --format '{{.State.Health.Status}}' "$container_id")" = "healthy"
+          docker exec "$container_id" node -e "fetch('http://127.0.0.1:4001/healthz').then(response=>process.exit(response.status===200?0:1)).catch(()=>process.exit(1))"
+      - name: Clean up this job's Compose project and generated secrets
+        if: always()
+        run: |
+          docker compose --project-name "$COMPOSE_PROJECT_NAME" down --volumes --remove-orphans || true
+          rm -f .env

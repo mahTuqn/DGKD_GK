@@ -8,7 +8,7 @@ Kiểm tra các yêu cầu trong [SRS](01-srs.md), tập trung rủi ro bán tr�
 
 | Tầng | Phạm vi | Cổng đề xuất |
 |---|---|---|
-| Unit/domain | TTL, giá VND, trạng thái đơn/vé, giới hạn ghế | Exact-head `ce16d19`: domain coverage và mutation threshold đều pass; Stryker được giới hạn rõ vào `tests/domain.test.ts`. Numeric score chưa được ghi nhận từ public job page. |
+| Unit/domain | TTL, giá VND, trạng thái đơn/vé, giới hạn ghế | Exact-head `ce16d19`: domain coverage pass; Stryker đạt 82.89% (155 killed/32 survived), vượt ngưỡng 70%, chỉ chạy `tests/domain.test.ts`. |
 | API/integration | Auth/RBAC, validation, ownership, payment/hold/order/check-in | PostgreSQL test DB; mutation có assertion dữ liệu sau cùng |
 | Contract/OpenAPI | Cấu trúc OpenAPI và rule lint | `npm run lint:openapi` chạy trong CI; Redocly lint không warning. Đây là lint contract document, chưa phải runtime contract test cho mọi endpoint |
 | Concurrency | Nhiều request cùng ghế/suất | 100 request ở nhiều browser/context/process; tối đa 1 hold/sale active; conflict còn lại là 409 |
@@ -20,7 +20,7 @@ Kiểm tra các yêu cầu trong [SRS](01-srs.md), tập trung rủi ro bán tr�
 
 ## Latest exact-head CI verification — 29/10/2026
 
-Latest source commit `ce16d19c10a4e34397df42c83d02e762c491bd45` was exercised by [quality + DAST run 40775913260](https://github.com/mahTuqn/DGKD_GK/actions/runs/40775913260), [cross-browser smoke 40775913086](https://github.com/mahTuqn/DGKD_GK/actions/runs/40775913086), and [15-minute worker soak 40775913265](https://github.com/mahTuqn/DGKD_GK/actions/runs/40775913265). All completed without failed steps. Quality passed API/integration, live HTTP expiry, five-minute worker soak/restart, build and Chromium Playwright. DAST, Firefox/WebKit smoke, domain coverage and mutation threshold passed. Stryker now selects only `tests/domain.test.ts`, avoiding the previous isolated-job Prisma initialization error; the numeric score is not visible on the public job page. See [current evidence manifest](evidence/followup/2026-10-29-github-actions-ce16d19.json). Earlier passing manifests remain historical evidence for their own commits.
+Latest source commit `ce16d19c10a4e34397df42c83d02e762c491bd45` was exercised by [quality + DAST run 40775913260](https://github.com/mahTuqn/DGKD_GK/actions/runs/40775913260), [cross-browser smoke 40775913086](https://github.com/mahTuqn/DGKD_GK/actions/runs/40775913086), and [15-minute worker soak 40775913265](https://github.com/mahTuqn/DGKD_GK/actions/runs/40775913265). All completed without failed steps. Quality passed API/integration, traceability (79/25), live HTTP expiry, five-minute worker soak/restart, build and Chromium Playwright. DAST, Firefox/WebKit smoke, domain coverage and mutation threshold passed. Stryker selects only `tests/domain.test.ts`; mutation score was **82.89% (155 killed/32 survived)** against the 70% threshold. The manifest records browser scope, artifact IDs and digests. DAST findings were not reviewed. See [current evidence manifest](evidence/followup/2026-10-29-github-actions-ce16d19.json). Earlier passing manifests remain historical evidence for their own commits.
 
 The first attempt on parent commit `36fbac5` failed only because Gitleaks treated two public SHA-256 DAST report checksums as generic API keys. The exact two fingerprints are documented in `.gitleaksignore`; the pinned local full-history scan returned no findings, and the next exact-head run passed Gitleaks. No credential was committed.
 

@@ -12,6 +12,42 @@
       "jobs": {
         "quality": {
           "result": "PASS",
+          "runtime": {
+            "runner": "ubuntu-latest",
+            "node": 24,
+            "postgres": 17
+          },
+          "traceability": {
+            "result": "PASS",
+            "testCases": 79,
+            "requirements": 25
+          },
+          "playwright": {
+            "result": "PASS",
+            "testCases": 24,
+            "testFiles": 7,
+            "projects": ["chromium-desktop", "chromium-mobile (Pixel 7)"],
+            "configuredExecutions": 48,
+            "artifact": {
+              "name": "cinema-booking-browser-results-ce16d19c10a4e34397df42c83d02e762c491bd45",
+              "id": 12854723809,
+              "sizeBytes": 326720,
+              "digest": "sha256:fb6315457262247dfceebe3bc4433590f9ec406fd2cb29c321b4cd2583c3084e"
+            }
+          },
+          "commands": [
+            "npm audit --audit-level=moderate",
+            "npm run db:generate",
+            "npm run db:deploy",
+            "npm run db:seed",
+            "npm run lint:openapi",
+            "npm run qa:trace",
+            "npm run test:api",
+            "npm run test:worker-live --workspace backend",
+            "npm run test:worker-soak --workspace backend",
+            "npm run build",
+            "npm run test:browser"
+          ],
           "verifiedSteps": [
             "secret and dependency scans",
             "database generation, migrations and seed",
@@ -28,12 +64,27 @@
           "domainCoverageThreshold": "PASS",
           "mutationThreshold": "PASS (configured threshold >=70%)",
           "testScope": ["tests/domain.test.ts"],
-          "score": "Not recorded; the logged-out public job page exposes the passing gate but not the uploaded report contents.",
-          "diagnostic": "The explicit domain-only test scope prevents the isolated mutation job from loading unrelated Prisma-backed API integration tests."
+          "score": "82.89% (155 killed, 32 survived; configured break threshold 70%).",
+          "diagnostic": "The explicit domain-only test scope prevents the isolated mutation job from loading unrelated Prisma-backed API integration tests.",
+          "artifact": {
+            "name": "cinema-booking-domain-quality-ce16d19c10a4e34397df42c83d02e762c491bd45",
+            "id": 12855620551,
+            "sizeBytes": 144409,
+            "digest": "sha256:a40b0350c9cf36d1cf78791ada3e2a34f8f739a006057d8935ef075aa260e4f3"
+          },
+          "diagnosticAnnotation": "Mutation report present: score=82.89%; breakThreshold=70; killed=155, survived=32. no Stryker error log."
         },
         "dast": {
           "result": "PASS",
-          "findingDetailsReviewed": false
+          "findingDetailsReviewed": false,
+          "severityCounts": "Not reviewed; no counts claimed.",
+          "gate": "The three ZAP plans fail the job on High alerts; lower severities are not represented by this pass status.",
+          "artifact": {
+            "name": "cinema-booking-dast-reports-ce16d19c10a4e34397df42c83d02e762c491bd45",
+            "id": 12856020039,
+            "sizeBytes": 6471,
+            "digest": "sha256:22a2cfeee0355bd06d99670d16409b9701f4ae6552f05fb4ec19bf3c61370c0a"
+          }
         }
       }
     },
@@ -41,13 +92,20 @@
       "id": 40775913086,
       "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40775913086",
       "result": "PASS",
-      "scope": "Firefox and WebKit desktop smoke"
+      "scope": "TC-E2E-01, TC-E2E-02, and TC-E2E-09 on Firefox and WebKit desktop; six configured executions.",
+      "artifact": {
+        "name": "cinema-booking-cross-browser-results-ce16d19c10a4e34397df42c83d02e762c491bd45",
+        "id": 12855006268,
+        "sizeBytes": 221955,
+        "digest": "sha256:1d687c089e9a9ad31a1421050d3ef2956b872764b998f2972ffd8e17ab3a5741"
+      }
     },
     "workerSoak15Minutes": {
       "id": 40775913265,
       "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40775913265",
       "result": "PASS",
-      "scope": "Two-worker 15-minute soak and graceful restart"
+      "scope": "Two-worker 15-minute soak and graceful restart",
+      "artifact": "No artifact was published by this workflow run."
     }
   },
   "environment": {
@@ -62,5 +120,5 @@
     "Reliability soak longer than 15 minutes",
     "Real payment gateway/refund, which is outside the SRS"
   ],
-  "scopeNote": "The quality, DAST, cross-browser, mutation and 15-minute soak jobs completed without failed steps on this exact source commit. The mutation step passed the configured threshold, but its numeric score was not visible in the public job page. These results do not establish manual WCAG conformance or staging/production readiness."
+  "scopeNote": "The quality, DAST, cross-browser, mutation and 15-minute soak jobs completed without failed steps on this exact source commit. Mutation score was 82.89%, above the configured 70% threshold. DAST artifact metadata is recorded, but its report contents and severity breakdown were not reviewed. These results do not establish manual WCAG conformance or staging/production readiness."
 }
