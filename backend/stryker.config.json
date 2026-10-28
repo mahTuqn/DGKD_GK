@@ -6,6 +6,9 @@
     "src/domain/booking-policy.ts",
     "src/domain/mock-payment-signature.ts"
   ],
+  "testFiles": [
+    "tests/domain.test.ts"
+  ],
   "coverageAnalysis": "perTest",
   "concurrency": 2,
   "fileLogLevel": "error",
