@@ -30,6 +30,8 @@ staffScopeDescribe("REQ-TICKET-03: staff cinema-scoped check-in", () => {
   let ticketA3: { id: string; qrToken: string };
   let ticketB1: { id: string; qrToken: string };
   let ticketB2: { id: string; qrToken: string };
+  let ticketB3: { id: string; qrToken: string };
+  let ticketB4: { id: string; qrToken: string };
   let staffAToken: string;
   let unassignedStaffToken: string;
   let adminToken: string;
@@ -48,7 +50,7 @@ staffScopeDescribe("REQ-TICKET-03: staff cinema-scoped check-in", () => {
     const bufferAuditorium = await prisma.auditorium.create({ data: { cinemaId: cinemaA.id, name: `Scope buffer room ${fixture}` } });
     bufferAuditoriumId = bufferAuditorium.id;
     const seatsA = await prisma.seat.createManyAndReturn({ data: [1, 2, 3].map((column) => ({ auditoriumId: auditoriumA.id, label: `A${column}`, row: "A", column, type: SeatType.STANDARD })) });
-    const seatsB = await prisma.seat.createManyAndReturn({ data: [1, 2].map((column) => ({ auditoriumId: auditoriumB.id, label: `B${column}`, row: "B", column, type: SeatType.STANDARD })) });
+    const seatsB = await prisma.seat.createManyAndReturn({ data: [1, 2, 3, 4].map((column) => ({ auditoriumId: auditoriumB.id, label: `B${column}`, row: "B", column, type: SeatType.STANDARD })) });
     seatIds.push(...seatsA.map((seat) => seat.id), ...seatsB.map((seat) => seat.id));
     const movie = await prisma.movie.create({ data: { slug: `scope-${fixture}`, title: `Scope test ${fixture}`, genre: "Test", synopsis: "Isolated staff permission fixture.", runtimeMinutes: 90, ageRating: "P" } });
     movieId = movie.id;
@@ -89,6 +91,8 @@ staffScopeDescribe("REQ-TICKET-03: staff cinema-scoped check-in", () => {
     ticketA3 = await createTicket(showtimeA.id, seatsA[2]!.id, "a3");
     ticketB1 = await createTicket(showtimeB.id, seatsB[0]!.id, "b1");
     ticketB2 = await createTicket(showtimeB.id, seatsB[1]!.id, "b2");
+    ticketB3 = await createTicket(showtimeB.id, seatsB[2]!.id, "b3");
+    ticketB4 = await createTicket(showtimeB.id, seatsB[3]!.id, "b4");
   }, 30_000);
 
   afterAll(async () => {
@@ -189,7 +193,25 @@ staffScopeDescribe("REQ-TICKET-03: staff cinema-scoped check-in", () => {
     await expectForbiddenWithoutCheckInSideEffects("guest", undefined, ticketB1, "id", "AUTH_REQUIRED");
     await expectForbiddenWithoutCheckInSideEffects("guest", undefined, ticketA2, "qr", "AUTH_REQUIRED");
 
-    expect((await request(app).post("/api/tickets/scan").set(staffAuth).send({ qrToken: ticketA3.qrToken })).status).toBe(200);
+    const reassignment = await request(app).patch(`/api/admin/users/${staffAId}/assigned-cinema`).set(adminAuth).send({ cinemaId: cinemaBId });
+    expect(reassignment.status).toBe(200);
+    expect(reassignment.body.assignedCinemaId).toBe(cinemaBId);
+    const staleReassignedStaffToken = await request(app).get("/api/auth/me").set(staffAuth);
+    expect(staleReassignedStaffToken.status).toBe(401);
+    expect(staleReassignedStaffToken.body.error).toBe("INVALID_TOKEN");
+    const reassignedStaff = await prisma.user.findUniqueOrThrow({ where: { id: staffAId! }, select: { id: true, authVersion: true } });
+    const reassignedStaffToken = createToken({ id: reassignedStaff.id, authVersion: reassignedStaff.authVersion });
+    const reassignedStaffAuth = { Authorization: `Bearer ${reassignedStaffToken}` };
+    expect((await request(app).get("/api/auth/me").set(reassignedStaffAuth)).body.assignedCinemaId).toBe(cinemaBId);
+    await expectForbiddenWithoutCheckInSideEffects(staffAId!, reassignedStaffToken, ticketA2, "id", "CINEMA_FORBIDDEN");
+    await expectForbiddenWithoutCheckInSideEffects(staffAId!, reassignedStaffToken, ticketA3, "qr", "CINEMA_FORBIDDEN");
+    expect((await request(app).post(`/api/tickets/${ticketB3.id}/check-in`).set(reassignedStaffAuth).send({})).status).toBe(200);
+    expect((await request(app).post("/api/tickets/scan").set(reassignedStaffAuth).send({ qrToken: ticketB4.qrToken })).status).toBe(200);
+    const reassignmentCheckins = await prisma.auditLog.findMany({ where: { actorId: staffAId, action: "TICKET_CHECKED_IN", entityId: { in: [ticketB3.id, ticketB4.id] } }, select: { entityId: true } });
+    expect(reassignmentCheckins.map((entry) => entry.entityId).sort()).toEqual([ticketB3.id, ticketB4.id].sort());
+    for (const ticket of [ticketB3, ticketB4]) {
+      expect((await prisma.ticket.findUniqueOrThrow({ where: { id: ticket.id }, select: { checkedInAt: true } })).checkedInAt).not.toBeNull();
+    }
 
     const assigned = await request(app).patch(`/api/admin/users/${unassignedStaffId}/assigned-cinema`).set(adminAuth).send({ cinemaId: cinemaAId });
     expect(assigned.status).toBe(200);
@@ -211,15 +233,16 @@ staffScopeDescribe("REQ-TICKET-03: staff cinema-scoped check-in", () => {
 
     expect((await request(app).post(`/api/tickets/${ticketB1.id}/check-in`).set(adminAuth).send({})).status).toBe(200);
     expect((await request(app).post("/api/tickets/scan").set(adminAuth).send({ qrToken: ticketB2.qrToken })).status).toBe(200);
-    const checkedIn = await prisma.ticket.findMany({ where: { id: { in: [ticketA1.id, ticketA2.id, ticketA3.id, ticketB1.id, ticketB2.id] } }, select: { id: true, checkedInAt: true } });
-    expect(checkedIn.filter((ticket) => ticket.checkedInAt !== null)).toHaveLength(5);
+    expect((await request(app).post(`/api/tickets/${ticketA3.id}/check-in`).set(adminAuth).send({})).status).toBe(200);
+    const checkedIn = await prisma.ticket.findMany({ where: { id: { in: ticketIds } }, select: { id: true, checkedInAt: true } });
+    expect(checkedIn.filter((ticket) => ticket.checkedInAt !== null)).toHaveLength(7);
     const staffCheckins = await prisma.auditLog.count({ where: { actorId: staffAId, action: "TICKET_CHECKED_IN" } });
     const newlyAssignedStaffCheckins = await prisma.auditLog.count({ where: { actorId: unassignedStaffId, action: "TICKET_CHECKED_IN" } });
     const adminCheckins = await prisma.auditLog.count({ where: { actorId: adminId, action: "TICKET_CHECKED_IN" } });
-    expect(staffCheckins).toBe(2);
+    expect(staffCheckins).toBe(3);
     expect(newlyAssignedStaffCheckins).toBe(1);
-    expect(adminCheckins).toBe(2);
-    expect(await prisma.auditLog.count({ where: { actorId: adminId, action: "STAFF_CINEMA_ASSIGNED" } })).toBe(2);
+    expect(adminCheckins).toBe(3);
+    expect(await prisma.auditLog.count({ where: { actorId: adminId, action: "STAFF_CINEMA_ASSIGNED" } })).toBe(3);
     expect(await prisma.auditLog.count({ where: { actorId: staffAId, action: "PROFILE_UPDATED" } })).toBe(2);
   }, 60_000);
 });
