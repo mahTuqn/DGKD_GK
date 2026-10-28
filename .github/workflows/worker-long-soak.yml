@@ -1,0 +1,58 @@
+name: Worker Reliability Soak (15 minutes)
+
+on:
+  push:
+    branches:
+      - "codex/**"
+  workflow_dispatch:
+  schedule:
+    - cron: "23 6 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  worker-long-soak:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: cinema
+          POSTGRES_PASSWORD: cinema_dev
+          POSTGRES_DB: cinema
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cinema -d cinema"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://cinema:cinema_dev@localhost:5432/cinema?schema=public
+      DATABASE_URL_TEST: postgresql://cinema:cinema_dev@localhost:5432/cinema_worker_soak_15m?schema=public
+      DATABASE_URL_WORKER_PROCESS_TEST: postgresql://cinema:cinema_dev@localhost:5432/cinema_worker_soak_15m?schema=public
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run db:generate
+      - name: Create dedicated 15-minute worker soak database
+        run: node --input-type=module -e 'import { PrismaClient } from "@prisma/client"; const client = new PrismaClient(); try { await client.$executeRawUnsafe("CREATE DATABASE cinema_worker_soak_15m"); } finally { await client.$disconnect(); }'
+      - name: Apply migrations to 15-minute worker soak database
+        run: npm run db:deploy --workspace backend
+        env:
+          DATABASE_URL: postgresql://cinema:cinema_dev@localhost:5432/cinema_worker_soak_15m?schema=public
+      - name: Verify two-worker 15-minute soak and graceful restart
+        run: npm run test:worker-soak:15m --workspace backend
+        timeout-minutes: 18
+        env:
+          DATABASE_URL: postgresql://cinema:cinema_dev@localhost:5432/cinema_worker_soak_15m?schema=public
+          DATABASE_URL_TEST: postgresql://cinema:cinema_dev@localhost:5432/cinema_worker_soak_15m?schema=public
+          DATABASE_URL_WORKER_PROCESS_TEST: postgresql://cinema:cinema_dev@localhost:5432/cinema_worker_soak_15m?schema=public

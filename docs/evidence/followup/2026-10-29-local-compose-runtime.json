@@ -1,0 +1,61 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "recordedAt": "2026-10-29",
+  "sourceHead": "70c53582437bc17e746e5d7fc20e5836bcabe9d0",
+  "environment": {
+    "host": "Windows Docker Desktop",
+    "dockerEngine": "29.7.2",
+    "composeFile": "docker-compose.yml"
+  },
+  "checks": {
+    "composeConfig": {
+      "command": "docker compose config --quiet",
+      "exitCode": 0
+    },
+    "stacks": [
+      {
+        "project": "dgkd_gk",
+        "services": {
+          "postgres": "healthy; published on 127.0.0.1:5434",
+          "api": "healthy",
+          "web": "healthy; published on 127.0.0.1:8080",
+          "worker": "running; no Docker healthcheck is configured",
+          "migrate": "exited 0"
+        },
+        "healthRequest": {
+          "url": "http://127.0.0.1:8080/api/health",
+          "status": 200,
+          "body": {
+            "status": "ok",
+            "service": "cinema-booking-api"
+          }
+        }
+      },
+      {
+        "project": "cinema-qa",
+        "services": {
+          "postgres": "healthy; published on 127.0.0.1:5435",
+          "api": "healthy",
+          "web": "healthy; published on 127.0.0.1:8081",
+          "worker": "running; no Docker healthcheck is configured",
+          "migrate": "exited 0"
+        },
+        "healthRequest": {
+          "url": "http://127.0.0.1:8081/api/health",
+          "status": 200,
+          "body": {
+            "status": "ok",
+            "service": "cinema-booking-api"
+          }
+        }
+      }
+    ]
+  },
+  "safetyScope": "Read-only inspection only: no stack restart/recreate, container/image build, database write, or volume operation was performed.",
+  "limitations": [
+    "Running container/image parity with this exact source HEAD was not verified.",
+    "A running worker container has no configured Docker healthcheck; process state is reported as running only.",
+    "This is local Docker health evidence, not staging or production deployment/recovery evidence."
+  ]
+}

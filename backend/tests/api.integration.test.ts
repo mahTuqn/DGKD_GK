@@ -61,6 +61,7 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
       const orders = await prisma.cinemaOrder.findMany({ where: { showtimeId }, select: { id: true } });
       const orderIds = orders.map((order) => order.id);
       if (orderIds.length) {
+        await prisma.auditLog.deleteMany({ where: { entityId: { in: orderIds } } });
         await prisma.ticket.deleteMany({ where: { orderId: { in: orderIds } } });
         await prisma.reconciliationCase.deleteMany({ where: { orderId: { in: orderIds } } });
         await prisma.outboxEvent.deleteMany({ where: { aggregateId: { in: orderIds } } });
@@ -421,4 +422,94 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
     expect(raceClaim.status).toBe("HELD");
     expect(await prisma.seatClaim.count({ where: { showtimeId, seatId: seatIds[4], status: "HELD" } })).toBe(1);
   }, 90_000);
+
+  it("[TC-SEC-20] rejects a signed provider event replayed against a different order without side effects", async () => {
+    const seats = await prisma.seat.findMany({ where: { auditoriumId }, orderBy: { column: "asc" }, select: { id: true } });
+    const now = new Date();
+    const existingClaims = await prisma.seatClaim.findMany({ where: { showtimeId }, select: { seatId: true, status: true, expiresAt: true } });
+    const occupiedSeatIds = new Set(existingClaims
+      .filter((claim) => claim.status === "SOLD" || (claim.status === "HELD" && claim.expiresAt !== null && claim.expiresAt > now))
+      .map((claim) => claim.seatId));
+    const availableSeatIds = seats.map((seat) => seat.id).filter((seatId) => !occupiedSeatIds.has(seatId));
+    expect(availableSeatIds.length).toBeGreaterThanOrEqual(2);
+
+    const customer = await prisma.user.create({
+      data: {
+        name: "Webhook Replay Customer",
+        email: `webhook-replay-${fixture}@test.local`,
+        passwordHash: "unused-in-webhook-replay-test",
+        role: Role.CUSTOMER
+      }
+    });
+    userIds.push(customer.id);
+    const customerAuth = { Authorization: `Bearer ${createToken({ id: customer.id, authVersion: customer.authVersion })}` };
+    const createPendingOrder = async (seatId: string) => {
+      const hold = await request(app).post("/api/holds").set(customerAuth).send({ showtimeId, seatIds: [seatId] });
+      expect(hold.status).toBe(201);
+      const order = await request(app).post("/api/orders").set(customerAuth).send({ holdId: hold.body.id as string });
+      expect(order.status).toBe(201);
+      expect(order.body.status).toBe(OrderStatus.PAYMENT_PENDING);
+      return {
+        holdId: hold.body.id as string,
+        orderId: order.body.id as string,
+        totalVnd: order.body.totalVnd as number,
+        seatId
+      };
+    };
+
+    const original = await createPendingOrder(availableSeatIds[0]!);
+    const second = await createPendingOrder(availableSeatIds[1]!);
+    const eventId = `evt-cross-order-replay-${fixture}`;
+    const webhookSecret = process.env.MOCK_PAYMENT_SECRET || "cinema-booking-local-mock-payment-secret-2026";
+    const originalEvent = {
+      eventId,
+      orderId: original.orderId,
+      status: "SUCCEEDED" as const,
+      amountVnd: original.totalVnd,
+      currency: "VND" as const
+    };
+    const originalCallback = await request(app).post("/api/payments/mock/webhook")
+      .set("x-mock-signature", signMockPaymentEvent(originalEvent, webhookSecret))
+      .send(originalEvent);
+    expect(originalCallback.status).toBe(200);
+    expect(originalCallback.body.idempotent).toBe(false);
+    expect(originalCallback.body.tickets).toHaveLength(1);
+
+    const orderState = async (order: typeof original) => ({
+      order: await prisma.cinemaOrder.findUniqueOrThrow({ where: { id: order.orderId } }),
+      hold: await prisma.seatHold.findUniqueOrThrow({ where: { id: order.holdId } }),
+      payment: await prisma.payment.findUnique({ where: { orderId: order.orderId } }),
+      claim: await prisma.seatClaim.findUniqueOrThrow({ where: { showtimeId_seatId: { showtimeId: showtimeId!, seatId: order.seatId } } }),
+      tickets: await prisma.ticket.findMany({ where: { orderId: order.orderId }, orderBy: { id: "asc" } }),
+      paymentEvents: await prisma.paymentEvent.findMany({ where: { orderId: order.orderId }, orderBy: { id: "asc" } }),
+      outboxEvents: await prisma.outboxEvent.findMany({ where: { aggregateId: order.orderId }, orderBy: { id: "asc" } }),
+      reconciliationCases: await prisma.reconciliationCase.findMany({ where: { orderId: order.orderId }, orderBy: { id: "asc" } }),
+      audits: await prisma.auditLog.findMany({ where: { entityId: order.orderId }, orderBy: { id: "asc" } })
+    });
+
+    const originalBeforeReplay = await orderState(original);
+    const secondBeforeReplay = await orderState(second);
+    expect(originalBeforeReplay.order.status).toBe(OrderStatus.CONFIRMED);
+    expect(originalBeforeReplay.paymentEvents).toHaveLength(1);
+    expect(originalBeforeReplay.tickets).toHaveLength(1);
+    expect(originalBeforeReplay.audits.map((auditEntry) => auditEntry.action)).toContain("PAYMENT_CONFIRMED");
+    expect(secondBeforeReplay.order.status).toBe(OrderStatus.PAYMENT_PENDING);
+    expect(secondBeforeReplay.payment).toBeNull();
+    expect(secondBeforeReplay.tickets).toHaveLength(0);
+    expect(secondBeforeReplay.paymentEvents).toHaveLength(0);
+
+    const replayAgainstSecondOrder = {
+      ...originalEvent,
+      orderId: second.orderId,
+      amountVnd: second.totalVnd
+    };
+    const replay = await request(app).post("/api/payments/mock/webhook")
+      .set("x-mock-signature", signMockPaymentEvent(replayAgainstSecondOrder, webhookSecret))
+      .send(replayAgainstSecondOrder);
+    expect(replay.status).toBe(409);
+    expect(replay.body.error).toBe("PAYMENT_EVENT_REPLAY");
+    expectSafeError(replay);
+    expect(await orderState(second)).toEqual(secondBeforeReplay);
+    expect(await orderState(original)).toEqual(originalBeforeReplay);
+  }, 30_000);
 });

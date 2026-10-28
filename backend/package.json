@@ -11,6 +11,7 @@
     "worker": "node dist/src/worker.js",
     "test:worker-process": "vitest run --config vitest.worker-process.config.ts",
     "test:worker-soak": "node scripts/require-worker-soak-db.mjs && cross-env WORKER_PROCESS_SOAK_DURATION_MS=300000 vitest run --config vitest.worker-process.config.ts",
+    "test:worker-soak:15m": "node scripts/require-worker-soak-db.mjs && cross-env WORKER_PROCESS_SOAK_DURATION_MS=900000 vitest run --config vitest.worker-process.config.ts",
     "test:worker-live": "vitest run --config vitest.worker-live.config.ts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",

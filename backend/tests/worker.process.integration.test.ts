@@ -11,7 +11,7 @@ const databaseUrl = process.env.DATABASE_URL_WORKER_PROCESS_TEST;
 const processDescribe = databaseUrl ? describe.sequential : describe.skip;
 const soakDurationMs = resolveWorkerSoakDurationMs();
 const soakEventCount = 1 + Math.ceil(soakDurationMs / WORKER_SOAK_EVENT_INTERVAL_MS);
-const soakCaseId = soakDurationMs > 60_000 ? "TC-WORKER-06" : "TC-WORKER-05";
+const soakCaseId = soakDurationMs >= 900_000 ? "TC-WORKER-07" : soakDurationMs > 60_000 ? "TC-WORKER-06" : "TC-WORKER-05";
 
 type HarnessMessage = { type: string; pid?: number; error?: string };
 type MessageWaiter = { matches: (message: HarnessMessage) => boolean; resolve: (message: HarnessMessage) => void; reject: (error: Error) => void; timeout: NodeJS.Timeout };
