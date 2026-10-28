@@ -1,6 +1,16 @@
 # Báo cáo tổng hợp kiểm thử
 
-## Latest exact-head CI result — 29/10/2026
+## Current exact-source CI result — `b84ba70` — 29/10/2026
+
+Commit `b84ba704398a91d12cdca9abfd0657d40cadefc0` passed all jobs in [quality + DAST run 40784545588](https://github.com/mahTuqn/DGKD_GK/actions/runs/40784545588); [cross-browser run 40784545596](https://github.com/mahTuqn/DGKD_GK/actions/runs/40784545596) also passed. Traceability passed at **90 cases/26 requirements**. The API/browser quality job, full Compose runtime/browser smoke, domain coverage/mutation, DAST gate, Firefox and WebKit smoke all passed.
+
+The Chromium desktop/Pixel 7 browser suite passed 24 cases (48 configured executions), including TC-E2E-24–26 for stacked modal semantics, Staff scan success/error accessibility and the payment-success dialog. API integration passed TC-CAT-06 and TC-SEC-22–26 for inactive-cinema creation, concurrent webhook idempotency, catalog BOPLA, Admin authorization transitions, exact response allowlist and malformed/unknown QR denials. TC-OPS-01 built and seeded the full isolated Compose stack, verified API/worker/web health and completed a Chromium registration, hold, order, demo-payment and ticket journey through the current web image.
+
+The DAST job passed its configured High-alert gate, and the workflow generated a severity-count summary that omits alert names, URLs and payloads. This report does not claim a severity breakdown because the detailed findings were not independently reviewed. Artifact ids, sizes and digests are recorded in the [current evidence manifest](evidence/followup/2026-10-29-github-actions-b84ba70.json).
+
+Manual WCAG 2.2 AA/screen-reader checks remain with the requester. No staging environment is available, so named-staging performance is not measured; production recovery/PITR/RPO/RTO and exhaustive ASVS/BOLA review remain open. This run does not certify production readiness or real-gateway/refund behavior.
+
+## Previous exact-head CI result — `8b1fc83` — 29/10/2026
 
 Source commit `8b1fc83c5e8f6c4a20b8106a9633e25515c25d83` was tested in clean GitHub Actions checkouts. [Quality + DAST run 40780057457](https://github.com/mahTuqn/DGKD_GK/actions/runs/40780057457), [cross-browser smoke 40780057484](https://github.com/mahTuqn/DGKD_GK/actions/runs/40780057484), and [15-minute worker soak 40780057400](https://github.com/mahTuqn/DGKD_GK/actions/runs/40780057400) completed successfully. The quality job passed secret/dependency scans, OpenAPI lint, traceability (80 cases/25 requirements), API integration, live five-minute hold expiry, five-minute worker soak/restart, build and Chromium Playwright. The new Compose worker-health smoke and TC-WORKER-08 passed. The browser config contains 24 cases across seven files and runs them in Chromium desktop and Pixel 7 emulation; the unfiltered browser step passed. DAST, domain coverage, and mutation passed; Stryker scored **82.89% (155 killed/32 survived)** against the 70% threshold. Firefox/WebKit smoke covered three critical cases on both desktop engines. DAST report contents were not reviewed, so no severity counts are claimed. See [exact-head evidence manifest](evidence/followup/2026-10-29-github-actions-8b1fc83.json), which includes run artifact sizes and digests.
 
@@ -14,11 +24,11 @@ The requester will perform the manual WCAG 2.2 AA/screen-reader checklist. No st
 
 Phạm vi bao gồm browser recovery khi payment đã commit nhưng response bị mất, retry idempotent một order/one ticket; API ownership/mass-assignment cases; Customer denial trên đủ 18 route Admin; và Staff chuyển Cinema A→B với token cũ bị thu hồi, quyền check-in chỉ chuyển sang rạp mới. Đây là mock payment và kiểm thử tự động trong các scope đã nêu, không phải chứng nhận cổng thanh toán thật, WCAG hay security toàn diện.
 
-## Working-tree follow-up — awaiting exact-source CI
+## Current automated coverage follow-up — `b84ba70`
 
-Traceability passes for 90 test cases across 26 requirements. New browser accessibility checks cover the guest-login modal stacked over seat selection, staff scan success/error announcements, and the payment-success/QR dialog. New API regressions cover concurrent identical signed webhooks, inactive-cinema auditorium creation, catalog/seat BOPLA, Admin self-demotion and inactive-cinema assignment, exact Admin-user response fields, and malformed/unknown QR scans. The current-source run has not yet executed these changes.
+Traceability passes for 90 test cases across 26 requirements. Browser accessibility checks cover the guest-login modal stacked over seat selection, Staff scan success/error announcements, and the payment-success/QR dialog. API regressions cover concurrent identical signed webhooks, inactive-cinema auditorium creation, catalog/seat BOPLA, Admin self-demotion and inactive-cinema assignment, exact Admin-user response fields, and malformed/unknown QR scans. These cases pass in current-source CI.
 
-CI now has a dedicated current-source Compose/browser job for PostgreSQL, migrations, API, worker, and web images plus a seeded Chromium booking journey against the web container. DAST severity-count summarization is also pending exact-source CI. Neither result is claimed yet. User-owned manual WCAG review, external staging, production recovery/RPO/RTO, and full ASVS/BOLA review remain open.
+CI has a dedicated current-source Compose/browser job for PostgreSQL, migrations, API, worker, and web images plus a seeded Chromium booking journey against the web container. DAST severity-count summarization is active; its counts were not independently reviewed for this report. User-owned manual WCAG review, external staging, production recovery/RPO/RTO, and full ASVS/BOLA review remain open.
 
 ## Frozen baseline — commit `2be2d911c635cbdbe810bd4f77eca71b73928d1f`
 

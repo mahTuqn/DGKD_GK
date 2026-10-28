@@ -1,0 +1,109 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "recordedAt": "2026-10-29",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "commit": "b84ba704398a91d12cdca9abfd0657d40cadefc0",
+  "branch": "codex/cross-browser-smoke",
+  "overall": "PASS_EXACT_SOURCE_CI_WITH_DOCUMENTED_LIMITATIONS",
+  "runs": {
+    "qualityAndDast": {
+      "id": 40784545588,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40784545588",
+      "result": "PASS",
+      "duration": "14m 39s",
+      "jobs": {
+        "quality": {
+          "result": "PASS",
+          "traceability": {
+            "result": "PASS",
+            "testCases": 90,
+            "requirements": 26
+          },
+          "verifiedSteps": [
+            "secret and dependency scans",
+            "database generation, migrations and seed",
+            "OpenAPI lint and traceability",
+            "API integration and PostgreSQL security regressions including TC-CAT-06 and TC-SEC-22–26",
+            "live five-minute hold expiry over HTTP",
+            "two-worker five-minute soak and graceful restart",
+            "production build",
+            "Chromium Playwright browser suite including TC-E2E-24–26"
+          ],
+          "playwright": {
+            "result": "PASS",
+            "testCases": 24,
+            "testFiles": 7,
+            "projects": [
+              "chromium-desktop",
+              "chromium-mobile (Pixel 7)"
+            ],
+            "configuredExecutions": 48,
+            "artifact": {
+              "name": "cinema-booking-browser-results-b84ba704398a91d12cdca9abfd0657d40cadefc0",
+              "id": 12858514560,
+              "sizeDisplay": "331 KB",
+              "digest": "sha256:a0b80a56c2c6a45acaf76bf72d7e48dea0f4c6fd85902936c617b96d5a3756c2"
+            }
+          }
+        },
+        "composeRuntimeBrowserSmoke": {
+          "result": "PASS",
+          "testCase": "TC-OPS-01",
+          "scope": "Built the current PostgreSQL/migration/API/worker/web Compose stack, seeded the isolated database, passed API/worker/web health checks and completed a Chromium registration, hold, order, demo-payment and ticket journey through the web image. The API used the dedicated test-mode override so mock payment is enabled; no local Docker project or volume was changed.",
+          "artifact": {
+            "name": "cinema-booking-compose-browser-results-b84ba704398a91d12cdca9abfd0657d40cadefc0",
+            "id": 12859355191,
+            "sizeDisplay": "194 KB",
+            "digest": "sha256:4f9c449d0067eebc45e74497d4614b43fdda906002e739300cceef1d51a022f0"
+          }
+        },
+        "domainCoverageAndMutation": {
+          "result": "PASS",
+          "artifact": {
+            "name": "cinema-booking-domain-quality-b84ba704398a91d12cdca9abfd0657d40cadefc0",
+            "id": 12856994730,
+            "sizeDisplay": "141 KB",
+            "digest": "sha256:06849e10d228bff54a428c3012433cad84e690388ca3ca9f51c7cddfa8180cdb"
+          }
+        },
+        "dast": {
+          "result": "PASS_WITHIN_CONFIGURED_HIGH_ALERT_GATE",
+          "severitySummaryStep": "Added and executed for the current run; only alert counts by severity are emitted.",
+          "findingDetailsReviewed": false,
+          "severityCounts": "Not independently reviewed; no counts claimed.",
+          "artifact": {
+            "name": "cinema-booking-dast-reports-b84ba704398a91d12cdca9abfd0657d40cadefc0",
+            "id": 12858383968,
+            "sizeDisplay": "6.31 KB",
+            "digest": "sha256:527449ba2a4b08fa657fe7f421b88e50b0b231b0d9a7579bb73cceede9cd0443"
+          }
+        }
+      }
+    },
+    "crossBrowser": {
+      "id": 40784545596,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40784545596",
+      "result": "PASS",
+      "scope": "Firefox and WebKit desktop smoke on the workflow's critical browser cases.",
+      "artifact": {
+        "name": "cinema-booking-cross-browser-results-b84ba704398a91d12cdca9abfd0657d40cadefc0",
+        "id": 12858512539,
+        "digest": "sha256:206408260f03b2b53d4517ba20d7fc4c8e2cc7a870e47e7ecf1568aad8118405"
+      }
+    }
+  },
+  "environment": {
+    "runner": "GitHub Actions clean checkout",
+    "applicationEnvironment": "Local Docker only; no staging URL was provided"
+  },
+  "notMeasured": [
+    "Manual WCAG 2.2 AA, screen-reader, contrast, zoom/reflow, orientation and full keyboard review; requester will perform the checklist",
+    "Performance validation on named staging or production",
+    "Detailed DAST finding list and exhaustive ASVS/API Top 10 and BOLA review",
+    "Production behavior, backup schedule, PITR, RPO/RTO and production restore",
+    "Reliability soak longer than 15 minutes on this exact source commit",
+    "Real payment gateway/refund, which is outside the SRS"
+  ],
+  "scopeNote": "Quality/API, current-source full Compose browser smoke, DAST High-alert gate, domain coverage/mutation, Chromium, Firefox and WebKit all passed on this exact source SHA. DAST report metadata is recorded, but the severity breakdown and individual alert details were not independently inspected. This does not establish manual WCAG conformance or staging/production readiness."
+}
