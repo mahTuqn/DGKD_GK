@@ -141,6 +141,12 @@ test("[TC-E2E-02] trang khám phá và dialog đăng nhập không có lỗi axe
   await expect(loginDialog.getByRole("button", { name: "Đóng" })).toBeFocused();
   await page.keyboard.press("Shift+Tab");
   await expect(loginDialog.getByRole("button", { name: "Tạo tài khoản mới" })).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(loginDialog.getByRole("button", { name: "Đóng" })).toBeFocused();
+  await expect(loginDialog.locator(":focus")).toHaveCount(1);
+  await page.keyboard.press("Shift+Tab");
+  await expect(loginDialog.getByRole("button", { name: "Tạo tài khoản mới" })).toBeFocused();
+  await expect(loginDialog.locator(":focus")).toHaveCount(1);
   await page.keyboard.press("Escape");
   await expect(loginDialog).toBeHidden();
   await expect(restoreFocus).toBeFocused();

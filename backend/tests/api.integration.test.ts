@@ -91,7 +91,7 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
     await prisma.$disconnect();
   }, 30_000);
 
-  it("[TC-API-01][TC-PLAN-01][TC-PLAN-02][TC-PLAN-03][TC-PLAN-04][TC-PLAN-05] enforces auth, booking boundaries, payment/report rules, concurrency, and one-use staff check-in", async () => {
+  it("[TC-API-01][TC-SEC-15][TC-SEC-16][TC-PLAN-01][TC-PLAN-02][TC-PLAN-03][TC-PLAN-04][TC-PLAN-05] enforces auth, booking boundaries, payment/report rules, concurrency, and one-use staff check-in", async () => {
     const guestHold = await request(app).post("/api/holds").send({ showtimeId, seatIds: ["missing"] });
     expect(guestHold.status).toBe(401);
     expectSafeError(guestHold);
@@ -204,7 +204,29 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
     expect(staffLogin.status).toBe(200);
     const staffAuth = { Authorization: `Bearer ${staffLogin.body.token as string}` };
     const ticketId = payment.body.tickets[0].id as string;
-    expect((await request(app).post(`/api/tickets/${ticketId}/check-in`).set(staffAuth).send({})).status).toBe(200);
+    const ticketQrToken = payment.body.tickets[0].qrToken as string;
+    const ticketBeforeQrRace = await prisma.ticket.findUniqueOrThrow({ where: { id: ticketId } });
+    expect(ticketBeforeQrRace.checkedInAt).toBeNull();
+    const checkInAuditCountBeforeQrRace = await prisma.auditLog.count({ where: { action: "TICKET_CHECKED_IN", entityId: ticketId } });
+    const qrRaceResults = await Promise.all([
+      request(app).post("/api/tickets/scan").set(staffAuth).send({ qrToken: ticketQrToken }),
+      request(app).post("/api/tickets/scan").set(adminAuth).send({ qrToken: ticketQrToken })
+    ]);
+    expect(qrRaceResults.map((result) => result.status).sort()).toEqual([200, 409]);
+    const successfulQrRace = qrRaceResults.find((result) => result.status === 200);
+    expect(successfulQrRace?.body.ticketId).toBe(ticketId);
+    expect(qrRaceResults.find((result) => result.status === 409)?.body.error).toBe("TICKET_ALREADY_USED");
+    const ticketAfterQrRace = await prisma.ticket.findUniqueOrThrow({ where: { id: ticketId } });
+    expect(ticketAfterQrRace).toMatchObject({
+      id: ticketBeforeQrRace.id,
+      orderId: ticketBeforeQrRace.orderId,
+      seatClaimId: ticketBeforeQrRace.seatClaimId,
+      qrToken: ticketBeforeQrRace.qrToken,
+      createdAt: ticketBeforeQrRace.createdAt
+    });
+    expect(ticketAfterQrRace.checkedInAt).not.toBeNull();
+    expect(await prisma.auditLog.count({ where: { action: "TICKET_CHECKED_IN", entityId: ticketId } })).toBe(checkInAuditCountBeforeQrRace + 1);
+    expect(await prisma.ticket.count({ where: { orderId: orderResponse.body.id, checkedInAt: { not: null } } })).toBe(1);
     expect((await request(app).post(`/api/tickets/${ticketId}/check-in`).set(staffAuth).send({})).status).toBe(409);
 
     const secondHold = await request(app).post("/api/holds").set(authA).send({ showtimeId, seatIds: [seatIds[1]] });
@@ -218,6 +240,35 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
     const badWebhook = await request(app).post("/api/payments/mock/webhook").set("x-mock-signature", "0".repeat(64)).send(webhookEvent);
     expect(badWebhook.status).toBe(401);
     expectSafeError(badWebhook);
+
+    const amountMismatchEvent = {
+      eventId: `evt-amount-mismatch-${fixture}`,
+      orderId: secondOrder.body.id as string,
+      status: "SUCCEEDED" as const,
+      amountVnd: (secondOrder.body.totalVnd as number) + 1,
+      currency: "VND" as const
+    };
+    const paymentWebhookSecret = process.env.MOCK_PAYMENT_SECRET || "cinema-booking-local-mock-payment-secret-2026";
+    const amountMismatchSnapshot = async () => ({
+      order: await prisma.cinemaOrder.findUniqueOrThrow({ where: { id: secondOrder.body.id as string } }),
+      hold: await prisma.seatHold.findUniqueOrThrow({ where: { id: secondHold.body.id as string } }),
+      payment: await prisma.payment.findUniqueOrThrow({ where: { orderId: secondOrder.body.id as string } }),
+      claims: await prisma.seatClaim.findMany({ where: { orderId: secondOrder.body.id as string }, orderBy: { id: "asc" } }),
+      tickets: await prisma.ticket.findMany({ where: { orderId: secondOrder.body.id as string }, orderBy: { id: "asc" } }),
+      paymentEvents: await prisma.paymentEvent.findMany({ where: { orderId: secondOrder.body.id as string }, orderBy: { id: "asc" } }),
+      outboxEvents: await prisma.outboxEvent.findMany({ where: { aggregateId: secondOrder.body.id as string }, orderBy: { id: "asc" } }),
+      reconciliationCases: await prisma.reconciliationCase.findMany({ where: { orderId: secondOrder.body.id as string }, orderBy: { id: "asc" } }),
+      audits: await prisma.auditLog.findMany({ where: { entityId: secondOrder.body.id as string }, orderBy: { id: "asc" } })
+    });
+    const beforeAmountMismatch = await amountMismatchSnapshot();
+    const signedAmountMismatch = await request(app).post("/api/payments/mock/webhook")
+      .set("x-mock-signature", signMockPaymentEvent(amountMismatchEvent, paymentWebhookSecret))
+      .send(amountMismatchEvent);
+    expect(signedAmountMismatch.status).toBe(422);
+    expect(signedAmountMismatch.body.error).toBe("PAYMENT_AMOUNT_MISMATCH");
+    expectSafeError(signedAmountMismatch);
+    expect(await amountMismatchSnapshot()).toEqual(beforeAmountMismatch);
+
     const stillPending = await request(app).get(`/api/orders/${secondOrder.body.id}`).set(authA);
     expect(stillPending.body.status).toBe(OrderStatus.PAYMENT_PENDING);
     expect(stillPending.body.tickets).toHaveLength(0);
