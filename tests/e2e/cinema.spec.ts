@@ -4,6 +4,7 @@ import AxeBuilder from "@axe-core/playwright";
 const API_URL = process.env.E2E_API_URL || "http://127.0.0.1:4000/api";
 const PREVIEW_URL = process.env.E2E_PREVIEW_URL || "http://127.0.0.1:5174/";
 const uniqueEmail = () => `qa-${Date.now()}-${Math.random().toString(16).slice(2)}@example.test`;
+const amountFromCurrencyText = (text: string) => Number(text.replace(/\D/g, ""));
 
 async function openLogin(page: Page) {
   const desktopButton = page.getByRole("button", { name: "Đăng nhập", exact: true });
@@ -70,10 +71,24 @@ async function buyOneTicket(page: Page) {
   const availableSeat = seatDialog.locator('[data-testid="seat"][aria-label*="trống"]:not([disabled])').first();
   await expect(availableSeat).toBeVisible();
   await availableSeat.click();
+  const holdResponsePromise = page.waitForResponse((response) => response.request().method() === "POST" && new URL(response.url()).pathname.endsWith("/api/holds"));
   await seatDialog.getByTestId("hold-submit").click();
+  const holdResponse = await holdResponsePromise;
+  expect(holdResponse.ok()).toBeTruthy();
+  const hold = await holdResponse.json() as { totalVnd: number };
+  expect(Number.isSafeInteger(hold.totalVnd)).toBe(true);
   await expect(page.getByTestId("hold-countdown")).toBeVisible();
+  const displayedTotal = page.locator(".summary-total b");
+  await expect.poll(async () => amountFromCurrencyText(await displayedTotal.innerText())).toBe(hold.totalVnd);
+  const orderResponsePromise = page.waitForResponse((response) => response.request().method() === "POST" && new URL(response.url()).pathname.endsWith("/api/orders"));
   await page.getByTestId("checkout-submit").click();
+  const orderResponse = await orderResponsePromise;
+  expect(orderResponse.ok()).toBeTruthy();
+  const order = await orderResponse.json() as { totalVnd: number };
+  expect(order.totalVnd).toBe(hold.totalVnd);
   await expect(page.getByTestId("pay-submit")).toBeVisible();
+  await expect.poll(async () => amountFromCurrencyText(await page.getByTestId("pay-submit").innerText())).toBe(order.totalVnd);
+  await expect.poll(async () => amountFromCurrencyText(await displayedTotal.innerText())).toBe(order.totalVnd);
   await page.getByTestId("pay-submit").click();
   await page.getByRole("button", { name: "Xem vé của tôi" }).click();
 
@@ -237,14 +252,21 @@ test("[TC-E2E-23] hai lượt quét QR đồng thời chỉ ghi nhận một vé
 
 
 
-test("[TC-E2E-04] Admin xem báo cáo tỉ lệ lấp đầy ở chế độ chỉ đọc", async ({ page }) => {
+test("[TC-E2E-04] Admin xem báo cáo doanh thu và tỉ lệ lấp đầy ở chế độ chỉ đọc", async ({ page }) => {
   await page.goto("/");
   await openLogin(page);
   await page.getByLabel("Email").fill("admin@cinema.local");
   await page.getByLabel("Mật khẩu").fill("CinemaAdmin123!");
   await page.getByRole("dialog").getByRole("button", { name: "Đăng nhập", exact: true }).click();
+  const summaryResponsePromise = page.waitForResponse((response) => response.request().method() === "GET" && new URL(response.url()).pathname.endsWith("/api/admin/summary"));
   await page.getByRole("button", { name: "Quản trị" }).click();
+  const summaryResponse = await summaryResponsePromise;
+  expect(summaryResponse.ok()).toBeTruthy();
+  const summary = await summaryResponse.json() as { confirmedRevenueVnd: number };
 
+  const revenue = page.locator(".metric-revenue");
+  await expect(revenue).toContainText("Doanh thu xác nhận");
+  await expect.poll(async () => amountFromCurrencyText(await revenue.locator("b").innerText())).toBe(summary.confirmedRevenueVnd);
   const occupancy = page.locator(".occupancy-panel");
   await expect(occupancy).toBeVisible();
   await expect(occupancy.getByRole("heading", { name: "Mức lấp đầy chỗ ngồi" })).toBeVisible();

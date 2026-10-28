@@ -8,6 +8,7 @@
   ],
   "coverageAnalysis": "perTest",
   "concurrency": 2,
+  "fileLogLevel": "error",
   "timeoutMS": 30000,
   "thresholds": {
     "high": 80,

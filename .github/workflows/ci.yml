@@ -129,6 +129,9 @@ jobs:
         run: npm run test:coverage --workspace backend
       - name: Verify hold/payment mutation threshold
         run: npm run test:mutation --workspace backend
+      - name: Summarize mutation result and safe diagnostics
+        if: always()
+        run: node scripts/summarize-mutation.mjs
       - uses: actions/upload-artifact@v6
         if: always()
         with:
@@ -136,5 +139,6 @@ jobs:
           path: |
             reports/generated/coverage
             reports/generated/mutation
+            backend/stryker.log
           if-no-files-found: warn
           retention-days: 14
