@@ -401,6 +401,21 @@ test("[TC-E2E-09][TC-PLAN-06] Bàn phím đi từ đăng nhập đến ghế ch�
   const availableSeats = seatDialog.locator('[data-testid="seat"][aria-label*="trống"]:not([disabled])');
   const availableSeat = availableSeats.first();
   await expect(availableSeat).toBeVisible();
+  const lastAvailableSeat = availableSeats.last();
+  await page.keyboard.press("Shift+Tab");
+  await expect(lastAvailableSeat).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(closeSeats).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(availableSeat).toBeFocused();
+
+  await page.keyboard.press("Escape");
+  await expect(seatDialog).toBeHidden();
+  await expect(showtime).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(seatDialog).toBeVisible();
+  await expect(closeSeats).toBeFocused();
+  await expect(availableSeat).toBeVisible();
   await tabUntilFocused(page, availableSeat, (await seatDialog.getByTestId("seat").count()) + 3);
   await expectVisibleKeyboardFocus(availableSeat);
   await expect(availableSeat).toHaveAccessibleName(/Ghế [A-Z] \d+ — trống/);
@@ -417,8 +432,15 @@ test("[TC-E2E-09][TC-PLAN-06] Bàn phím đi từ đăng nhập đến ghế ch�
   const closeCheckout = checkoutDialog.getByRole("button", { name: "Đóng" });
   await expect(closeCheckout).toBeFocused();
   const checkoutButton = checkoutDialog.getByTestId("checkout-submit");
+  await page.keyboard.press("Shift+Tab");
+  await expectVisibleKeyboardFocus(checkoutButton);
+  await page.keyboard.press("Tab");
+  await expect(closeCheckout).toBeFocused();
   await page.keyboard.press("Tab");
   await expectVisibleKeyboardFocus(checkoutButton);
   await expect(checkoutButton).toHaveAccessibleName("Tiếp tục thanh toán");
-  // The test stops at the focused checkout action; it creates no order or payment.
+  await page.keyboard.press("Escape");
+  await expect(checkoutDialog).toBeHidden();
+  await expect(showtime).toBeFocused();
+  // The test stops without creating an order or payment.
 });

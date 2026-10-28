@@ -91,7 +91,7 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
     await prisma.$disconnect();
   }, 30_000);
 
-  it("[TC-API-01][TC-SEC-15][TC-SEC-16][TC-PLAN-01][TC-PLAN-02][TC-PLAN-03][TC-PLAN-04][TC-PLAN-05] enforces auth, booking boundaries, payment/report rules, concurrency, and one-use staff check-in", async () => {
+  it("[TC-API-01][TC-SEC-15][TC-SEC-16][TC-SEC-19][TC-PLAN-01][TC-PLAN-02][TC-PLAN-03][TC-PLAN-04][TC-PLAN-05] enforces auth, booking boundaries, payment/report rules, concurrency, and one-use staff check-in", async () => {
     const guestHold = await request(app).post("/api/holds").send({ showtimeId, seatIds: ["missing"] });
     expect(guestHold.status).toBe(401);
     expectSafeError(guestHold);
@@ -347,6 +347,58 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
     expect(expiredOrder.body.tickets).toHaveLength(0);
     const releasedLateSeat = await request(app).post("/api/holds").set(authB).send({ showtimeId, seatIds: [seatIds[5]] });
     expect(releasedLateSeat.status).toBe(201);
+
+    const webhookSuccessOrder = await request(app).post("/api/orders").set(authB).send({ holdId: releasedLateSeat.body.id });
+    expect(webhookSuccessOrder.status).toBe(201);
+    const validWebhookEvent = {
+      eventId: `evt-http-success-${fixture}`,
+      orderId: webhookSuccessOrder.body.id as string,
+      status: "SUCCEEDED" as const,
+      amountVnd: webhookSuccessOrder.body.totalVnd as number,
+      currency: "VND" as const
+    };
+    const validWebhookSignature = signMockPaymentEvent(validWebhookEvent, paymentWebhookSecret);
+    const validWebhook = await request(app).post("/api/payments/mock/webhook")
+      .set("x-mock-signature", validWebhookSignature)
+      .send(validWebhookEvent);
+    expect(validWebhook.status).toBe(200);
+    expect(validWebhook.body).toMatchObject({
+      accepted: true,
+      idempotent: false,
+      orderId: webhookSuccessOrder.body.id,
+      status: OrderStatus.CONFIRMED,
+      totalVnd: webhookSuccessOrder.body.totalVnd
+    });
+    expect(validWebhook.body.tickets).toHaveLength(1);
+
+    const successfulWebhookState = async () => ({
+      order: await prisma.cinemaOrder.findUniqueOrThrow({ where: { id: validWebhookEvent.orderId } }),
+      payment: await prisma.payment.findUniqueOrThrow({ where: { orderId: validWebhookEvent.orderId } }),
+      events: await prisma.paymentEvent.findMany({ where: { orderId: validWebhookEvent.orderId }, orderBy: { id: "asc" } }),
+      tickets: await prisma.ticket.findMany({ where: { orderId: validWebhookEvent.orderId }, orderBy: { id: "asc" } }),
+      audits: await prisma.auditLog.findMany({ where: { entityId: validWebhookEvent.orderId, action: "PAYMENT_CONFIRMED" }, orderBy: { id: "asc" } })
+    });
+    const afterWebhookSuccess = await successfulWebhookState();
+    expect(afterWebhookSuccess.events).toHaveLength(1);
+    expect(afterWebhookSuccess.tickets).toHaveLength(1);
+    expect(afterWebhookSuccess.audits).toHaveLength(1);
+
+    const identicalWebhookRetry = await request(app).post("/api/payments/mock/webhook")
+      .set("x-mock-signature", validWebhookSignature)
+      .send(validWebhookEvent);
+    expect(identicalWebhookRetry.status).toBe(200);
+    expect(identicalWebhookRetry.body.idempotent).toBe(true);
+    expect(identicalWebhookRetry.body.tickets.map((ticket: { id: string }) => ticket.id)).toEqual(afterWebhookSuccess.tickets.map((ticket) => ticket.id));
+    expect(await successfulWebhookState()).toEqual(afterWebhookSuccess);
+
+    const changedReplayEvent = { ...validWebhookEvent, amountVnd: validWebhookEvent.amountVnd + 1 };
+    const changedReplay = await request(app).post("/api/payments/mock/webhook")
+      .set("x-mock-signature", signMockPaymentEvent(changedReplayEvent, paymentWebhookSecret))
+      .send(changedReplayEvent);
+    expect(changedReplay.status).toBe(409);
+    expect(changedReplay.body.error).toBe("PAYMENT_EVENT_REPLAY");
+    expectSafeError(changedReplay);
+    expect(await successfulWebhookState()).toEqual(afterWebhookSuccess);
 
     // One hundred distinct customers contend for an initially unclaimed seat.
     const racers = Array.from({ length: 100 }, (_, index) => ({

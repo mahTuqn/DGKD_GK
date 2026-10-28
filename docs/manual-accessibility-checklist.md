@@ -43,7 +43,7 @@ For each check, select exactly one outcome: **Pass**, **Fail**, **Not applicable
 
 ## Screen and workflow checklist
 
-Record a result for each check ID. The result fields are intentionally blank and the initial status is **Not tested**.
+For every workflow, record a separate outcome and evidence for each applicable shared check ID (KBD-01, FOCUS-01, FOCUS-02, NAME-01, COLOR-01, REFLOW-01, TARGET-01, SR-01, SR-02). Overall status is Pass only when all applicable checks pass; any failure makes it Fail, and unresolved checks remain Not tested. The result fields are intentionally blank and the initial status is **Not tested**.
 
 | ID / screen or workflow | Manual checks to perform | Status | Reviewer / date | Evidence link(s) | Finding / issue ID or N/A reason |
 |---|---|---|---|---|---|

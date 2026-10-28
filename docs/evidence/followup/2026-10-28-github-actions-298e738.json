@@ -1,0 +1,82 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "runId": "github-actions-40743132425",
+  "status": "PASS_QUALITY_AND_DAST",
+  "recordedAt": "2026-10-29",
+  "commit": "298e738ce8126dfd169866ce3d314e542e6e8bb2",
+  "runUrl": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40743132425",
+  "environment": {
+    "runner": "GitHub Actions clean checkout",
+    "qualityJob": "PASS",
+    "dastJob": "PASS",
+    "browserProjects": [
+      "chromium-desktop",
+      "chromium-mobile (Pixel 7)"
+    ],
+    "staging": "Not available; local Docker is the only user-provided QA environment"
+  },
+  "quality": {
+    "result": "PASS",
+    "playwright": {
+      "result": "PASS",
+      "testsPassed": 46,
+      "testsFailed": 0,
+      "testsSkipped": 0,
+      "testsFlaky": 0,
+      "durationMs": 109123.875,
+      "projects": [
+        "chromium-desktop",
+        "chromium-mobile (Pixel 7)"
+      ],
+      "artifactId": 12839939879,
+      "artifactUrl": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40743132425/artifacts/12839939879",
+      "playwrightResultsSha256": "7FB28A68B81C5C6F9D0D0932F16DAB58F630D7FB82E0D3F2F63D795EBCDBDBA6",
+      "htmlReportSha256": "30722C3A90268C978E9C74973268AA1DF468A0BB9DEBD062B72B0CA09FED0E00"
+    }
+  },
+  "dast": {
+    "result": "PASS_WITH_TRIAGED_LOW",
+    "job": "DAST (isolated Docker Compose)",
+    "unauthenticatedApi": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0,
+      "informational": 2
+    },
+    "authenticatedApi": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 1,
+      "informational": 2,
+      "triagedFinding": "Low-confidence persistent-markup observation in JSON; the Admin UI renders the value as text."
+    },
+    "productionWebPreview": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0,
+      "informational": 1
+    },
+    "criticalHighMediumFindings": 0,
+    "artifactId": 12841630783,
+    "artifactUrl": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40743132425/artifacts/12841630783",
+    "reportSha256": {
+      "authenticatedApi": "6DF15EEC91D5B348FAA5B35C7454AF7994AAACBC69A583560FA6DDFC792A2127",
+      "productionWebPreview": "DA9885D03CADD8D49BB002F0F6432E06336D830EDD7554BAD3324274FE2CD649",
+      "unauthenticatedApi": "45A6AE4BC13A1F80EDCF70215298D15E983FB9CE7F0A551B91472C7E96417E90"
+    }
+  },
+  "notMeasured": [
+    "Follow-up source edits made after this commit: registration rate limiting, production mock-payment restriction, webhook replay regression, and modal focus restoration",
+    "Manual WCAG 2.2 AA, screen-reader, contrast, zoom/reflow, orientation, and full keyboard review; requester will perform the checklist",
+    "Named staging performance validation; no staging environment is available",
+    "Production behavior, backup schedule, PITR, RPO/RTO, and production restore",
+    "Exhaustive ASVS/API Top 10 and BOLA review beyond the documented automated matrix",
+    "Reliability soak longer than five minutes",
+    "Firefox/WebKit cross-browser behavior"
+  ],
+  "scopeNote": "This exact-head run verifies commit 298e738 only. Later uncommitted changes require a new CI run. The SRS specifies mock payment; real gateway/refund testing is outside acceptance scope."
+}

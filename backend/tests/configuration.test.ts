@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { assertMockPaymentConfiguration, createApp } from "../src/app.js";
+import { assertMockPaymentConfiguration, createApp, getRegistrationRateLimit } from "../src/app.js";
 import { assertAuthenticationConfiguration } from "../src/auth.js";
 
-const environmentKeys = ["NODE_ENV", "JWT_SECRET", "MOCK_PAYMENT_SECRET", "TRUST_PROXY_HOPS"] as const;
+const environmentKeys = ["NODE_ENV", "JWT_SECRET", "MOCK_PAYMENT_SECRET", "TRUST_PROXY_HOPS", "E2E_REGISTRATION_RATE_LIMIT"] as const;
 const originalEnvironment = Object.fromEntries(environmentKeys.map((key) => [key, process.env[key]]));
 
 function restoreEnvironment() {
@@ -15,6 +15,14 @@ function restoreEnvironment() {
 
 describe("TC-SEC-13 production secrets and trusted proxy configuration", () => {
   afterEach(restoreEnvironment);
+
+  it("keeps five registrations per window by default and ignores the E2E override in production", () => {
+    expect(getRegistrationRateLimit({ NODE_ENV: "test" })).toBe(5);
+    expect(getRegistrationRateLimit({ NODE_ENV: "development", E2E_REGISTRATION_RATE_LIMIT: "100" })).toBe(100);
+    expect(getRegistrationRateLimit({ NODE_ENV: "production", E2E_REGISTRATION_RATE_LIMIT: "100" })).toBe(5);
+    expect(() => getRegistrationRateLimit({ NODE_ENV: "test", E2E_REGISTRATION_RATE_LIMIT: "0" })).toThrow("positive integer");
+    expect(() => getRegistrationRateLimit({ NODE_ENV: "test", E2E_REGISTRATION_RATE_LIMIT: "1001" })).toThrow("no greater than 1000");
+  });
 
   it("requires a long JWT secret and rejects published development/CI values in production", () => {
     process.env.NODE_ENV = "production";

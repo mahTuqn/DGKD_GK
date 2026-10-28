@@ -28,7 +28,11 @@ function humanError(error: unknown) {
   return error instanceof Error ? error.message : "Kết nối chưa ổn định. Vui lòng thử lại.";
 }
 
-function useModalKeyboard(dialogRef: { current: HTMLElement | null }, onEscape?: () => void) {
+function useModalKeyboard(
+  dialogRef: { current: HTMLElement | null },
+  onEscape?: () => void,
+  restoreFocusFallback?: { current: HTMLElement | null },
+) {
   const escapeRef = useRef(onEscape);
   escapeRef.current = onEscape;
   useEffect(() => {
@@ -75,13 +79,20 @@ function useModalKeyboard(dialogRef: { current: HTMLElement | null }, onEscape?:
     return () => {
       window.cancelAnimationFrame(frame);
       document.removeEventListener("keydown", onKeyDown);
-      if (previousFocus?.isConnected) window.requestAnimationFrame(() => previousFocus.focus());
+      const focusTarget = previousFocus && previousFocus !== document.body && previousFocus.isConnected
+        ? previousFocus
+        : restoreFocusFallback?.current;
+      if (focusTarget?.isConnected) window.requestAnimationFrame(() => focusTarget.focus());
     };
-  }, []);
+  }, [restoreFocusFallback]);
 }
 
-function ModalKeyboardSupport({ dialogRef, onEscape }: { dialogRef: { current: HTMLElement | null }; onEscape?: () => void }) {
-  useModalKeyboard(dialogRef, onEscape);
+function ModalKeyboardSupport({ dialogRef, onEscape, restoreFocusFallback }: {
+  dialogRef: { current: HTMLElement | null };
+  onEscape?: () => void;
+  restoreFocusFallback?: { current: HTMLElement | null };
+}) {
+  useModalKeyboard(dialogRef, onEscape, restoreFocusFallback);
   return null;
 }
 
@@ -298,6 +309,7 @@ export default function App() {
   const [bookingStep, setBookingStep] = useState<BookingStep>("seats"); const [order, setOrder] = useState<Order | null>(null); const [paidTickets, setPaidTickets] = useState<Ticket[]>([]);
   const [orders, setOrders] = useState<Order[]>([]); const [ordersLoading, setOrdersLoading] = useState(false); const [checkoutBusy, setCheckoutBusy] = useState(false);
   const checkoutDialogRef = useRef<HTMLElement | null>(null);
+  const seatShowtimeOpenerRef = useRef<HTMLElement | null>(null);
   const cinemas = useMemo(() => [...new Map(showtimes.map((showtime) => [showtime.cinemaId, showtime.cinemaName])).entries()].map(([id, name]) => ({ id, name })), [showtimes]);
   const activeMovie = movies.find((movie) => movie.id === activeMovieId) || movies[0];
   const activeShowtimes = showtimes.filter((item) => item.movieId === activeMovie?.id);
@@ -374,7 +386,7 @@ export default function App() {
 
       <section className="schedule-section" id="schedule"><div className="section-heading"><div><span className="eyebrow">LỊCH CHIẾU</span><h2>{activeMovie ? `Suất chiếu · ${activeMovie.title}` : "Suất chiếu hôm nay"}</h2><p className="muted">Chọn rạp và ngày phù hợp với lịch của bạn.</p></div></div>
         <div className="schedule-filters"><label className="filter-field"><span>Ngày xem phim</span><select aria-label="Ngày chiếu" value={date} onChange={(event) => setDate(event.target.value)}>{Array.from({ length: 7 }, (_, index) => { const value = businessDateOffset(index + 1); return <option key={value} value={value}>{shortDate(value)}</option>; })}</select></label><label className="filter-field"><span>Rạp chiếu</span><select aria-label="Rạp" value={cinemaId} onChange={(event) => setCinemaId(event.target.value)}><option value="">Tất cả rạp</option>{cinemas.map((cinema) => <option value={cinema.id} key={cinema.id}>{cinema.name}</option>)}</select></label><div className="showtime-legend"><span><i className="live-dot" /> Suất còn chỗ</span><span className="muted">Giá từ {formatVnd(activeShowtimes.length ? Math.min(...activeShowtimes.map((showtime) => showtime.priceVnd)) : 0)}</span></div></div>
-        {scheduleLoading ? <div className="schedule-loading"><span className="spinner" />Đang tìm suất chiếu…</div> : !activeShowtimes.length ? <div className="empty-inline"><span>✳</span><div><b>Ngày này chưa có suất chiếu phù hợp</b><p>Hãy thử một ngày khác hoặc đổi rạp nhé.</p></div></div> : <div className="showtime-list">{activeShowtimes.map((showtime) => <article className="showtime-card" key={showtime.id}><div className="showtime-venue"><span className="venue-icon">⌂</span><div><b>{showtime.cinemaName}</b><span>{showtime.auditoriumName}{showtime.screenType ? ` · ${showtime.screenType}` : ""}</span></div></div><div className="showtime-time"><b>{timeOf(showtime.startAt)}</b><span>{shortDate(showtime.date)}</span></div><div className="showtime-price"><span>Vé từ</span><b>{formatVnd(showtime.priceVnd)}</b></div><button data-testid="showtime-option" className="button button-primary showtime-button" onClick={() => setSeatShowtime(showtime)}>Chọn suất <span aria-hidden="true">→</span></button></article>)}</div>}
+        {scheduleLoading ? <div className="schedule-loading"><span className="spinner" />Đang tìm suất chiếu…</div> : !activeShowtimes.length ? <div className="empty-inline"><span>✳</span><div><b>Ngày này chưa có suất chiếu phù hợp</b><p>Hãy thử một ngày khác hoặc đổi rạp nhé.</p></div></div> : <div className="showtime-list">{activeShowtimes.map((showtime) => <article className="showtime-card" key={showtime.id}><div className="showtime-venue"><span className="venue-icon">⌂</span><div><b>{showtime.cinemaName}</b><span>{showtime.auditoriumName}{showtime.screenType ? ` · ${showtime.screenType}` : ""}</span></div></div><div className="showtime-time"><b>{timeOf(showtime.startAt)}</b><span>{shortDate(showtime.date)}</span></div><div className="showtime-price"><span>Vé từ</span><b>{formatVnd(showtime.priceVnd)}</b></div><button data-testid="showtime-option" className="button button-primary showtime-button" onClick={(event) => { seatShowtimeOpenerRef.current = event.currentTarget; setSeatShowtime(showtime); }}>Chọn suất <span aria-hidden="true">→</span></button></article>)}</div>}
       </section>
       <section className="promise-strip"><div><span>01</span><b>Chọn chỗ dễ dàng</b><small>Sơ đồ ghế trực quan</small></div><div><span>02</span><b>Thanh toán an tâm</b><small>Giao dịch bảo mật</small></div><div><span>03</span><b>Vé về tay ngay</b><small>QR sẵn sàng vào rạp</small></div></section>
     </main>}
@@ -390,7 +402,7 @@ export default function App() {
 
     {hold && <div className="overlay booking-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && bookingStep !== "success") return; }}>
       <section ref={checkoutDialogRef} className="dialog checkout-dialog" role="dialog" aria-modal="true" aria-labelledby="checkout-title" tabIndex={-1}>
-        <ModalKeyboardSupport dialogRef={checkoutDialogRef} onEscape={bookingStep !== "success" ? closeCheckout : undefined} />
+        <ModalKeyboardSupport dialogRef={checkoutDialogRef} onEscape={bookingStep !== "success" ? closeCheckout : undefined} restoreFocusFallback={seatShowtimeOpenerRef} />
         <div className="dialog-top"><div><span className="eyebrow">{bookingStep === "success" ? "VÉ ĐÃ SẴN SÀNG" : "HOÀN TẤT ĐẶT VÉ"}</span><h2 id="checkout-title">{bookingStep === "success" ? "Hẹn gặp bạn tại rạp." : "Một bước nữa thôi."}</h2></div>{bookingStep !== "success" && <button className="icon-button" aria-label="Đóng" onClick={closeCheckout}>×</button>}</div>
         {bookingStep === "success" ? <div className="success-content"><div className="success-check">✓</div><p>Thanh toán demo thành công. Vé điện tử đã được gửi vào mục <b>Vé của tôi</b>.</p><div className="success-tickets">{paidTickets.map((ticket) => <div className="mini-ticket" key={ticket.id}><QRCodeSVG value={ticket.qrToken} title={`Mã QR vé ${ticket.id.slice(-8).toUpperCase()}`} size={92} /><span>MÃ VÉ · {ticket.id.slice(-8).toUpperCase()}</span></div>)}</div><button className="button button-primary button-wide" onClick={() => { setHold(null); setHoldMap(null); setBookingStep("seats"); setView("tickets"); }}>Xem vé của tôi</button></div> : <>
           <div className="hold-countdown" data-testid="hold-countdown"><span className="timer-icon">◷</span><div><span>GHẾ ĐANG ĐƯỢC GIỮ CHO BẠN</span><b>{String(Math.floor(secondsLeft / 60)).padStart(2, "0")}:{String(secondsLeft % 60).padStart(2, "0")}</b></div><small>Vui lòng hoàn tất trước khi hết giờ.</small></div>

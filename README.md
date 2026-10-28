@@ -29,13 +29,20 @@ Kiểm tra trạng thái bằng `docker compose ps`; xem log bằng `docker comp
 
 ## Khởi chạy Docker QA tách biệt
 
-Stack QA dùng cùng secrets trong `.env`, nhưng có Compose project, PostgreSQL volume, database port và web port riêng. Từ thư mục gốc:
+Stack QA dùng secrets trong `.env`, nhưng có Compose project và PostgreSQL volume riêng. Nếu chưa có `.env`, tạo một lần trước khi khởi chạy. Từ thư mục gốc:
 
 ```powershell
+if (-not (Test-Path .env)) { npm run env:compose }
 npm run compose:qa:up
 ```
 
-Lệnh này dùng project `cinema-qa`, bind PostgreSQL ở `127.0.0.1:5435` và web ở `127.0.0.1:8081`, rồi chờ PostgreSQL/API/web health checks. API CORS cũng cho phép origin QA. Nếu mã runtime, Dockerfile hoặc migration thay đổi, rebuild image khi áp dụng:
+Lệnh này dùng project `cinema-qa`, bind PostgreSQL ở `127.0.0.1:5435` và web ở `127.0.0.1:8081`, rồi chờ PostgreSQL/API/web health checks. CORS tự thêm origin QA. Worker chưa có Docker healthcheck; trạng thái `Up` chỉ xác nhận container đang chạy, không xác nhận job đã được xử lý. Với một volume QA mới, nạp dữ liệu demo một lần:
+
+```powershell
+docker compose -p cinema-qa --profile seed run --rm seed
+```
+
+Không chạy seed profile trên dữ liệu cần giữ. Nếu hai cổng mặc định đang bận, đặt `QA_POSTGRES_HOST_PORT` hoặc `QA_WEB_HOST_PORT` trước lệnh launcher; `QA_CORS_ORIGIN` cho phép chỉ định danh sách origin riêng. Nếu mã runtime, Dockerfile hoặc migration thay đổi, rebuild image khi áp dụng:
 
 ```powershell
 npm run compose:qa:up -- --build
@@ -46,7 +53,11 @@ QA PostgreSQL lưu trong volume `cinema-qa_cinema_postgres_data`, tách khỏi `
 ## Chạy ở chế độ phát triển trên máy host
 
 ```powershell
+if (-not (Test-Path .env)) { npm run env:compose }
 if (-not (Test-Path backend/.env)) { Copy-Item backend/.env.example backend/.env }
+$composeEnv = @{}
+Get-Content .env | ForEach-Object { if ($_ -match '^([^#=]+)=(.*)$') { $composeEnv[$matches[1]] = $matches[2] } }
+$env:DATABASE_URL = "postgresql://cinema:$($composeEnv.POSTGRES_PASSWORD)@localhost:$($composeEnv.POSTGRES_HOST_PORT)/cinema?schema=public"
 npm install
 npm run db:setup
 npm run dev
@@ -82,16 +93,30 @@ npm run test:worker-live
 npm run build
 ```
 
-`npm test` chạy liền API/integration và browser E2E trên Chromium desktop + mobile. Trước khi chạy, hãy dựng database theo bước `npm run db:setup` ở trên; API integration cần `DATABASE_URL_TEST` trỏ tới database test đã migrate.
+`npm test` chạy liền API/integration và browser E2E trên Chromium desktop + mobile. Các test API và E2E tạo dữ liệu; không trỏ `DATABASE_URL_TEST` hoặc `DATABASE_URL` vào database demo `cinema` trên cổng 5434. Local browser suite cần một database test riêng đã migrate/seed và không được dùng lại API đang chạy.
 
 Test browser chạy qua Playwright trên Chromium và tự khởi động web/API development server theo cấu hình E2E. Chạy `npm run test:browser:ui` để mở Playwright UI. Các test PostgreSQL trong API suite chỉ chạy khi đặt `DATABASE_URL_TEST` tới một database test đã migrate; nếu bỏ trống, Vitest sẽ skip các ca cần DB.
 
 `npm test` bao gồm API, worker process soak/restart và browser desktop/mobile. Bài live hold-expiry 5 phút được tách riêng để suite nhanh không phải chờ; chạy `npm run test:worker-live` với `DATABASE_URL_TEST` và `DATABASE_URL_WORKER_PROCESS_TEST` cùng trỏ tới một PostgreSQL database rehearsal đã migrate riêng, và `HOLD_TTL_SECONDS=300`.
 
 ```powershell
-$env:DATABASE_URL_TEST = "postgresql://cinema:cinema_dev@localhost:5434/cinema?schema=public"
-npm run test:api
+# Mỗi lượt dùng một database test mới trong PostgreSQL của stack QA.
+$testDatabaseName = "cinema_browser_test_$([guid]::NewGuid().ToString('N').Substring(0, 8))"
+docker compose -p cinema-qa exec -T postgres psql -U cinema -d postgres -c "CREATE DATABASE $testDatabaseName"
+$composeEnv = @{}
+Get-Content .env | ForEach-Object { if ($_ -match '^([^#=]+)=(.*)$') { $composeEnv[$matches[1]] = $matches[2] } }
+$testDatabaseUrl = "postgresql://cinema:$($composeEnv.POSTGRES_PASSWORD)@localhost:5435/$testDatabaseName?schema=public"
+$env:DATABASE_URL = $testDatabaseUrl
+$env:DATABASE_URL_TEST = $testDatabaseUrl
+npm run db:deploy
+npm run db:seed
+npx playwright install chromium
+npm run test:browser
+# Sau khi test xong và mọi process test đã dừng, có thể xóa đúng database dùng một lần này.
+docker compose -p cinema-qa exec -T postgres dropdb -U cinema $testDatabaseName
 ```
+
+API/integration tests also write fixture data, so point both `DATABASE_URL` and `DATABASE_URL_TEST` to an isolated test database before running `npm run test:api`. Browser tests modify catalog and booking data in their database; keep that data disposable and separate from the demo database. CI runs against a fresh PostgreSQL service and uploads the Playwright report.
 
 ## Quy tắc phát triển
 

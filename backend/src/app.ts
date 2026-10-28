@@ -56,6 +56,20 @@ export function assertMockPaymentConfiguration() {
   getMockPaymentSecret();
 }
 
+export function getRegistrationRateLimit(environment: { NODE_ENV?: string; E2E_REGISTRATION_RATE_LIMIT?: string } = process.env) {
+  const secureDefault = 5;
+  // E2E raises the local test server's ceiling so one browser suite can create
+  // many isolated accounts. Production always keeps the lower abuse limit.
+  if (environment.NODE_ENV === "production") return secureDefault;
+
+  const configured = environment.E2E_REGISTRATION_RATE_LIMIT;
+  if (configured === undefined || configured.trim() === "") return secureDefault;
+  if (!/^[1-9]\d*$/.test(configured)) throw new Error("E2E_REGISTRATION_RATE_LIMIT must be a positive integer no greater than 1000 outside production.");
+  const limit = Number(configured);
+  if (!Number.isSafeInteger(limit) || limit > 1000) throw new Error("E2E_REGISTRATION_RATE_LIMIT must be a positive integer no greater than 1000 outside production.");
+  return limit;
+}
+
 export async function applyMockPaymentEvent(event: MockPaymentEvent, actorId?: string, client: typeof prisma = prisma) {
   const payloadHash = mockPaymentPayloadHash(event);
   return client.$transaction(async (tx) => {
@@ -239,10 +253,17 @@ export function createApp() {
     skipSuccessfulRequests: true,
     handler: (_req, res) => res.status(429).json({ error: "AUTH_RATE_LIMITED", message: "Có quá nhiều lần đăng nhập không thành công. Vui lòng thử lại sau." })
   });
+  const registrationLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: getRegistrationRateLimit(),
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    handler: (_req, res) => res.status(429).json({ error: "REGISTRATION_RATE_LIMITED", message: "Có quá nhiều yêu cầu đăng ký. Vui lòng thử lại sau." })
+  });
 
   app.get("/api/health", (_req, res) => res.json({ status: "ok", service: "cinema-booking-api" }));
 
-  app.post("/api/auth/register", asyncRoute(async (req, res) => {
+  app.post("/api/auth/register", registrationLimiter, asyncRoute(async (req, res) => {
     const input = z.object({ name: z.string().trim().min(2).max(80), email: z.string().trim().email().max(254), password: z.string().min(8).max(72) }).strict().parse(req.body);
     let user;
     try {
@@ -413,6 +434,9 @@ export function createApp() {
   }));
 
   app.post("/api/payments/mock/complete", requireAuth, asyncRoute(async (req, res) => {
+    if (process.env.NODE_ENV === "production") {
+      throw new DomainError("MOCK_PAYMENT_DISABLED", "Thanh toán mô phỏng không khả dụng trong production.", 404);
+    }
     const input = z.object({ orderId: z.string().min(1), outcome: z.enum(["SUCCEEDED", "FAILED"]).default("SUCCEEDED") }).strict().parse(req.body);
     const ownedOrder = await prisma.cinemaOrder.findFirst({ where: { id: input.orderId, userId: req.user!.id }, select: { id: true, totalVnd: true } });
     if (!ownedOrder) throw new DomainError("ORDER_NOT_FOUND", "Không tìm thấy đơn đặt vé.", 404);
