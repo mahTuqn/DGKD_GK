@@ -18,6 +18,7 @@
     "db:deploy": "npm run db:deploy --workspace backend",
     "db:seed": "npm run db:seed --workspace backend",
     "db:setup": "npm run db:up && npm run db:generate && npm run db:migrate && npm run db:seed",
+    "compose:qa:up": "node scripts/compose-qa-up.mjs",
     "test": "npm run test:api && npm run test:browser",
     "test:api": "npm run test --workspace backend && npm run test:worker-process --workspace backend",
     "test:worker-live": "npm run test:worker-live --workspace backend",

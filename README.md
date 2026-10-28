@@ -23,9 +23,25 @@ Compose khởi chạy PostgreSQL, áp dụng migrations trước khi API và wor
 
 - Web: `http://localhost:8080`
 - API health: `http://localhost:8080/api/health`
-- PostgreSQL: `localhost:5434` (database `cinema`, user `cinema`, mật khẩu demo `cinema_dev`)
+- PostgreSQL: `localhost:5434` (database/user `cinema`; mật khẩu lấy từ `.env`)
 
 Kiểm tra trạng thái bằng `docker compose ps`; xem log bằng `docker compose logs -f api worker web`. PostgreSQL lưu dữ liệu trong volume `cinema_postgres_data`. Khi triển khai ngoài local, tự quản lý secret qua secret manager, cấu hình đúng số proxy tin cậy và thay dữ liệu demo bằng dữ liệu phù hợp.
+
+## Khởi chạy Docker QA tách biệt
+
+Stack QA dùng cùng secrets trong `.env`, nhưng có Compose project, PostgreSQL volume, database port và web port riêng. Từ thư mục gốc:
+
+```powershell
+npm run compose:qa:up
+```
+
+Lệnh này dùng project `cinema-qa`, bind PostgreSQL ở `127.0.0.1:5435` và web ở `127.0.0.1:8081`, rồi chờ PostgreSQL/API/web health checks. API CORS cũng cho phép origin QA. Nếu mã runtime, Dockerfile hoặc migration thay đổi, rebuild image khi áp dụng:
+
+```powershell
+npm run compose:qa:up -- --build
+```
+
+QA PostgreSQL lưu trong volume `cinema-qa_cinema_postgres_data`, tách khỏi `dgkd_gk_cinema_postgres_data`. Không dùng `docker compose down -v` khi muốn giữ dữ liệu. Kiểm tra bằng `docker compose -p cinema-qa ps` và `http://localhost:8081/api/health`.
 
 ## Chạy ở chế độ phát triển trên máy host
 
