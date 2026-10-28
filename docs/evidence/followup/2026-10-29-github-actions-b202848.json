@@ -1,0 +1,71 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "recordedAt": "2026-10-29",
+  "commit": "b202848caddb1afa64bb12ee93388e3e6377f181",
+  "branch": "codex/cross-browser-smoke",
+  "scope": "Exact-head GitHub Actions verification for signed cross-order payment event replay, Firefox/WebKit smoke, and extended worker soak.",
+  "runs": {
+    "qualityAndDast": {
+      "runId": "40762891578",
+      "runUrl": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40762891578",
+      "status": "PASS",
+      "quality": "PASS",
+      "dast": "PASS",
+      "qualityGates": [
+        "Gitleaks and dependency audit",
+        "OpenAPI lint and traceability (76 test cases / 25 requirements)",
+        "API integration including TC-SEC-20 cross-order replay/no-side-effects snapshots",
+        "TC-WORKER-03 live hold expiry",
+        "TC-WORKER-06 five-minute two-worker soak/restart",
+        "Production build and Chromium Playwright E2E"
+      ],
+      "dastScopes": [
+        "Unauthenticated API",
+        "Authenticated API",
+        "Production web preview"
+      ]
+    },
+    "crossBrowserSmoke": {
+      "runId": "40762891732",
+      "runUrl": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40762891732",
+      "status": "PASS",
+      "testsPassed": 6,
+      "testCases": [
+        "TC-E2E-01 booking/payment/ticket flow",
+        "TC-E2E-02 discovery and login dialog",
+        "TC-E2E-09 keyboard/focus flow"
+      ],
+      "browserProjects": [
+        "Firefox desktop",
+        "WebKit desktop"
+      ],
+      "expectedRuns": "3 selected test cases x 2 browser projects"
+    },
+    "worker15MinuteSoak": {
+      "runId": "40762891697",
+      "runUrl": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40762891697",
+      "status": "PASS",
+      "testCase": "TC-WORKER-07",
+      "durationSeconds": 900,
+      "assertions": [
+        "Two worker processes ran for 15 minutes and exited cleanly",
+        "Graceful worker shutdown/restart succeeded",
+        "Replacement worker processed the pending event after restart"
+      ]
+    }
+  },
+  "environment": {
+    "database": "Ephemeral PostgreSQL services in GitHub Actions",
+    "staging": "Not available; no staging performance or production claim is made"
+  },
+  "notMeasured": [
+    "Requester manual WCAG/screen-reader checklist",
+    "Named staging performance",
+    "Production backup schedule, PITR, RPO/RTO and production restore",
+    "Exhaustive ASVS/API Top 10 and BOLA review beyond the documented route matrix",
+    "Reliability longer than 15 minutes",
+    "Physical devices and mobile engines other than Chromium Pixel 7"
+  ],
+  "scopeNote": "CI pass applies to this source commit and the recorded automated scope; it does not certify WCAG, exhaustive security compliance, staging, or production readiness."
+}
