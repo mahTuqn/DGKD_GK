@@ -2,6 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 const externalBaseUrl = process.env.E2E_BASE_URL;
 const isGitHubActions = process.env.GITHUB_ACTIONS === "true";
+const crossBrowserSmoke = process.env.PLAYWRIGHT_CROSS_BROWSER_SMOKE === "true";
 
 function localBrowserTestDatabaseUrl() {
   const configured = process.env.DATABASE_URL_TEST?.trim();
@@ -55,10 +56,15 @@ export default defineConfig({
     screenshot: "only-on-failure",
     video: "retain-on-failure",
   },
-  projects: [
-    { name: "chromium-desktop", use: { ...devices["Desktop Chrome"] } },
-    { name: "chromium-mobile", use: { ...devices["Pixel 7"] } },
-  ],
+  projects: crossBrowserSmoke
+    ? [
+        { name: "firefox-desktop", use: { ...devices["Desktop Firefox"] } },
+        { name: "webkit-desktop", use: { ...devices["Desktop Safari"] } },
+      ]
+    : [
+        { name: "chromium-desktop", use: { ...devices["Desktop Chrome"] } },
+        { name: "chromium-mobile", use: { ...devices["Pixel 7"] } },
+      ],
   webServer: externalBaseUrl ? undefined : [
     {
       command: "npm run dev --workspace backend",
