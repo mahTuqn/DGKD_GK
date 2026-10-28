@@ -66,6 +66,19 @@ jobs:
           DATABASE_URL_TEST: postgresql://cinema:cinema_dev@localhost:5432/cinema_worker_process_test?schema=public
           DATABASE_URL_WORKER_PROCESS_TEST: postgresql://cinema:cinema_dev@localhost:5432/cinema_worker_process_test?schema=public
           HOLD_TTL_SECONDS: "300"
+      - name: Create dedicated five-minute worker soak database
+        run: node --input-type=module -e 'import { PrismaClient } from "@prisma/client"; const client = new PrismaClient(); try { await client.$executeRawUnsafe("CREATE DATABASE cinema_worker_soak_ci"); } finally { await client.$disconnect(); }'
+      - name: Apply migrations to five-minute worker soak database
+        run: npm run db:deploy --workspace backend
+        env:
+          DATABASE_URL: postgresql://cinema:cinema_dev@localhost:5432/cinema_worker_soak_ci?schema=public
+      - name: Verify two-worker five-minute soak and graceful restart
+        run: npm run test:worker-soak --workspace backend
+        timeout-minutes: 8
+        env:
+          DATABASE_URL: postgresql://cinema:cinema_dev@localhost:5432/cinema_worker_soak_ci?schema=public
+          DATABASE_URL_TEST: postgresql://cinema:cinema_dev@localhost:5432/cinema_worker_soak_ci?schema=public
+          DATABASE_URL_WORKER_PROCESS_TEST: postgresql://cinema:cinema_dev@localhost:5432/cinema_worker_soak_ci?schema=public
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:browser
