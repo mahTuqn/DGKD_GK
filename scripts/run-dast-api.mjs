@@ -269,11 +269,6 @@ function scan(projectName, scenario, planPath, token = "") {
     "--env", "ZAP_RUN_SUFFIX",
   ];
   env.ZAP_RUN_SUFFIX = runSuffix;
-  if (typeof process.getuid === "function" && typeof process.getgid === "function") {
-    // Match the host runner UID so it can sanitize and preserve reports created
-    // on the bind mount. Keep ZAP's own home under its writable /tmp directory.
-    args.push("--user", `${process.getuid()}:${process.getgid()}`);
-  }
 
   if (token) {
     env.ZAP_AUTH_HEADER_VALUE = `Bearer ${token}`;
@@ -283,7 +278,10 @@ function scan(projectName, scenario, planPath, token = "") {
     args.push("--env", "ZAP_AUTH_HEADER_VALUE", "--env", "ZAP_AUTH_HEADER", "--env", "ZAP_AUTH_HEADER_SITE");
   }
 
-  args.push(image, "zap.sh", "-cmd", "-dir", "/tmp/zap-home", "-autorun", `/zap/wrk/${path.relative(projectRoot, planPath).replaceAll("\\", "/")}`);
+  const planInContainer = `/zap/wrk/${path.relative(projectRoot, planPath).replaceAll("\\", "/")}`;
+  const reportInContainer = `/zap/wrk/reports/generated/dast/${scenario.reportName}`;
+  const zapCommand = `zap.sh -cmd -autorun '${planInContainer}'\nscan_status=$?\nchmod 0644 '${reportInContainer}' 2>/dev/null || true\nexit "$scan_status"`;
+  args.push("--entrypoint", "/bin/sh", image, "-c", zapCommand);
   let scanError;
   try {
     run("docker", args, { env, timeoutMs });
