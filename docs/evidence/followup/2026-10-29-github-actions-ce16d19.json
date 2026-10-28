@@ -1,0 +1,66 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "recordedAt": "2026-10-29",
+  "commit": "ce16d19c10a4e34397df42c83d02e762c491bd45",
+  "branch": "codex/cross-browser-smoke",
+  "runs": {
+    "qualityAndDast": {
+      "id": 40775913260,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40775913260",
+      "overall": "PASS",
+      "jobs": {
+        "quality": {
+          "result": "PASS",
+          "verifiedSteps": [
+            "secret and dependency scans",
+            "database generation, migrations and seed",
+            "OpenAPI lint and traceability",
+            "API integration tests",
+            "live five-minute hold expiry over HTTP",
+            "two-worker five-minute soak and graceful restart",
+            "production build",
+            "Chromium Playwright browser suite"
+          ]
+        },
+        "domainCoverageAndMutation": {
+          "result": "PASS",
+          "domainCoverageThreshold": "PASS",
+          "mutationThreshold": "PASS (configured threshold >=70%)",
+          "testScope": ["tests/domain.test.ts"],
+          "score": "Not recorded; the logged-out public job page exposes the passing gate but not the uploaded report contents.",
+          "diagnostic": "The explicit domain-only test scope prevents the isolated mutation job from loading unrelated Prisma-backed API integration tests."
+        },
+        "dast": {
+          "result": "PASS",
+          "findingDetailsReviewed": false
+        }
+      }
+    },
+    "crossBrowser": {
+      "id": 40775913086,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40775913086",
+      "result": "PASS",
+      "scope": "Firefox and WebKit desktop smoke"
+    },
+    "workerSoak15Minutes": {
+      "id": 40775913265,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40775913265",
+      "result": "PASS",
+      "scope": "Two-worker 15-minute soak and graceful restart"
+    }
+  },
+  "environment": {
+    "runner": "GitHub Actions clean checkout",
+    "applicationEnvironment": "Local Docker only; no staging URL was provided"
+  },
+  "notMeasured": [
+    "Manual WCAG 2.2 AA, screen-reader, contrast, zoom/reflow, orientation and full keyboard review; requester will perform this checklist",
+    "Performance validation on named staging or production",
+    "Detailed DAST findings and exhaustive ASVS/API Top 10 and BOLA review",
+    "Production behavior, backup schedule, PITR, RPO/RTO and production restore",
+    "Reliability soak longer than 15 minutes",
+    "Real payment gateway/refund, which is outside the SRS"
+  ],
+  "scopeNote": "The quality, DAST, cross-browser, mutation and 15-minute soak jobs completed without failed steps on this exact source commit. The mutation step passed the configured threshold, but its numeric score was not visible in the public job page. These results do not establish manual WCAG conformance or staging/production readiness."
+}
