@@ -139,6 +139,29 @@ async function lockAdminActorAndUserTarget(tx: Prisma.TransactionClient, actor: 
   return readCurrentActor(tx, actor, [Role.ADMIN]);
 }
 
+async function upsertExpiredPayment(
+  tx: Prisma.TransactionClient,
+  event: MockPaymentEvent,
+  orderId: string,
+  amountVnd: number
+) {
+  const existing = await tx.payment.findUnique({
+    where: { orderId },
+    select: { providerEventId: true, status: true }
+  });
+  const reconciliationRequired = event.status === "SUCCEEDED" || existing?.status === PaymentStatus.RECONCILIATION_REQUIRED;
+  const keepExistingReconciliationEvent = existing?.status === PaymentStatus.RECONCILIATION_REQUIRED && existing.providerEventId !== null;
+  const providerEventId = keepExistingReconciliationEvent ? existing.providerEventId : event.eventId;
+  const status = reconciliationRequired ? PaymentStatus.RECONCILIATION_REQUIRED : PaymentStatus.FAILED;
+
+  await tx.payment.upsert({
+    where: { orderId },
+    create: { orderId, providerEventId: event.eventId, amountVnd, status },
+    update: { providerEventId, amountVnd, status }
+  });
+  return reconciliationRequired;
+}
+
 export async function applyMockPaymentEvent(event: MockPaymentEvent, actor?: RequestActor, client: typeof prisma = prisma) {
   const payloadHash = mockPaymentPayloadHash(event);
   return client.$transaction(async (tx) => {
@@ -171,13 +194,7 @@ export async function applyMockPaymentEvent(event: MockPaymentEvent, actor?: Req
       return { orderId: order.id, outcome: "CONFIRMED", idempotent: true };
     }
     if (order.status === OrderStatus.EXPIRED) {
-      const reconciliationRequired = event.status === "SUCCEEDED";
-      const paymentStatus = reconciliationRequired ? PaymentStatus.RECONCILIATION_REQUIRED : PaymentStatus.FAILED;
-      await tx.payment.upsert({
-        where: { orderId: order.id },
-        create: { orderId: order.id, providerEventId: event.eventId, amountVnd: order.totalVnd, status: paymentStatus },
-        update: { providerEventId: event.eventId, amountVnd: order.totalVnd, status: paymentStatus }
-      });
+      const reconciliationRequired = await upsertExpiredPayment(tx, event, order.id, order.totalVnd);
       await tx.paymentEvent.create({ data: { providerEventId: event.eventId, orderId: order.id, status: event.status === "SUCCEEDED" ? PaymentStatus.SUCCEEDED : PaymentStatus.FAILED, amountVnd: event.amountVnd, currency: event.currency, payloadHash, outcome: "EXPIRED" } });
       if (reconciliationRequired) {
         await enqueueOutboxEvent(tx, {
@@ -198,8 +215,7 @@ export async function applyMockPaymentEvent(event: MockPaymentEvent, actor?: Req
       await tx.cinemaOrder.update({ where: { id: order.id }, data: { status: OrderStatus.EXPIRED } });
       await tx.seatHold.update({ where: { id: order.holdId }, data: { status: HoldStatus.EXPIRED } });
       await tx.seatClaim.updateMany({ where: { orderId: order.id, status: ClaimStatus.HELD }, data: { status: ClaimStatus.EXPIRED, holdId: null, orderId: null, expiresAt: null } });
-      const reconciliationRequired = event.status === "SUCCEEDED";
-      await tx.payment.upsert({ where: { orderId: order.id }, create: { orderId: order.id, providerEventId: event.eventId, amountVnd: order.totalVnd, status: reconciliationRequired ? PaymentStatus.RECONCILIATION_REQUIRED : PaymentStatus.FAILED }, update: { providerEventId: event.eventId, amountVnd: order.totalVnd, status: reconciliationRequired ? PaymentStatus.RECONCILIATION_REQUIRED : PaymentStatus.FAILED } });
+      const reconciliationRequired = await upsertExpiredPayment(tx, event, order.id, order.totalVnd);
       await tx.paymentEvent.create({ data: { providerEventId: event.eventId, orderId: order.id, status: event.status === "SUCCEEDED" ? PaymentStatus.SUCCEEDED : PaymentStatus.FAILED, amountVnd: event.amountVnd, currency: event.currency, payloadHash, outcome: "EXPIRED" } });
       if (reconciliationRequired) {
         await enqueueOutboxEvent(tx, {

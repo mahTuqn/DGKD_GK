@@ -1,0 +1,105 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "recordedAt": "2026-10-29",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "commit": "890cb45ee64eb1464440bb50295843e8110f0567",
+  "branch": "codex/cross-browser-smoke",
+  "overall": "PASS_EXACT_SOURCE_CI_WITH_DOCUMENTED_LIMITATIONS",
+  "sourceDelta": "Scope TC-SEC-41 absence assertions to the target Showtime after a released claim fixture for TC-SEC-46 exposed a cross-showtime assertion bug; includes serializable seat/Showtime edits and holds, ordered seat/auditorium locks, concurrent schedule overlap validation, reversed-order multi-seat claim handling, registration BOPLA regression, and corresponding tests.",
+  "runs": {
+    "qualityApiDastDomainCompose": {
+      "id": 40864237378,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40864237378",
+      "result": "PASS",
+      "duration": "15m 48s",
+      "gates": [
+        "Exact-source quality workflow passed on commit 890cb45",
+        "Complete API suite passed, including TC-SEC-41 through TC-SEC-46",
+        "Backend source and test type-check passed",
+        "OpenAPI lint and traceability passed (118 test cases / 28 requirements)",
+        "Domain/mutation gate passed: 82.89%, 155 killed / 32 survived; break threshold 70%",
+        "Isolated Docker Compose runtime and browser smoke passed",
+        "Five-minute expiry/worker checks and production builds passed",
+        "Configured DAST gate passed"
+      ],
+      "artifacts": {
+        "dast": {
+          "id": 12892609597,
+          "name": "cinema-booking-dast-reports-890cb45ee64eb1464440bb50295843e8110f0567",
+          "sizeDisplay": "6.35 KB",
+          "githubDigest": "sha256:3311e29c40a89aebec1bf18737454aaa1d337233001b18fca4b03a249959417a",
+          "digestIndependentlyVerified": false,
+          "artifactContentsRetrieved": false,
+          "reportTotalsReviewed": false,
+          "note": "The DAST gate passed, but the artifact contents and alert totals, names, URLs and payloads were not reviewed. The GitHub browser remained signed out when last inspected. Do not infer current findings from earlier runs."
+        },
+        "domainQuality": {
+          "id": 12893072173,
+          "name": "cinema-booking-domain-quality-890cb45ee64eb1464440bb50295843e8110f0567",
+          "sizeDisplay": "141 KB",
+          "githubDigest": "sha256:57c2458522c5aad7aebf853f764e49dd63d94f73b50d0e8316ffa8c67653c086"
+        },
+        "composeBrowser": {
+          "id": 12893366088,
+          "name": "cinema-booking-compose-browser-results-890cb45ee64eb1464440bb50295843e8110f0567",
+          "sizeDisplay": "195 KB",
+          "githubDigest": "sha256:f2f311780d9b0b458b0d553b4c98435a6e5364d644a8d46d1b97f3cf17b235d5"
+        },
+        "browser": {
+          "id": 12894171061,
+          "name": "cinema-booking-browser-results-890cb45ee64eb1464440bb50295843e8110f0567",
+          "sizeDisplay": "384 KB",
+          "githubDigest": "sha256:69fe584eed581ab737124b04be3cddd2043cf7bf4d7cb341fa52cf497138dadd"
+        }
+      }
+    },
+    "crossBrowserSmoke": {
+      "id": 40864237469,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40864237469",
+      "result": "PASS",
+      "duration": "2m 19s",
+      "scope": "Firefox and WebKit desktop smoke",
+      "artifact": {
+        "id": 12891929743,
+        "name": "cinema-booking-cross-browser-results-890cb45ee64eb1464440bb50295843e8110f0567",
+        "sizeDisplay": "218 KB",
+        "githubDigest": "sha256:aa3b786b5dd238d29fd89478c8c72580e659894fa416b7d89f2e1b47f5696ded",
+        "digestIndependentlyVerified": false
+      }
+    },
+    "workerLongSoak": {
+      "id": 40864237259,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40864237259",
+      "result": "PASS",
+      "duration": "16m 07s",
+      "scope": "Two-worker 15-minute soak, graceful restart and pending-event catch-up"
+    }
+  },
+  "localChecks": {
+    "traceability": "PASS: 118 test cases / 28 requirements on the post-890cb45 documentation follow-up before the new BUG-026/TC-SEC-47 change; current follow-up traceability separately passes at 119/28.",
+    "gitDiffCheck": "PASS after the 890cb45 documentation follow-up; the subsequent BUG-026 code/documentation diff also passes git diff --check.",
+    "sourceTests": "Not rerun locally for 890cb45; exact-source GitHub Actions quality workflow passed."
+  },
+  "environment": {
+    "runner": "GitHub Actions clean checkout",
+    "database": "Isolated GitHub Actions PostgreSQL databases and Compose stack",
+    "localDocker": "No heavy local tests or DAST run was performed for this follow-up; CI used isolated runners.",
+    "staging": "Not available; CI results do not establish staging or production behavior."
+  },
+  "remainingGates": [
+    "Requester-owned manual WCAG 2.2 AA keyboard, screen-reader, contrast, zoom/reflow and orientation checklist (90 template pairs remain Not tested)",
+    "Review current-source DAST artifact contents, alert names, URLs, payloads and triage",
+    "Named staging performance and production reliability validation; no staging environment is available",
+    "Production backup schedule, PITR, RPO/RTO and restore verification",
+    "Comprehensive ASVS/API Top 10 and adversarial BOLA/IDOR testing",
+    "Reliability beyond the tested 15-minute worker soak",
+    "Real payment gateway/refund behavior is outside the current mock-payment SRS"
+  ],
+  "limitations": [
+    "Passing CI applies to this exact source commit and isolated GitHub Actions databases/runners.",
+    "The configured DAST gate passed, but report totals and alert identity/payloads remain unreviewed; no severity totals are claimed.",
+    "Automated browser/axe checks do not replace the requester’s manual accessibility review.",
+    "No staging or production behavior is inferred from local or CI results."
+  ]
+}

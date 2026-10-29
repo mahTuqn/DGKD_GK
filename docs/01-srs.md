@@ -40,7 +40,7 @@ CinemaBooking là ứng dụng web responsive đặt vé cho một cụm rạp, 
 | REQ-BOOK-01 | Tạo hold | Chỉ Customer tạo được hold; hold thành công trả thời hạn, ghế và tổng giá; quá 8 ghế hoặc ghế không khả dụng bị từ chối |
 | REQ-BOOK-02 | Chống bán trùng | Nhiều yêu cầu đồng thời cùng ghế cho tối đa một hold/sale; phần còn lại `409` |
 | REQ-BOOK-03 | Hết hạn hold | Sau 5 phút ghế giải phóng theo đồng hồ backend; hold hết hạn không thể checkout |
-| REQ-OPS-01 | Thu hồi hold và đối soát callback muộn | Worker định kỳ hết hạn hold/đơn đang chờ và giải phóng claim an toàn, có thể chạy lặp; callback thanh toán thành công hợp lệ đến sau hạn tạo outbox idempotent và hồ sơ đối soát thủ công, không tự xác nhận đơn hoặc hoàn tiền |
+| REQ-OPS-01 | Thu hồi hold và đối soát callback muộn | Worker định kỳ hết hạn hold/đơn đang chờ và giải phóng claim an toàn, có thể chạy lặp; callback thanh toán thành công hợp lệ đến sau hạn tạo outbox idempotent và hồ sơ đối soát thủ công; trạng thái RECONCILIATION_REQUIRED không bị callback trái chiều đến sau hạ xuống cho tới khi đối soát thủ công; không tự xác nhận đơn hoặc hoàn tiền |
 | REQ-OPS-02 | Kiểm tra runtime Docker full stack và browser journey | CI phải build các Docker image từ source hiện tại, migrate/seed database disposable, xác nhận API/worker/web healthy và chạy booking journey trên web image; dữ liệu test phải được cô lập và dọn sau job |
 | REQ-BOOK-04 | Tạo đơn | Chỉ Customer tạo order từ hold còn hiệu lực; tổng tiền khớp giá server; thao tác idempotent |
 | REQ-PAY-01 | Thanh toán demo | Chỉ Customer gọi endpoint tự hoàn tất cho đơn của mình; thành công xác nhận đơn và phát vé; thất bại không phát vé; không có dữ liệu thẻ |

@@ -576,6 +576,87 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
     expect(await orderState(original)).toEqual(originalBeforeReplay);
   }, 30_000);
 
+  it("[TC-SEC-47] keeps expired-payment reconciliation required across late callback orderings", async () => {
+    const customer = await prisma.user.create({
+      data: {
+        name: "Late Payment Reconciliation Customer",
+        email: `late-reconciliation-${fixture}@test.local`,
+        passwordHash: await hashPassword("LateReconciliation123!"),
+        role: Role.CUSTOMER
+      }
+    });
+    userIds.push(customer.id);
+    const auth = { Authorization: `Bearer ${createToken({ id: customer.id, authVersion: customer.authVersion })}` };
+    const webhookSecret = process.env.MOCK_PAYMENT_SECRET || "cinema-booking-local-mock-payment-secret-2026";
+    const seats = await prisma.seat.findMany({ where: { auditoriumId }, orderBy: { column: "asc" }, select: { id: true } });
+    const now = new Date();
+    const claims = await prisma.seatClaim.findMany({ where: { showtimeId }, select: { seatId: true, status: true, expiresAt: true } });
+    const occupiedSeatIds = new Set(claims
+      .filter((claim) => claim.status === "SOLD" || (claim.status === "HELD" && claim.expiresAt !== null && claim.expiresAt > now))
+      .map((claim) => claim.seatId));
+    const availableSeatIds = seats.map((seat) => seat.id).filter((seatId) => !occupiedSeatIds.has(seatId));
+    expect(availableSeatIds.length).toBeGreaterThanOrEqual(3);
+
+    const createExpiredOrder = async (seatId: string) => {
+      const hold = await request(app).post("/api/holds").set(auth).send({ showtimeId, seatIds: [seatId] });
+      expect(hold.status).toBe(201);
+      const order = await request(app).post("/api/orders").set(auth).send({ holdId: hold.body.id });
+      expect(order.status).toBe(201);
+      await prisma.seatHold.update({ where: { id: hold.body.id as string }, data: { expiresAt: new Date(Date.now() - 1) } });
+      await prisma.seatClaim.updateMany({ where: { orderId: order.body.id as string, status: "HELD" }, data: { expiresAt: new Date(Date.now() - 1) } });
+      return { holdId: hold.body.id as string, orderId: order.body.id as string, amountVnd: order.body.totalVnd as number };
+    };
+    const deliver = async (order: { orderId: string; amountVnd: number }, status: "SUCCEEDED" | "FAILED", eventId: string) => {
+      const event = { eventId, orderId: order.orderId, status, amountVnd: order.amountVnd, currency: "VND" as const };
+      const response = await request(app).post("/api/payments/mock/webhook")
+        .set("x-mock-signature", signMockPaymentEvent(event, webhookSecret))
+        .send(event);
+      expect(response.status).toBe(409);
+      expect(response.body.error).toBe("PAYMENT_TOO_LATE");
+      return event;
+    };
+
+    const successThenFailureOrder = await createExpiredOrder(availableSeatIds[0]!);
+    const successEvent = await deliver(successThenFailureOrder, "SUCCEEDED", `evt-sticky-success-${fixture}`);
+    await deliver(successThenFailureOrder, "FAILED", `evt-sticky-failure-${fixture}`);
+    const afterSuccessThenFailure = await prisma.payment.findUniqueOrThrow({ where: { orderId: successThenFailureOrder.orderId } });
+    expect(afterSuccessThenFailure.status).toBe("RECONCILIATION_REQUIRED");
+    expect(afterSuccessThenFailure.providerEventId).toBe(successEvent.eventId);
+
+    const failureThenSuccessOrder = await createExpiredOrder(availableSeatIds[1]!);
+    await deliver(failureThenSuccessOrder, "FAILED", `evt-reverse-failure-${fixture}`);
+    expect(await prisma.payment.findUniqueOrThrow({ where: { orderId: failureThenSuccessOrder.orderId } }).then((payment) => payment.status)).toBe("FAILED");
+    const reverseSuccessEvent = await deliver(failureThenSuccessOrder, "SUCCEEDED", `evt-reverse-success-${fixture}`);
+    const afterFailureThenSuccess = await prisma.payment.findUniqueOrThrow({ where: { orderId: failureThenSuccessOrder.orderId } });
+    expect(afterFailureThenSuccess.status).toBe("RECONCILIATION_REQUIRED");
+    expect(afterFailureThenSuccess.providerEventId).toBe(reverseSuccessEvent.eventId);
+
+    const concurrentOrder = await createExpiredOrder(availableSeatIds[2]!);
+    const concurrentSuccess = { eventId: `evt-concurrent-success-${fixture}`, orderId: concurrentOrder.orderId, status: "SUCCEEDED" as const, amountVnd: concurrentOrder.amountVnd, currency: "VND" as const };
+    const concurrentFailure = { eventId: `evt-concurrent-failure-${fixture}`, orderId: concurrentOrder.orderId, status: "FAILED" as const, amountVnd: concurrentOrder.amountVnd, currency: "VND" as const };
+    const concurrentResponses = await Promise.all([concurrentSuccess, concurrentFailure].map((event) => request(app)
+      .post("/api/payments/mock/webhook")
+      .set("x-mock-signature", signMockPaymentEvent(event, webhookSecret))
+      .send(event)));
+    expect(concurrentResponses.every((response) => response.status === 409 && response.body.error === "PAYMENT_TOO_LATE")).toBe(true);
+    const afterConcurrentCallbacks = await prisma.payment.findUniqueOrThrow({ where: { orderId: concurrentOrder.orderId } });
+    expect(afterConcurrentCallbacks.status).toBe("RECONCILIATION_REQUIRED");
+    expect(afterConcurrentCallbacks.providerEventId).toBe(concurrentSuccess.eventId);
+
+    for (const order of [successThenFailureOrder, failureThenSuccessOrder, concurrentOrder]) {
+      expect(await prisma.cinemaOrder.findUniqueOrThrow({ where: { id: order.orderId } }).then((row) => row.status)).toBe(OrderStatus.EXPIRED);
+      expect(await prisma.ticket.count({ where: { orderId: order.orderId } })).toBe(0);
+      expect(await prisma.paymentEvent.count({ where: { orderId: order.orderId } })).toBe(2);
+    }
+    for (const event of [successEvent, reverseSuccessEvent, concurrentSuccess]) {
+      expect(await prisma.outboxEvent.count({ where: { eventKey: `payment-reconciliation:${event.eventId}` } })).toBe(1);
+    }
+    await processOutboxBatch(prisma);
+    for (const event of [successEvent, reverseSuccessEvent, concurrentSuccess]) {
+      expect(await prisma.reconciliationCase.findUniqueOrThrow({ where: { providerEventId: event.eventId } }).then((row) => row.status)).toBe("OPEN");
+    }
+  }, 90_000);
+
   it("[TC-SEC-22] handles two parallel identical signed webhook HTTP requests idempotently", async () => {
     const customer = await prisma.user.create({
       data: {
