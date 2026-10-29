@@ -18,7 +18,15 @@ Kiểm tra các yêu cầu trong [SRS](01-srs.md), tập trung rủi ro bán tr�
 | Hiệu năng | Đọc danh sách và hold ghế | k6 local baseline: 50 VU/5 phút; showtime p95 9.85ms, hold p95 265.35ms, lỗi ngoài conflict 0%; đạt ngưỡng đã đặt nhưng chưa phải staging |
 | Backup/restore | PostgreSQL custom-format dump, restore vào database mới và kiểm tra record counts | Rehearsal đã đạt trên PostgreSQL 17 với source/target UTF8; chưa thay thế backup schedule/PITR/RPO/RTO/production restore |
 
-## Latest completed exact-source CI verification — `890cb45` — 29/10/2026
+## Latest completed exact-source CI verification — `9001ed7` — 29/10/2026
+
+All three workflows passed on source commit `9001ed7e74203fd61bbf5f790207339622cb2a84`: [quality/API/DAST/domain/Compose run 40870861147](https://github.com/mahTuqn/DGKD_GK/actions/runs/40870861147), [Firefox/WebKit smoke 40870861454](https://github.com/mahTuqn/DGKD_GK/actions/runs/40870861454), and [15-minute worker soak 40870861369](https://github.com/mahTuqn/DGKD_GK/actions/runs/40870861369). The quality workflow passed the API suite (including TC-SEC-47), type-check, OpenAPI/traceability (119 cases / 28 requirements), live five-minute expiry, five-minute worker soak/restart, production build, full configured Chromium desktop/Pixel 7 Playwright job, domain/mutation gate, DAST threshold, and isolated Compose/browser smoke. Firefox/WebKit desktop smoke and the separate 15-minute two-worker soak/restart/catch-up passed.
+
+The exact-source evidence and artifact IDs/digests are recorded in [the 9001ed7 manifest](evidence/followup/2026-10-29-github-actions-9001ed7.json). The configured DAST gate passed, but the artifact download API returned HTTP 401; report contents, severity totals, alert identities, URLs and payloads remain unreviewed. Do not infer findings from older runs. TC-SEC-47 fixes BUG-026 and passed in the current API suite.
+
+Manual WCAG 2.2 AA review remains requester-owned; the 90-row result template remains **Not tested**. No staging is available. Production backup/PITR/RPO/RTO/restore, exhaustive ASVS/API Top 10 and adversarial BOLA/IDOR, and reliability beyond the tested soak remain open. This is not an acceptance or production-readiness sign-off.
+
+## Previous exact-source CI verification — `890cb45` — 29/10/2026
 
 All three workflows passed on source commit `890cb45ee64eb1464440bb50295843e8110f0567`: [quality/API/DAST/domain/Compose run 40864237378](https://github.com/mahTuqn/DGKD_GK/actions/runs/40864237378) (15m48s), [Firefox/WebKit smoke 40864237469](https://github.com/mahTuqn/DGKD_GK/actions/runs/40864237469) (2m19s), and [15-minute worker soak 40864237259](https://github.com/mahTuqn/DGKD_GK/actions/runs/40864237259) (16m07s). Quality confirmed the complete API suite, strict backend/test type-check, OpenAPI and traceability checks, domain/mutation gate (82.89%, 155 killed / 32 survived against 70%), isolated Compose/browser smoke, five-minute expiry/worker soak, production build, and Chromium browser gate. Cross-browser and worker-soak workflows also passed.
 
@@ -26,7 +34,7 @@ The configured DAST gate passed. Its artifact metadata is recorded in [the exact
 
 ## Current post-audit follow-up — `TC-SEC-47` — 29/10/2026
 
-An independent source audit found that a later signed FAILED callback could downgrade an expired order's `RECONCILIATION_REQUIRED` Payment after a late SUCCEEDED callback. The callback does not issue a ticket or restore the expired order, but it could hide unresolved reconciliation state. The app now keeps reconciliation required and preserves the successful provider event ID; TC-SEC-47 covers success→failure, failure→success, and concurrent distinct callbacks, including PaymentEvent/outbox/reconciliation/ticket state. This follow-up is after the passing `890cb45` CI above; local PostgreSQL execution was deferred because only 124 MiB RAM was free while the two Docker stacks were active. Exact-source CI for this follow-up is pending. See BUG-026 and the regression catalog.
+An independent source audit found that a later signed FAILED callback could downgrade an expired order's `RECONCILIATION_REQUIRED` Payment after a late SUCCEEDED callback. The callback does not issue a ticket or restore the expired order, but it could hide unresolved reconciliation state. The app now keeps reconciliation required and preserves the successful provider event ID; TC-SEC-47 covers success→failure, failure→success, and concurrent distinct callbacks, including PaymentEvent/outbox/reconciliation/ticket state. This follow-up is after the passing `890cb45` CI above; local PostgreSQL execution was deferred because only 124 MiB RAM was free while the two Docker stacks were active. TC-SEC-47 and BUG-026 passed exact-source quality/API run 40870861147 on 9001ed7. See the exact-source manifest and regression catalog.
 
 ## Previous follow-up snapshot — `5409673` — observed 29/10/2026 09:36 UTC
 

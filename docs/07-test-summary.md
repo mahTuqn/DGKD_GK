@@ -1,16 +1,18 @@
 # Báo cáo tổng hợp kiểm thử
 
-## Latest exact-source CI result — `890cb45` — 29/10/2026
+## Latest exact-source CI result — `9001ed7` — 29/10/2026
 
-All workflows passed on exact source commit `890cb45ee64eb1464440bb50295843e8110f0567`: [quality/API/DAST/domain/Compose 40864237378](https://github.com/mahTuqn/DGKD_GK/actions/runs/40864237378) in 15m48s, [Firefox/WebKit smoke 40864237469](https://github.com/mahTuqn/DGKD_GK/actions/runs/40864237469) in 2m19s, and [15-minute worker soak 40864237259](https://github.com/mahTuqn/DGKD_GK/actions/runs/40864237259) in 16m07s. The quality workflow passed the full API suite (including TC-SEC-41–46), type-check, OpenAPI and traceability checks, domain/mutation threshold (82.89%; 155 killed / 32 survived; threshold 70%), isolated Compose/browser smoke, five-minute expiry/soak, production build and Chromium browser gate. Firefox and WebKit desktop smoke and the separate two-worker 15-minute soak/restart/catch-up also passed.
+All three workflows passed on source commit `9001ed7e74203fd61bbf5f790207339622cb2a84`: [quality/API/DAST/domain/Compose 40870861147](https://github.com/mahTuqn/DGKD_GK/actions/runs/40870861147), [Firefox/WebKit smoke 40870861454](https://github.com/mahTuqn/DGKD_GK/actions/runs/40870861454), and [15-minute worker soak 40870861369](https://github.com/mahTuqn/DGKD_GK/actions/runs/40870861369). The quality workflow passed the complete API suite, including TC-SEC-47; strict backend/test type-check; OpenAPI and traceability (**119 test cases / 28 requirements**); live five-minute hold expiry; five-minute worker soak/restart; production build; configured Chromium desktop/Pixel 7 Playwright suite; domain/mutation gate; configured DAST gate; and isolated Compose/browser smoke. The Firefox/WebKit desktop smoke and separate 15-minute worker soak/restart/catch-up also passed.
 
-The configured DAST gate passed and uploaded an artifact, but its report contents, alert identities, URLs and payloads have not been reviewed. See the exact artifact metadata and limitation in the [890cb45 evidence manifest](evidence/followup/2026-10-29-github-actions-890cb45.json). GitHub Actions pages require sign-in to view report details; the user indicated they would sign in, but the browser remained signed out at the last inspection.
+TC-SEC-47 fixes BUG-026: late reconciliation stays required across success→failure, failure→success, and concurrent distinct callbacks; expired orders remain without tickets. The payment-state/API regression passed in exact-source CI. See the [9001ed7 evidence manifest](evidence/followup/2026-10-29-github-actions-9001ed7.json).
 
-The catalog now has **119 test cases / 28 requirements** (traceability passed after adding TC-SEC-47). Manual WCAG 2.2 AA keyboard/screen-reader/contrast/zoom/reflow review remains requester-owned; its template has 90 pairs marked **Not tested**. No staging environment is available. Production backup/PITR/RPO/RTO/restore, comprehensive ASVS/API Top 10 and adversarial BOLA/IDOR, review of DAST finding details, and reliability beyond the tested soak remain open. This is not an acceptance or production-readiness sign-off.
+The DAST gate passed, but downloading the run artifact returned HTTP 401. The report contents, alert counts, names, affected URLs, payloads and triage remain unreviewed. No DAST severity totals are claimed.
 
-## Current post-audit follow-up — `TC-SEC-47` — 29/10/2026
+Manual WCAG 2.2 AA keyboard/screen-reader/contrast/zoom/reflow review remains requester-owned; the 90-pair template is still **Not tested**. No staging environment is available. Production backup/PITR/RPO/RTO/restore, comprehensive ASVS/API Top 10 and adversarial BOLA/IDOR, and reliability beyond the tested 15-minute soak remain open. This is not an acceptance or production-readiness sign-off.
 
-The independent API audit found BUG-026: a distinct signed FAILED callback could overwrite `Payment.status=RECONCILIATION_REQUIRED` after a late success on an expired order. The fix keeps reconciliation required and retains the successful provider event ID; TC-SEC-47 covers both sequential callback orders and concurrent success/failure delivery, with assertions for no ticket/order resurrection and one reconciliation record per successful event. This source change is newer than commit `890cb45`; no local PostgreSQL test ran because free host memory was 124 MiB with both Docker stacks running. Exact-source CI is pending. Do not treat the previous green run as verification of this fix.
+## Previous exact-source CI result — `890cb45` — 29/10/2026
+
+Commit `890cb45` also passed quality/API/DAST/Compose, Firefox/WebKit, and 15-minute worker soak workflows. Its exact evidence is recorded in the [890cb45 manifest](evidence/followup/2026-10-29-github-actions-890cb45.json); it predates BUG-026/TC-SEC-47 and is not the verification for that fix.
 
 ## Previous follow-up snapshot — `5409673` — 29/10/2026
 

@@ -1,0 +1,109 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "recordedAt": "2026-10-29",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "commit": "9001ed7e74203fd61bbf5f790207339622cb2a84",
+  "branch": "codex/cross-browser-smoke",
+  "overall": "PASS_EXACT_SOURCE_CI_WITH_DAST_REPORT_CONTENTS_UNREVIEWED",
+  "sourceDelta": "Keep late-payment reconciliation sticky after contradictory or concurrent webhook callbacks; preserve the successful provider event ID; add TC-SEC-47 for both sequential callback orders and concurrent distinct events; update SRS, RTM, bug record and route-line inventory.",
+  "runs": {
+    "qualityApiDastDomainCompose": {
+      "id": 40870861147,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40870861147",
+      "result": "PASS",
+      "gates": [
+        "Secret scan and npm dependency audit passed",
+        "Prisma generation, isolated migrations and seed passed",
+        "OpenAPI lint and traceability passed (119 test cases / 28 requirements)",
+        "Backend source and test type-check passed",
+        "Complete npm run test:api passed, including TC-SEC-47 late-payment callback order/concurrency regression",
+        "Live five-minute HTTP hold expiry passed",
+        "Five-minute worker soak/restart passed",
+        "Backend/frontend production build passed",
+        "Full configured Playwright Chromium desktop/Pixel 7 browser job passed",
+        "Configured DAST threshold passed; report contents not inspected",
+        "Domain/mutation threshold job passed",
+        "Isolated Docker Compose runtime/browser smoke passed"
+      ],
+      "artifacts": {
+        "browser": {
+          "id": 12896064810,
+          "name": "cinema-booking-browser-results-9001ed7e74203fd61bbf5f790207339622cb2a84",
+          "sizeBytes": 392738,
+          "githubDigest": "sha256:f8a5330332ebb88360b6141c2bacba063484ac6292c868ea39f3a90d586cc9c0",
+          "digestIndependentlyVerified": false
+        },
+        "domainQuality": {
+          "id": 12895543567,
+          "name": "cinema-booking-domain-quality-9001ed7e74203fd61bbf5f790207339622cb2a84",
+          "sizeBytes": 144548,
+          "githubDigest": "sha256:86cee662496fccfdd16686cd8e0256221b1e6f1f97553cb99c86bc400b0cabec",
+          "digestIndependentlyVerified": false
+        },
+        "composeBrowser": {
+          "id": 12895428190,
+          "name": "cinema-booking-compose-browser-results-9001ed7e74203fd61bbf5f790207339622cb2a84",
+          "sizeBytes": 199985,
+          "githubDigest": "sha256:4a963a1308f1402106befd03ed2d0662b5de8ebf19a2a69e46b6ab03acf26485",
+          "digestIndependentlyVerified": false
+        },
+        "dast": {
+          "id": 12895244708,
+          "name": "cinema-booking-dast-reports-9001ed7e74203fd61bbf5f790207339622cb2a84",
+          "sizeBytes": 6490,
+          "githubDigest": "sha256:f73f3e38ba98eeddf0a5a8715f31952e1db2aaa396ed0f29bca054e585ebfbeb",
+          "digestIndependentlyVerified": false,
+          "artifactContentsRetrieved": false,
+          "reportTotalsReviewed": false,
+          "downloadAttempt": "GitHub artifact API returned HTTP 401 for anonymous download. No finding totals, names, URLs, payloads or triage are claimed."
+        }
+      }
+    },
+    "crossBrowserSmoke": {
+      "id": 40870861454,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40870861454",
+      "result": "PASS",
+      "scope": "Firefox and WebKit desktop smoke",
+      "artifact": {
+        "id": 12896181777,
+        "name": "cinema-booking-cross-browser-results-9001ed7e74203fd61bbf5f790207339622cb2a84",
+        "sizeBytes": 223007,
+        "githubDigest": "sha256:901073a829cce390f20d7aaf7d81413a6c1013273ccb489ceaa213a7651b3a12",
+        "digestIndependentlyVerified": false
+      }
+    },
+    "workerLongSoak": {
+      "id": 40870861369,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40870861369",
+      "result": "PASS",
+      "scope": "Two-worker 15-minute soak, graceful shutdown/restart and pending-event catch-up"
+    }
+  },
+  "localChecks": {
+    "qaTrace": "PASS: 119 cases / 28 requirements on the pushed source; quality job step passed.",
+    "gitDiffCheck": "PASS before commit 9001ed7.",
+    "localPostgreSQL": "Not run; host free RAM was 124 MiB while both local Docker stacks were running."
+  },
+  "environment": {
+    "runner": "GitHub Actions clean checkout",
+    "database": "Isolated ephemeral PostgreSQL databases and Compose stack",
+    "staging": "Not available; CI results do not establish staging or production behavior."
+  },
+  "remainingGates": [
+    "Requester-owned manual WCAG 2.2 AA keyboard, screen-reader, contrast, zoom/reflow and orientation checklist (90 pairs remain Not tested)",
+    "Review current-source DAST artifact contents, alert identities, URLs, payloads and triage",
+    "Named-staging performance and production reliability validation; no staging environment is available",
+    "Production backup schedule, PITR, RPO/RTO and restore verification",
+    "Comprehensive ASVS/API Top 10 and adversarial BOLA/IDOR testing",
+    "Reliability beyond the tested 15-minute worker soak",
+    "Real payment gateway/refund behavior is outside the current mock-payment SRS"
+  ],
+  "limitations": [
+    "CI results apply to this exact source commit and isolated GitHub Actions databases/runners.",
+    "The DAST gate passed but the artifact returned HTTP 401 to the available anonymous download path; report contents and severity totals remain unreviewed.",
+    "Cross-browser smoke is the configured Firefox/WebKit desktop subset; the full browser suite is Chromium desktop and Pixel 7 mobile.",
+    "Automated browser/axe checks do not replace the requester-owned manual accessibility review.",
+    "No staging or production behavior is inferred from local or CI results."
+  ]
+}
