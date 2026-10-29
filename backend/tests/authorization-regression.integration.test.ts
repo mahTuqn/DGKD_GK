@@ -460,17 +460,17 @@ regressionDescribe("authorization regression coverage", () => {
     const adminAuth = { Authorization: `Bearer ${adminToken}` };
     const missingId = () => randomUUID();
     const unknownPatchCases = [
-      { path: `/api/admin/cinemas/${missingId()}`, body: { name: "Missing cinema update" }, action: "CINEMA_UPDATED" },
-      { path: `/api/admin/movies/${missingId()}`, body: { title: "Missing movie update" }, action: "MOVIE_UPDATED" },
-      { path: `/api/admin/auditoriums/${missingId()}`, body: { name: "Missing auditorium update" }, action: "AUDITORIUM_UPDATED" },
-      { path: `/api/admin/seats/${missingId()}`, body: { label: "Z1" }, action: "SEAT_UPDATED" }
+      { path: `/api/admin/cinemas/${missingId()}`, body: { name: "Missing cinema update" }, action: "CINEMA_UPDATED", error: "NOT_FOUND" },
+      { path: `/api/admin/movies/${missingId()}`, body: { title: "Missing movie update" }, action: "MOVIE_UPDATED", error: "NOT_FOUND" },
+      { path: `/api/admin/auditoriums/${missingId()}`, body: { name: "Missing auditorium update" }, action: "AUDITORIUM_UPDATED", error: "NOT_FOUND" },
+      { path: `/api/admin/seats/${missingId()}`, body: { label: "Z1" }, action: "SEAT_UPDATED", error: "SEAT_NOT_FOUND" }
     ];
 
     for (const route of unknownPatchCases) {
       const auditsBefore = await prisma.auditLog.count({ where: { actorId: adminId, action: route.action } });
       const response = await request(app).patch(route.path).set(adminAuth).send(route.body);
       expect(response.status).toBe(404);
-      expect(response.body.error).toBe("NOT_FOUND");
+      expect(response.body.error).toBe(route.error);
       expect(await prisma.auditLog.count({ where: { actorId: adminId, action: route.action } })).toBe(auditsBefore);
     }
   }, 30_000);
@@ -644,6 +644,37 @@ regressionDescribe("authorization regression coverage", () => {
     expect(unknown.body.error).toBe("TICKET_NOT_FOUND");
     expect(await prisma.ticket.findUnique({ where: { qrToken: unknownQrToken } })).toBeNull();
     expect(await ticketState()).toEqual(before);
+  }, 30_000);
+
+  it("[TC-SEC-32] rejects ID and QR check-in for a ticket whose order is not paid", async () => {
+    const heldClaim = await prisma.seatClaim.findFirstOrThrow({
+      where: { orderId: orderId!, status: ClaimStatus.HELD },
+      select: { id: true }
+    });
+    const pendingOrderTicket = await prisma.ticket.create({
+      data: { orderId: orderId!, seatClaimId: heldClaim.id, qrToken: randomUUID().replaceAll("-", "") }
+    });
+    const staffAuth = { Authorization: `Bearer ${staffToken}` };
+    const snapshot = async () => ({
+      ticket: await prisma.ticket.findUniqueOrThrow({
+        where: { id: pendingOrderTicket.id },
+        select: { id: true, orderId: true, seatClaimId: true, qrToken: true, checkedInAt: true }
+      }),
+      audits: await prisma.auditLog.count({
+        where: { actorId: staffId, action: "TICKET_CHECKED_IN", entityId: pendingOrderTicket.id }
+      })
+    });
+    const before = await snapshot();
+
+    const idCheckIn = await request(app).post(`/api/tickets/${pendingOrderTicket.id}/check-in`).set(staffAuth).send({});
+    expect(idCheckIn.status).toBe(422);
+    expect(idCheckIn.body.error).toBe("TICKET_NOT_VALID");
+    expect(await snapshot()).toEqual(before);
+
+    const qrCheckIn = await request(app).post("/api/tickets/scan").set(staffAuth).send({ qrToken: pendingOrderTicket.qrToken });
+    expect(qrCheckIn.status).toBe(422);
+    expect(qrCheckIn.body.error).toBe("TICKET_NOT_VALID");
+    expect(await snapshot()).toEqual(before);
   }, 30_000);
 
   it("[TC-SEC-08] requires authentication on every protected route family", async () => {
