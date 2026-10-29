@@ -88,7 +88,8 @@ workerDescribe("plan phase 5: expiration worker and payment reconciliation outbo
 
   it("[TC-WORKER-01] idempotently expires due holds, pending orders, and releases claims", async () => {
     const now = new Date();
-    const firstSweep = await expireDueHolds(prisma, now, 500);
+    const correlationId = `worker-cycle-${fixture}`;
+    const firstSweep = await expireDueHolds(prisma, now, 500, correlationId);
     expect(firstSweep.expiredHeldHolds).toBeGreaterThanOrEqual(1);
     expect(firstSweep.expiredPendingOrders).toBeGreaterThanOrEqual(1);
 
@@ -103,6 +104,12 @@ workerDescribe("plan phase 5: expiration worker and payment reconciliation outbo
     expect((await prisma.seatHold.findUniqueOrThrow({ where: { id: futureHoldId! } })).status).toBe(HoldStatus.HELD);
     expect(await prisma.outboxEvent.count({ where: { aggregateId: pendingOrderId } })).toBe(0);
     expect(await prisma.reconciliationCase.count({ where: { orderId: pendingOrderId } })).toBe(0);
+    const [heldExpiryAudit, pendingOrderExpiryAudit] = await Promise.all([
+      prisma.auditLog.findFirst({ where: { action: "SEAT_HOLD_EXPIRED", entityId: expiredHeldId } }),
+      prisma.auditLog.findFirst({ where: { action: "PAYMENT_PENDING_EXPIRED", entityId: pendingOrderId } })
+    ]);
+    expect(heldExpiryAudit?.metadata).toMatchObject({ correlationId });
+    expect(pendingOrderExpiryAudit?.metadata).toMatchObject({ correlationId });
 
     const secondSweep = await expireDueHolds(prisma, new Date(now.getTime() + 1_000), 500);
     expect(secondSweep.expiredHeldHolds).toBe(0);

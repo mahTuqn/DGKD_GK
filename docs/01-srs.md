@@ -54,8 +54,9 @@ CinemaBooking là ứng dụng web responsive đặt vé cho một cụm rạp, 
 | REQ-PERF-01 | Phân trang danh sách | Lịch sử đơn Customer và danh sách người dùng Admin có thứ tự ổn định, mặc định 20 và tối đa 50 bản ghi mỗi trang; cursor cho phép tải tiếp, giao diện chỉ tải trang hiện tại |
 | REQ-API-01 | Health readiness API | `GET /api/health` trả `200` và trạng thái `ok` khi dịch vụ sẵn sàng |
 | REQ-CONTRACT-01 | OpenAPI contract được kiểm tra tự động | `docs/openapi.yaml` phải lint hợp lệ bằng Redocly không có warning; CI chạy cùng quality workflow và fail khi contract/schema có lỗi |
-| REQ-SEC-01 | Bảo vệ dữ liệu | Không lộ password/token; lỗi API không trả stack; log không chứa secret; nội dung quản trị có markup phải hiển thị an toàn như text trong UI |
+| REQ-SEC-01 | Bảo vệ dữ liệu | Không lộ password/token; lỗi API không trả stack; HTTP request logs và request/worker-created audit metadata có correlation ID, worker errors dùng safe structured metadata; không ghi secret; nội dung quản trị có markup phải hiển thị an toàn như text trong UI |
 | REQ-SEC-02 | Quét secret trong repository | `npm run scan:secrets` dùng Gitleaks v8.30.1 đã pin để quét Git history; command pass khi không phát hiện leak, findings làm gate thất bại; CI cấu hình cùng phiên bản và report không được lộ secret |
+| REQ-SEC-03 | Giới hạn tần suất thao tác nhạy cảm | Hold/order, mock payment/webhook và check-in/QR scan được rate-limit theo client IP đáng tin cậy; vượt ngưỡng trả `429 ACTION_RATE_LIMITED` trước side effect; E2E override không làm nới limit ngoài development/test; trước khi chạy nhiều API replica phải dùng shared store |
 | REQ-A11Y-01 | Truy cập | Hành trình cốt lõi dùng được với bàn phím, nhãn rõ và focus dễ nhận biết; axe không có lỗi serious/critical trong scope |
 
 ## 5. Trạng thái đặt vé

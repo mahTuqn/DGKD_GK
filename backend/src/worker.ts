@@ -86,7 +86,7 @@ type DuePendingOrder = { orderId: string; holdId: string };
 type DueHeldHold = { id: string };
 
 /** Expire due holds under database row locks; no correctness depends on sweep cadence. */
-export async function expireDueHolds(database: PrismaClient = prisma, now = new Date(), batchSize = DEFAULT_BATCH_SIZE): Promise<ExpirationSweepResult> {
+export async function expireDueHolds(database: PrismaClient = prisma, now = new Date(), batchSize = DEFAULT_BATCH_SIZE, correlationId: string = randomUUID()): Promise<ExpirationSweepResult> {
   validateBatchSize(batchSize);
   return database.$transaction(async (tx) => {
     let expiredHeldHolds = 0;
@@ -128,7 +128,7 @@ export async function expireDueHolds(database: PrismaClient = prisma, now = new 
         update: { amountVnd: order.totalVnd, status: PaymentStatus.FAILED }
       });
       await tx.auditLog.create({
-        data: { actorId: null, action: "PAYMENT_PENDING_EXPIRED", entity: "CinemaOrder", entityId: order.id, metadata: { holdId: order.holdId, expiredAt: now.toISOString() } }
+        data: { actorId: null, action: "PAYMENT_PENDING_EXPIRED", entity: "CinemaOrder", entityId: order.id, metadata: { holdId: order.holdId, expiredAt: now.toISOString(), correlationId } }
       });
       expiredPendingOrders += 1;
     }
@@ -152,7 +152,7 @@ export async function expireDueHolds(database: PrismaClient = prisma, now = new 
         data: { status: "EXPIRED", holdId: null, orderId: null, expiresAt: null }
       });
       await tx.auditLog.create({
-        data: { actorId: null, action: "SEAT_HOLD_EXPIRED", entity: "SeatHold", entityId: hold.id, metadata: { expiredAt: now.toISOString() } }
+        data: { actorId: null, action: "SEAT_HOLD_EXPIRED", entity: "SeatHold", entityId: hold.id, metadata: { expiredAt: now.toISOString(), correlationId } }
       });
       expiredHeldHolds += 1;
     }
@@ -254,7 +254,8 @@ export async function processOutboxBatch(database: PrismaClient = prisma, now = 
 }
 
 export async function runWorkerCycle(database: PrismaClient = prisma, now = new Date(), batchSize = DEFAULT_BATCH_SIZE): Promise<WorkerCycleResult> {
-  const expiration = await expireDueHolds(database, now, batchSize);
+  const correlationId = randomUUID();
+  const expiration = await expireDueHolds(database, now, batchSize, correlationId);
   const outbox = await processOutboxBatch(database, now, batchSize);
   return { ...expiration, outbox };
 }

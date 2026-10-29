@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { assertMockPaymentConfiguration, createApp, getRegistrationRateLimit, isMockPaymentCompletionEnabled } from "../src/app.js";
+import { assertMockPaymentConfiguration, createApp, getMutationRateLimit, getRegistrationRateLimit, isMockPaymentCompletionEnabled } from "../src/app.js";
 import { assertAuthenticationConfiguration } from "../src/auth.js";
 
-const environmentKeys = ["NODE_ENV", "JWT_SECRET", "MOCK_PAYMENT_SECRET", "TRUST_PROXY_HOPS", "E2E_REGISTRATION_RATE_LIMIT"] as const;
+const environmentKeys = ["NODE_ENV", "JWT_SECRET", "MOCK_PAYMENT_SECRET", "TRUST_PROXY_HOPS", "E2E_REGISTRATION_RATE_LIMIT", "E2E_MUTATION_RATE_LIMIT"] as const;
 const originalEnvironment = Object.fromEntries(environmentKeys.map((key) => [key, process.env[key]]));
 
 function restoreEnvironment() {
@@ -32,6 +32,18 @@ describe("TC-SEC-13 deployment secrets and trusted proxy configuration", () => {
     expect(getRegistrationRateLimit({ NODE_ENV: "production", E2E_REGISTRATION_RATE_LIMIT: "100" })).toBe(5);
     expect(() => getRegistrationRateLimit({ NODE_ENV: "test", E2E_REGISTRATION_RATE_LIMIT: "0" })).toThrow("positive integer");
     expect(() => getRegistrationRateLimit({ NODE_ENV: "test", E2E_REGISTRATION_RATE_LIMIT: "1001" })).toThrow("no greater than 1000");
+  });
+
+  it("limits sensitive mutations and ignores test overrides outside development/test", () => {
+    expect(getMutationRateLimit({ NODE_ENV: "production", E2E_MUTATION_RATE_LIMIT: "2" })).toBe(120);
+    expect(getMutationRateLimit({ NODE_ENV: "staging", E2E_MUTATION_RATE_LIMIT: "2" })).toBe(120);
+    expect(getMutationRateLimit({ NODE_ENV: undefined, E2E_MUTATION_RATE_LIMIT: "2" })).toBe(120);
+    expect(getMutationRateLimit({ NODE_ENV: "production" }, 300)).toBe(300);
+    expect(getMutationRateLimit({ NODE_ENV: "development" })).toBe(120);
+    expect(getMutationRateLimit({ NODE_ENV: "test" })).toBe(1000);
+    expect(getMutationRateLimit({ NODE_ENV: "test", E2E_MUTATION_RATE_LIMIT: "2" })).toBe(2);
+    expect(() => getMutationRateLimit({ NODE_ENV: "test", E2E_MUTATION_RATE_LIMIT: "0" })).toThrow("positive integer");
+    expect(() => getMutationRateLimit({ NODE_ENV: "test", E2E_MUTATION_RATE_LIMIT: "1001" })).toThrow("no greater than 1000");
   });
 
   it("requires a long JWT secret in deployment modes and rejects published development/CI values", () => {

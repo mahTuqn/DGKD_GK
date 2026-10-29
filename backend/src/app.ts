@@ -88,6 +88,17 @@ export function getRegistrationRateLimit(environment: { NODE_ENV?: string; E2E_R
   return limit;
 }
 
+export function getMutationRateLimit(environment: { NODE_ENV?: string; E2E_MUTATION_RATE_LIMIT?: string } = process.env, secureDefault = 120) {
+  if (environment.NODE_ENV !== "development" && environment.NODE_ENV !== "test") return secureDefault;
+
+  const configured = environment.E2E_MUTATION_RATE_LIMIT;
+  if (configured === undefined || configured.trim() === "") return environment.NODE_ENV === "test" ? 1000 : secureDefault;
+  if (!/^[1-9]\d*$/.test(configured)) throw new Error("E2E_MUTATION_RATE_LIMIT must be a positive integer no greater than 1000 in development/test.");
+  const limit = Number(configured);
+  if (!Number.isSafeInteger(limit) || limit > 1000) throw new Error("E2E_MUTATION_RATE_LIMIT must be a positive integer no greater than 1000 in development/test.");
+  return limit;
+}
+
 export async function applyMockPaymentEvent(event: MockPaymentEvent, actorId?: string, client: typeof prisma = prisma) {
   const payloadHash = mockPaymentPayloadHash(event);
   return client.$transaction(async (tx) => {
@@ -301,6 +312,19 @@ export function createApp() {
     legacyHeaders: false,
     handler: (_req, res) => res.status(429).json({ error: "REGISTRATION_RATE_LIMITED", message: "Có quá nhiều yêu cầu đăng ký. Vui lòng thử lại sau." })
   });
+  const actionLimiter = (secureLimit = 120) => rateLimit({
+    windowMs: 60 * 1000,
+    limit: getMutationRateLimit(process.env, secureLimit),
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    handler: (_req, res) => res.status(429).json({ error: "ACTION_RATE_LIMITED", message: "Có quá nhiều thao tác. Vui lòng thử lại sau." })
+  });
+  const holdLimiter = actionLimiter();
+  const orderLimiter = actionLimiter();
+  const mockPaymentLimiter = actionLimiter();
+  const paymentWebhookLimiter = actionLimiter(300);
+  const ticketIdCheckInLimiter = actionLimiter(300);
+  const ticketScanLimiter = actionLimiter(300);
 
   app.get("/api/health", (_req, res) => res.json({ status: "ok", service: "cinema-booking-api" }));
 
@@ -400,7 +424,7 @@ export function createApp() {
     });
   }));
 
-  app.post("/api/holds", requireAuth, requireRole(Role.CUSTOMER), asyncRoute(async (req, res) => {
+  app.post("/api/holds", holdLimiter, requireAuth, requireRole(Role.CUSTOMER), asyncRoute(async (req, res) => {
     const input = z.object({ showtimeId: z.string().min(1), seatIds: z.array(z.string().min(1)).min(1).max(8) }).strict().parse(req.body);
     const seatIds = uniqueSeatIds(input.seatIds);
     const now = new Date();
@@ -442,7 +466,7 @@ export function createApp() {
     res.status(201).json(hold);
   }));
 
-  app.post("/api/orders", requireAuth, requireRole(Role.CUSTOMER), asyncRoute(async (req, res) => {
+  app.post("/api/orders", orderLimiter, requireAuth, requireRole(Role.CUSTOMER), asyncRoute(async (req, res) => {
     const { holdId } = z.object({ holdId: z.string().min(1) }).strict().parse(req.body);
     const result = await prisma.$transaction(async (tx) => {
       // Use the same lock order as POST /api/holds so an order transition cannot race a new hold.
@@ -469,7 +493,7 @@ export function createApp() {
     res.status(201).json(result.order);
   }));
 
-  app.post("/api/payments/mock/webhook", asyncRoute(async (req, res) => {
+  app.post("/api/payments/mock/webhook", paymentWebhookLimiter, asyncRoute(async (req, res) => {
     const event = mockPaymentEventSchema.parse(req.body) as MockPaymentEvent;
     if (!verifyMockPaymentSignature(event, req.header("x-mock-signature"), getMockPaymentSecret())) {
       throw new DomainError("INVALID_WEBHOOK_SIGNATURE", "Chữ ký callback thanh toán không hợp lệ.", 401);
@@ -481,7 +505,7 @@ export function createApp() {
     res.json({ accepted: true, idempotent: result.idempotent, orderId: result.orderId });
   }));
 
-  app.post("/api/payments/mock/complete", requireAuth, requireRole(Role.CUSTOMER), asyncRoute(async (req, res) => {
+  app.post("/api/payments/mock/complete", mockPaymentLimiter, requireAuth, requireRole(Role.CUSTOMER), asyncRoute(async (req, res) => {
     if (!isMockPaymentCompletionEnabled()) {
       throw new DomainError("MOCK_PAYMENT_DISABLED", "Thanh toán mô phỏng chỉ khả dụng trong development và test.", 404);
     }
@@ -530,7 +554,7 @@ export function createApp() {
     res.json(await getOrderForResponse(prisma, order.id));
   }));
 
-  app.post("/api/tickets/:ticketId/check-in", requireAuth, requireRole(...staffRoles), asyncRoute(async (req, res) => {
+  app.post("/api/tickets/:ticketId/check-in", ticketIdCheckInLimiter, requireAuth, requireRole(...staffRoles), asyncRoute(async (req, res) => {
     const ticketId = String(req.params.ticketId);
     const checkedIn = await prisma.$transaction(async (tx) => {
       await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`SELECT "id" FROM "Ticket" WHERE "id" = ${ticketId} FOR UPDATE`);
@@ -554,7 +578,7 @@ export function createApp() {
     res.json(checkedIn);
   }));
 
-  app.post("/api/tickets/scan", requireAuth, requireRole(...staffRoles), asyncRoute(async (req, res) => {
+  app.post("/api/tickets/scan", ticketScanLimiter, requireAuth, requireRole(...staffRoles), asyncRoute(async (req, res) => {
     const { qrToken } = z.object({ qrToken: z.string().min(20).max(128) }).strict().parse(req.body);
     const ticket = await prisma.ticket.findUnique({ where: { qrToken }, select: { id: true } });
     if (!ticket) throw new DomainError("TICKET_NOT_FOUND", "Mã vé không hợp lệ.", 404);

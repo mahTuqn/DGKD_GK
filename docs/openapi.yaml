@@ -226,6 +226,7 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
         '422': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/RateLimited' }
 
   /api/orders:
     post:
@@ -254,6 +255,7 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
         '422': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/RateLimited' }
 
   /api/orders/me:
     get:
@@ -320,6 +322,7 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
         '422': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/RateLimited' }
 
   /api/payments/mock/webhook:
     post:
@@ -354,6 +357,7 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
         '422': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/RateLimited' }
 
   /api/tickets/{ticketId}/check-in:
     post:
@@ -377,6 +381,7 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
         '422': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/RateLimited' }
 
   /api/tickets/scan:
     post:
@@ -405,6 +410,7 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
         '422': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/RateLimited' }
 
   /api/admin/summary:
     get:
@@ -850,7 +856,7 @@ components:
         application/json:
           schema: { $ref: '#/components/schemas/ApiError' }
     RateLimited:
-      description: Tạm giới hạn đăng nhập sau nhiều lần sai.
+      description: Tạm giới hạn đăng nhập hoặc thao tác nhạy cảm sau khi vượt ngưỡng yêu cầu.
       content:
         application/json:
           schema: { $ref: '#/components/schemas/ApiError' }
