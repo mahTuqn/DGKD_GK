@@ -24,8 +24,6 @@ dbDescribe("registration field-level authorization", () => {
   });
 
   it("[TC-SEC-42] rejects privilege-bearing fields during public registration without persistence", async () => {
-    const usersBefore = await prisma.user.count();
-    const auditsBefore = await prisma.auditLog.count();
     const response = await request(app).post("/api/auth/register").send({
       name: "Privilege Injection",
       email,
@@ -38,8 +36,12 @@ dbDescribe("registration field-level authorization", () => {
     expect(response.body.error).toBe("VALIDATION_ERROR");
     expect(response.body).not.toHaveProperty("token");
     expect(response.body).not.toHaveProperty("user");
+    expect(response.headers["x-request-id"]).toMatch(/^[0-9a-f-]{36}$/i);
     expect(await prisma.user.findUnique({ where: { email } })).toBeNull();
-    expect(await prisma.user.count()).toBe(usersBefore);
-    expect(await prisma.auditLog.count()).toBe(auditsBefore);
+    const requestAuditLogs = await prisma.$queryRaw<Array<{ id: string }>>`
+      SELECT "id" FROM "AuditLog"
+      WHERE "metadata"->>'correlationId' = ${String(response.headers["x-request-id"])}
+    `;
+    expect(requestAuditLogs).toEqual([]);
   }, 15_000);
 });

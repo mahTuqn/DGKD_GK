@@ -2,7 +2,11 @@
 
 ## Current working-tree snapshot — 29/10/2026
 
-The uncommitted source adds a deterministic Admin seat-edit/Customer hold serialization regression (TC-SEC-41), which passed 1/1 on disposable PostgreSQL 17 and reproduced the stale 100,000 VND price against the 130,000 VND PREMIUM seat before the fix. TC-SEC-42 now covers rejection of `role` and `assignedCinemaId` during public registration, but it has not yet been executed. Traceability passes at **114 test cases / 28 requirements**. Exact-source CI for these changes is pending; the complete current-source API/browser, DAST, and worker-soak runs have not completed. See BUG-023 and the linked test cases in the RTM.
+The latest pushed source is `c6aa9181da1beecafe32c92f3c1d5024482683db`. Its [cross-browser smoke run 40859784802](https://github.com/mahTuqn/DGKD_GK/actions/runs/40859784802) passed. At the last inspection, quality/API/DAST run [40859784771](https://github.com/mahTuqn/DGKD_GK/actions/runs/40859784771) and 15-minute worker soak [40859784746](https://github.com/mahTuqn/DGKD_GK/actions/runs/40859784746) were still in progress; the DAST artifact had not appeared. Those results apply only to `c6aa918`.
+
+The follow-up working tree adds TC-SEC-43–46 and hardens TC-SEC-41/42. It now traces **118 test cases / 28 requirements**; `npm run qa:trace` and `git diff --check` pass. The source changes serialize Showtime edits, seat holds, and schedule-overlap checks; tests cover both orderings, reversed multi-seat request order, existing released claims, and request-correlated registration audit effects. Exact-source API, test typecheck, DAST, browser and worker CI are pending a push. They were not run locally because available host memory was below the safe test threshold.
+
+The requester owns the manual WCAG 2.2 AA/screen-reader checklist; its new 90-row results template is intentionally all **Not tested**. No staging environment is available. Production backup/PITR/RPO/RTO/restore and exhaustive ASVS/API Top 10/adversarial BOLA coverage remain open. This is an engineering follow-up snapshot, not acceptance or production-readiness sign-off.
 
 ## Previous follow-up snapshot — `5409673` — 29/10/2026
 

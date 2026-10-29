@@ -474,21 +474,25 @@ export function createApp() {
   app.post("/api/holds", holdLimiter, requireAuth, requireRole(Role.CUSTOMER), asyncRoute(async (req, res) => {
     const input = z.object({ showtimeId: z.string().min(1), seatIds: z.array(z.string().min(1)).min(1).max(8) }).strict().parse(req.body);
     const seatIds = uniqueSeatIds(input.seatIds);
-    const now = new Date();
-    const expiresAt = new Date(now.getTime() + HOLD_TTL_SECONDS * 1000);
     const hold = await prisma.$transaction(async (tx) => {
       // Serialize all booking attempts for a Customer, including requests for different seats.
       await lockCurrentActor(tx, { id: req.user!.id, authVersion: req.authVersion }, [Role.CUSTOMER], "update");
+      // Serialize the showtime state used for eligibility, auditorium, and pricing
+      // with Admin edits. Re-read it after the lock so a queued hold sees commits.
+      await tx.$queryRaw<Array<{ id: string }>>`SELECT "id" FROM "Showtime" WHERE "id" = ${input.showtimeId} FOR SHARE`;
+      const now = new Date();
+      const expiresAt = new Date(now.getTime() + HOLD_TTL_SECONDS * 1000);
       const showtime = await tx.showtime.findFirst({ where: { id: input.showtimeId, status: RecordStatus.ACTIVE, startAt: { gt: now }, movie: { status: RecordStatus.ACTIVE }, auditorium: { cinema: { status: RecordStatus.ACTIVE } } } });
       if (!showtime) throw new DomainError("SHOWTIME_UNAVAILABLE", "Suất chiếu không còn mở bán.", 404);
-      // Hold a shared Seat-row lock before using its label/type. Admin seat edits
-      // take an exclusive lock on the same row, so either the edit wins first and
-      // this read sees its new shape, or the hold wins and the edit sees the claim.
+      // Lock seats exclusively in stable order before reading label/type. This
+      // serializes overlapping holds, including reuse of mixed existing/new claims,
+      // with Admin edits. The lock is per physical seat, so different showtimes
+      // using the same seat serialize briefly as well.
       const lockedSeats = await tx.$queryRaw<Array<{ id: string }>>`
         SELECT "id" FROM "Seat"
         WHERE "id" IN (${Prisma.join(seatIds)}) AND "auditoriumId" = ${showtime.auditoriumId}
         ORDER BY "id"
-        FOR SHARE
+        FOR UPDATE
       `;
       if (lockedSeats.length !== seatIds.length) throw new DomainError("SEAT_NOT_FOUND", "Một hoặc nhiều ghế không thuộc phòng chiếu này.", 422);
       // Re-read after acquiring the row locks so the claim price and seat data
@@ -511,7 +515,9 @@ export function createApp() {
       const createdHold = await tx.seatHold.create({ data: { userId: req.user!.id, showtimeId: input.showtimeId, expiresAt } });
       let totalVnd = 0;
       const seatById = new Map(seats.map((seat) => [seat.id, seat]));
-      for (const seatId of seatIds) {
+      // Consistent insert/update ordering avoids unique-key deadlocks when two
+      // customers request the same multi-seat set in opposite input orders.
+      for (const seatId of [...seatIds].sort()) {
         const seat = seatById.get(seatId)!;
         const priceVnd = computeSeatPrice(showtime.priceVnd, showtime.premiumSurchargeVnd, seat.type);
         totalVnd += priceVnd;
@@ -842,7 +848,7 @@ export function createApp() {
     const seat = await prisma.$transaction(async (tx) => {
       await lockCurrentActor(tx, { id: req.user!.id, authVersion: req.authVersion }, [Role.ADMIN]);
       // Serialize the no-active-claim check and seat mutation with POST /api/holds.
-      // Holds take FOR SHARE on this row before reading price/label/type.
+      // Holds take the same ordered FOR UPDATE lock before reading seat data.
       await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`SELECT "id" FROM "Seat" WHERE "id" = ${String(req.params.id)} FOR UPDATE`);
       const current = await tx.seat.findUnique({ where: { id: String(req.params.id) } });
       if (!current) throw new DomainError("SEAT_NOT_FOUND", "Không tìm thấy ghế.", 404);
@@ -870,6 +876,9 @@ export function createApp() {
     const input = z.object({ movieId: z.string().min(1), auditoriumId: z.string().min(1), startAt: z.string().datetime({ offset: true }), priceVnd: z.number().int().min(1000).max(1_000_000), premiumSurchargeVnd: z.number().int().min(0).max(500_000).default(30_000) }).strict().parse(req.body);
     const created = await prisma.$transaction(async (tx) => {
       await lockCurrentActor(tx, { id: req.user!.id, authVersion: req.authVersion }, [Role.ADMIN]);
+      // Lock the auditorium before checking overlap so create/edit schedule
+      // operations serialize even though they use fresh READ COMMITTED snapshots.
+      await tx.$queryRaw<Array<{ id: string }>>`SELECT "id" FROM "Auditorium" WHERE "id" = ${input.auditoriumId} FOR UPDATE`;
       const movie = await tx.movie.findUnique({ where: { id: input.movieId } });
       const auditorium = await tx.auditorium.findUnique({ where: { id: input.auditoriumId }, include: { cinema: true } });
       if (!movie || !auditorium) throw new DomainError("CATALOG_NOT_FOUND", "Không tìm thấy phim hoặc phòng chiếu.", 404);
@@ -884,7 +893,7 @@ export function createApp() {
       const showtime = await tx.showtime.create({ data: { movieId: movie.id, auditoriumId: auditorium.id, startAt, endAt, priceVnd: input.priceVnd, premiumSurchargeVnd: input.premiumSurchargeVnd } });
       await audit(tx, req.user!.id, "SHOWTIME_CREATED", "Showtime", showtime.id, { movieId: movie.id, auditoriumId: auditorium.id, startAt: startAt.toISOString() });
       return tx.showtime.findUniqueOrThrow({ where: { id: showtime.id }, include: { movie: true, auditorium: { include: { cinema: true } } } });
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted });
     res.status(201).json(toShowtime(created));
   }));
 
@@ -899,15 +908,20 @@ export function createApp() {
     }).partial().strict().refine((value) => Object.keys(value).length > 0, "Cần ít nhất một trường để cập nhật.").parse(req.body);
     const showtime = await prisma.$transaction(async (tx) => {
       await lockCurrentActor(tx, { id: req.user!.id, authVersion: req.authVersion }, [Role.ADMIN]);
+      // Acquire the conflicting lock before reading claims. READ COMMITTED then
+      // lets the post-wait claim check see holds committed while this waited.
+      await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`SELECT "id" FROM "Showtime" WHERE "id" = ${String(req.params.id)} FOR UPDATE`);
       const current = await tx.showtime.findUnique({ where: { id: String(req.params.id) }, include: { movie: true, auditorium: { include: { cinema: true } } } });
       if (!current) throw new DomainError("SHOWTIME_NOT_FOUND", "Không tìm thấy suất chiếu.", 404);
+      const auditoriumId = input.auditoriumId ?? current.auditoriumId;
+      const lockedAuditoriumIds = [...new Set([current.auditoriumId, auditoriumId])].sort();
+      await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`SELECT "id" FROM "Auditorium" WHERE "id" IN (${Prisma.join(lockedAuditoriumIds)}) ORDER BY "id" FOR UPDATE`);
       const changesIdentity = input.movieId !== undefined || input.auditoriumId !== undefined || input.startAt !== undefined;
       if (changesIdentity) {
         const existingClaims = await tx.seatClaim.count({ where: { showtimeId: current.id, status: { in: [ClaimStatus.HELD, ClaimStatus.SOLD] } } });
         if (existingClaims > 0) throw new DomainError("SHOWTIME_HAS_BOOKINGS", "Không thể đổi phim, phòng hoặc giờ khi suất đã có ghế giữ/bán.", 409);
       }
       const movieId = input.movieId ?? current.movieId;
-      const auditoriumId = input.auditoriumId ?? current.auditoriumId;
       const movie = await tx.movie.findUnique({ where: { id: movieId } });
       const auditorium = await tx.auditorium.findUnique({ where: { id: auditoriumId }, include: { cinema: true } });
       if (!movie || !auditorium) throw new DomainError("CATALOG_NOT_FOUND", "Không tìm thấy phim hoặc phòng chiếu.", 404);
@@ -931,7 +945,7 @@ export function createApp() {
       });
       await audit(tx, req.user!.id, "SHOWTIME_UPDATED", "Showtime", updated.id, { changedFields: Object.keys(input), priceVnd: updated.priceVnd, premiumSurchargeVnd: updated.premiumSurchargeVnd });
       return updated;
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted });
     res.json(toShowtime(showtime));
   }));
 

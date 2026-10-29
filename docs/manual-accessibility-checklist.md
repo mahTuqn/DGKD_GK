@@ -43,7 +43,7 @@ For each check, select exactly one outcome: **Pass**, **Fail**, **Not applicable
 
 ## Screen and workflow checklist
 
-For every workflow, record a separate outcome and evidence for each applicable shared check ID (KBD-01, FOCUS-01, FOCUS-02, NAME-01, COLOR-01, REFLOW-01, TARGET-01, SR-01, SR-02). Overall status is Pass only when all applicable checks pass; any failure makes it Fail, and unresolved checks remain Not tested. The result fields are intentionally blank and the initial status is **Not tested**.
+Record granular results in the [manual accessibility results template](manual-accessibility-results-template.csv): **one CSV row records one workflow ID × shared check ID result**. Keep the outcome as **Not tested** until that specific check has been performed; for **Not applicable**, enter the reason in the finding/N/A reason column. The Status column below is only the summary for the whole workflow: mark Pass only when all applicable checks pass, Fail when any check fails, and Not tested while any applicable check is unresolved. The CSV template is pre-filled with all 90 workflow/check pairs and their outcome set to **Not tested**.
 
 | ID / screen or workflow | Manual checks to perform | Status | Reviewer / date | Evidence link(s) | Finding / issue ID or N/A reason |
 |---|---|---|---|---|---|
