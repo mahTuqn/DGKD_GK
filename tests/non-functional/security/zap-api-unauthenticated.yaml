@@ -60,4 +60,4 @@ jobs:
 
   - type: exitStatus
     parameters:
-      errorLevel: High
+      errorLevel: Medium

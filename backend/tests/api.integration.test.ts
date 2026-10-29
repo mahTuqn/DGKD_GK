@@ -96,7 +96,7 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
     await prisma.$disconnect();
   }, 30_000);
 
-  it("[TC-API-01][TC-SEC-15][TC-SEC-16][TC-SEC-19][TC-PLAN-01][TC-PLAN-02][TC-PLAN-03][TC-PLAN-04][TC-PLAN-05][TC-PLAN-09] enforces auth, booking boundaries, payment/report rules, concurrency, and one-use staff check-in", async () => {
+  it("[TC-API-01][TC-SEC-15][TC-SEC-16][TC-SEC-19][TC-SEC-34][TC-PLAN-01][TC-PLAN-02][TC-PLAN-03][TC-PLAN-04][TC-PLAN-05][TC-PLAN-09] enforces auth, booking boundaries, payment/report rules, concurrency, and one-use staff check-in", async () => {
     const guestHold = await request(app).post("/api/holds").send({ showtimeId, seatIds: ["missing"] });
     expect(guestHold.status).toBe(401);
     expectSafeError(guestHold);
@@ -420,14 +420,7 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
       .set("x-mock-signature", validWebhookSignature)
       .send(validWebhookEvent);
     expect(validWebhook.status).toBe(200);
-    expect(validWebhook.body).toMatchObject({
-      accepted: true,
-      idempotent: false,
-      orderId: webhookSuccessOrder.body.id,
-      status: OrderStatus.CONFIRMED,
-      totalVnd: webhookSuccessOrder.body.totalVnd
-    });
-    expect(validWebhook.body.tickets).toHaveLength(1);
+    expect(validWebhook.body).toEqual({ accepted: true, idempotent: false, orderId: webhookSuccessOrder.body.id });
 
     const successfulWebhookState = async () => ({
       order: await prisma.cinemaOrder.findUniqueOrThrow({ where: { id: validWebhookEvent.orderId } }),
@@ -446,7 +439,9 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
       .send(validWebhookEvent);
     expect(identicalWebhookRetry.status).toBe(200);
     expect(identicalWebhookRetry.body.idempotent).toBe(true);
-    expect(identicalWebhookRetry.body.tickets.map((ticket: { id: string }) => ticket.id)).toEqual(afterWebhookSuccess.tickets.map((ticket) => ticket.id));
+    expect(identicalWebhookRetry.body).toEqual({ accepted: true, idempotent: true, orderId: webhookSuccessOrder.body.id });
+    expect(identicalWebhookRetry.body).not.toHaveProperty("tickets");
+    expect(JSON.stringify(identicalWebhookRetry.body)).not.toContain(afterWebhookSuccess.tickets[0]!.qrToken);
     expect(await successfulWebhookState()).toEqual(afterWebhookSuccess);
 
     const changedReplayEvent = { ...validWebhookEvent, amountVnd: validWebhookEvent.amountVnd + 1 };
@@ -500,10 +495,20 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
     });
     userIds.push(customer.id);
     const customerAuth = { Authorization: `Bearer ${createToken({ id: customer.id, authVersion: customer.authVersion })}` };
-    const createPendingOrder = async (seatId: string) => {
-      const hold = await request(app).post("/api/holds").set(customerAuth).send({ showtimeId, seatIds: [seatId] });
+    const replayCustomer = await prisma.user.create({
+      data: {
+        name: "Webhook Replay Customer B",
+        email: `webhook-replay-b-${fixture}@test.local`,
+        passwordHash: "unused-in-webhook-replay-test",
+        role: Role.CUSTOMER
+      }
+    });
+    userIds.push(replayCustomer.id);
+    const replayCustomerAuth = { Authorization: `Bearer ${createToken({ id: replayCustomer.id, authVersion: replayCustomer.authVersion })}` };
+    const createPendingOrder = async (seatId: string, auth: typeof customerAuth) => {
+      const hold = await request(app).post("/api/holds").set(auth).send({ showtimeId, seatIds: [seatId] });
       expect(hold.status).toBe(201);
-      const order = await request(app).post("/api/orders").set(customerAuth).send({ holdId: hold.body.id as string });
+      const order = await request(app).post("/api/orders").set(auth).send({ holdId: hold.body.id as string });
       expect(order.status).toBe(201);
       expect(order.body.status).toBe(OrderStatus.PAYMENT_PENDING);
       return {
@@ -514,8 +519,8 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
       };
     };
 
-    const original = await createPendingOrder(availableSeatIds[0]!);
-    const second = await createPendingOrder(availableSeatIds[1]!);
+    const original = await createPendingOrder(availableSeatIds[0]!, customerAuth);
+    const second = await createPendingOrder(availableSeatIds[1]!, replayCustomerAuth);
     const eventId = `evt-cross-order-replay-${fixture}`;
     const webhookSecret = process.env.MOCK_PAYMENT_SECRET || "cinema-booking-local-mock-payment-secret-2026";
     const originalEvent = {
@@ -530,7 +535,8 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
       .send(originalEvent);
     expect(originalCallback.status).toBe(200);
     expect(originalCallback.body.idempotent).toBe(false);
-    expect(originalCallback.body.tickets).toHaveLength(1);
+    expect(originalCallback.body).toEqual({ accepted: true, idempotent: false, orderId: original.orderId });
+    expect(originalCallback.body).not.toHaveProperty("tickets");
 
     const orderState = async (order: typeof original) => ({
       order: await prisma.cinemaOrder.findUniqueOrThrow({ where: { id: order.orderId } }),
@@ -616,10 +622,10 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
     expect([first.status, second.status]).toEqual([200, 200]);
     expect([first.body.idempotent, second.body.idempotent].sort((left: boolean, right: boolean) => Number(left) - Number(right))).toEqual([false, true]);
     for (const response of [first, second]) {
-      expect(response.body).toMatchObject({ accepted: true, orderId: event.orderId, status: OrderStatus.CONFIRMED, totalVnd: event.amountVnd });
-      expect(response.body.tickets).toHaveLength(1);
+      expect(response.body).toMatchObject({ accepted: true, orderId: event.orderId });
+      expect(Object.keys(response.body).sort()).toEqual(["accepted", "idempotent", "orderId"]);
+      expect(JSON.stringify(response.body)).not.toContain("qrToken");
     }
-    expect(first.body.tickets[0].id).toBe(second.body.tickets[0].id);
 
     expect(await prisma.paymentEvent.count({ where: { providerEventId: event.eventId, orderId: event.orderId } })).toBe(1);
     expect(await prisma.ticket.count({ where: { orderId: event.orderId } })).toBe(1);

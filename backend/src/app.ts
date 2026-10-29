@@ -373,6 +373,8 @@ export function createApp() {
     const now = new Date();
     const expiresAt = new Date(now.getTime() + HOLD_TTL_SECONDS * 1000);
     const hold = await prisma.$transaction(async (tx) => {
+      // Serialize all booking attempts for a Customer, including requests for different seats.
+      await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`SELECT "id" FROM "User" WHERE "id" = ${req.user!.id} FOR UPDATE`);
       const showtime = await tx.showtime.findFirst({ where: { id: input.showtimeId, status: RecordStatus.ACTIVE, startAt: { gt: now }, movie: { status: RecordStatus.ACTIVE }, auditorium: { cinema: { status: RecordStatus.ACTIVE } } }, include: { auditorium: { include: { seats: { where: { id: { in: seatIds } } } } } } });
       if (!showtime) throw new DomainError("SHOWTIME_UNAVAILABLE", "Suất chiếu không còn mở bán.", 404);
       if (showtime.auditorium.seats.length !== seatIds.length) throw new DomainError("SEAT_NOT_FOUND", "Một hoặc nhiều ghế không thuộc phòng chiếu này.", 422);
@@ -386,7 +388,7 @@ export function createApp() {
           throw new DomainError("SEAT_CONFLICT", "Một hoặc nhiều ghế vừa được người khác giữ. Vui lòng chọn lại.", 409);
         }
       }
-      const userActiveHold = await tx.seatHold.findFirst({ where: { userId: req.user!.id, status: HoldStatus.HELD, expiresAt: { gt: now } } });
+      const userActiveHold = await tx.seatHold.findFirst({ where: { userId: req.user!.id, status: { in: [HoldStatus.HELD, HoldStatus.PAYMENT_PENDING] }, expiresAt: { gt: now } } });
       if (userActiveHold) throw new DomainError("ACTIVE_HOLD_EXISTS", "Bạn đang có lượt giữ ghế chưa hoàn tất.", 409);
 
       const createdHold = await tx.seatHold.create({ data: { userId: req.user!.id, showtimeId: input.showtimeId, expiresAt } });
@@ -410,6 +412,8 @@ export function createApp() {
   app.post("/api/orders", requireAuth, requireRole(Role.CUSTOMER), asyncRoute(async (req, res) => {
     const { holdId } = z.object({ holdId: z.string().min(1) }).strict().parse(req.body);
     const result = await prisma.$transaction(async (tx) => {
+      // Use the same lock order as POST /api/holds so an order transition cannot race a new hold.
+      await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`SELECT "id" FROM "User" WHERE "id" = ${req.user!.id} FOR UPDATE`);
       await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`SELECT "id" FROM "SeatHold" WHERE "id" = ${holdId} FOR UPDATE`);
       const hold = await tx.seatHold.findFirst({ where: { id: holdId, userId: req.user!.id }, include: { order: true, claims: { include: { seat: true } } } });
       if (!hold) throw new DomainError("HOLD_NOT_FOUND", "Không tìm thấy lượt giữ ghế.", 404);
@@ -440,8 +444,8 @@ export function createApp() {
     const result = await applyMockPaymentEvent(event);
     if (result.outcome === "EXPIRED") throw new DomainError("PAYMENT_TOO_LATE", "Đơn đã hết thời gian giữ ghế; callback không phát vé.", 409);
     if (result.outcome === "FAILED") throw new DomainError("PAYMENT_FAILED", "Thanh toán mô phỏng thất bại. Ghế đã được giải phóng.", 402);
-    const order = await getOrderForResponse(prisma, result.orderId);
-    res.json({ accepted: true, idempotent: result.idempotent, orderId: order.id, status: order.status, totalVnd: order.totalVnd, tickets: order.tickets });
+    // A signed provider callback only needs an acknowledgement; ticket QR credentials stay customer-only.
+    res.json({ accepted: true, idempotent: result.idempotent, orderId: result.orderId });
   }));
 
   app.post("/api/payments/mock/complete", requireAuth, requireRole(Role.CUSTOMER), asyncRoute(async (req, res) => {

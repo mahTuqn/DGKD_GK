@@ -18,6 +18,7 @@ CinemaBooking là ứng dụng web responsive đặt vé cho một cụm rạp, 
 - Múi giờ hiển thị/ngày nghiệp vụ: `Asia/Ho_Chi_Minh`; lưu timestamp UTC.
 - Hold giữ tối đa 8 ghế của cùng suất trong 5 phút. Hạn do backend quyết định.
 - Chỉ một hold còn hiệu lực hoặc một vé bán được cho cùng ghế/suất. Tranh chấp trả `409`.
+- Mỗi Customer chỉ có một lượt đặt chỗ đang hoạt động: hold `HELD` hoặc đơn `PAYMENT_PENDING` còn hạn. Có thể đặt lượt mới sau khi thanh toán được xác nhận, thất bại hoặc lượt trước hết hạn.
 - Giá tính ở backend, lưu nguyên VND và snapshot theo đơn; không tin tổng giá gửi từ browser.
 - Demo payment không nhận thông tin thẻ. Lặp request cùng đơn không phát nhiều vé.
 - Chỉ role Customer được tạo hold, tạo order và gọi endpoint tự hoàn tất mock payment; Guest bị yêu cầu đăng nhập, Staff/Admin nhận `403 ROLE_FORBIDDEN` trước khi đọc hoặc thay đổi booking/payment state.
@@ -57,7 +58,7 @@ CinemaBooking là ứng dụng web responsive đặt vé cho một cụm rạp, 
 
 ## 5. Trạng thái đặt vé
 
-`HELD → PAYMENT_PENDING → CONFIRMED`; hold/đơn có thể chuyển `EXPIRED`, payment có thể `PAYMENT_FAILED` hoặc `RECONCILIATION_REQUIRED`. Callback thành công hợp lệ đến sau khi đơn hết hạn không phát vé hay chiếm ghế; sự kiện được ghi vào outbox và tạo hồ sơ đối soát thủ công. Vé thuộc đơn xác nhận chuyển trạng thái `CHECKED_IN` sau lần soát đầu. Không cho phép trạng thái cuối quay lại `HELD`.
+`HELD → PAYMENT_PENDING → CONFIRMED`; hold/đơn có thể chuyển `EXPIRED`, payment có thể `PAYMENT_FAILED` hoặc `RECONCILIATION_REQUIRED`. Callback thành công hợp lệ đến sau khi đơn hết hạn không phát vé hay chiếm ghế; sự kiện được ghi vào outbox và tạo hồ sơ đối soát thủ công. Webhook chỉ nhận ACK tối thiểu (`accepted`, `idempotent`, `orderId`); QR token chỉ trả cho Customer xem đơn của chính mình. Vé thuộc đơn xác nhận chuyển trạng thái `CHECKED_IN` sau lần soát đầu. Không cho phép trạng thái cuối quay lại `HELD`.
 
 ## 6. API bản demo
 

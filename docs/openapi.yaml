@@ -209,7 +209,7 @@ paths:
       tags: [Booking]
       operationId: createSeatHold
       summary: Giữ từ 1 đến 8 ghế trong 5 phút
-      description: Chỉ Customer được giữ ghế; Staff/Admin nhận 403. Giá được tính ở server; mỗi Customer chỉ có thể có một lượt giữ ghế đang hoạt động.
+      description: Chỉ Customer được giữ ghế; Staff/Admin nhận 403. Giá được tính ở server; mỗi Customer chỉ có một lượt đặt chỗ đang hoạt động (hold HELD hoặc đơn PAYMENT_PENDING còn hạn), kể cả khi gửi request đồng thời cho ghế khác.
       requestBody:
         required: true
         content:
@@ -329,6 +329,7 @@ paths:
         eventId, orderId, status, amountVnd, currency, sử dụng MOCK_PAYMENT_SECRET.
         Sự kiện lặp cùng payload là idempotent; dùng lại eventId cho payload khác bị từ chối.
         Callback thành công đến sau khi hết hạn trả PAYMENT_TOO_LATE, không tạo vé và giải phóng claim.
+        Response chỉ xác nhận accepted, idempotent và orderId; QR token chỉ được trả qua order API đã xác thực.
       parameters:
         - name: x-mock-signature
           in: header
@@ -1138,16 +1139,12 @@ components:
           items: { $ref: '#/components/schemas/Ticket' }
     MockWebhookResponse:
       type: object
-      required: [accepted, idempotent, orderId, status, totalVnd, tickets]
+      additionalProperties: false
+      required: [accepted, idempotent, orderId]
       properties:
         accepted: { const: true }
         idempotent: { type: boolean }
         orderId: { type: string }
-        status: { $ref: '#/components/schemas/OrderStatus' }
-        totalVnd: { type: integer }
-        tickets:
-          type: array
-          items: { $ref: '#/components/schemas/Ticket' }
     CheckInResponse:
       type: object
       required: [ticketId, checkedInAt, seat, movieTitle, cinemaName]
