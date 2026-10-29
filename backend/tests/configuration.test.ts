@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { assertMockPaymentConfiguration, createApp, getRegistrationRateLimit } from "../src/app.js";
+import { assertMockPaymentConfiguration, createApp, getRegistrationRateLimit, isMockPaymentCompletionEnabled } from "../src/app.js";
 import { assertAuthenticationConfiguration } from "../src/auth.js";
 
 const environmentKeys = ["NODE_ENV", "JWT_SECRET", "MOCK_PAYMENT_SECRET", "TRUST_PROXY_HOPS", "E2E_REGISTRATION_RATE_LIMIT"] as const;
@@ -15,6 +15,16 @@ function restoreEnvironment() {
 
 describe("TC-SEC-13 deployment secrets and trusted proxy configuration", () => {
   afterEach(restoreEnvironment);
+
+  it("allows customer-triggered mock payment only in explicit development and test modes", () => {
+    for (const mode of ["development", "test"]) {
+      expect(isMockPaymentCompletionEnabled({ NODE_ENV: mode })).toBe(true);
+    }
+
+    for (const mode of ["production", "staging", "preview", undefined]) {
+      expect(isMockPaymentCompletionEnabled({ NODE_ENV: mode })).toBe(false);
+    }
+  });
 
   it("keeps five registrations per window by default and ignores the E2E override in production", () => {
     expect(getRegistrationRateLimit({ NODE_ENV: "test" })).toBe(5);

@@ -1,19 +1,21 @@
-import { randomBytes } from "node:crypto";
+import { AsyncLocalStorage } from "node:async_hooks";
+import { randomBytes, randomUUID } from "node:crypto";
 import { ClaimStatus, HoldStatus, OrderStatus, PaymentStatus, Prisma, RecordStatus, Role, SeatType } from "@prisma/client";
 import cors from "cors";
 import express from "express";
 import { rateLimit } from "express-rate-limit";
 import helmet from "helmet";
-import morgan from "morgan";
 import { z } from "zod";
 import { createToken, hashPassword, requireAuth, requireRole, verifyPassword } from "./auth.js";
 import { prisma } from "./db.js";
 import { calculateFillRatePercent, calendarDateAtTime, computeSeatPrice, DomainError, formatBusinessDate, HOLD_TTL_SECONDS, isHoldActive, uniqueSeatIds } from "./domain/booking-policy.js";
 import { mockPaymentPayloadHash, signMockPaymentEvent, verifyMockPaymentSignature, type MockPaymentEvent } from "./domain/mock-payment-signature.js";
 import { collectionPageQuerySchema, decodeCollectionCursor, encodeCollectionCursor } from "./pagination.js";
+import { logSafeError } from "./safe-logger.js";
 import { enqueueOutboxEvent } from "./worker.js";
 
 const asyncRoute = (handler: express.RequestHandler): express.RequestHandler => (req, res, next) => Promise.resolve(handler(req, res, next)).catch(next);
+const requestCorrelation = new AsyncLocalStorage<string>();
 const businessDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
   try { calendarDateAtTime(value, 0); return true; } catch { return false; }
 }, "Ngày lịch không tồn tại.");
@@ -32,6 +34,14 @@ const publicMockPaymentSecrets = new Set([
   "local-mock-webhook-secret-change-before-deployment-2026",
   "ci-only-webhook-secret"
 ]);
+function isLocalEnvironment(environment: { NODE_ENV?: string }) {
+  return environment.NODE_ENV === "development" || environment.NODE_ENV === "test";
+}
+
+export function isMockPaymentCompletionEnabled(environment: { NODE_ENV?: string } = process.env) {
+  return isLocalEnvironment(environment);
+}
+
 const mockPaymentEventSchema = z.object({
   eventId: z.string().trim().min(8).max(128),
   orderId: z.string().min(1),
@@ -42,8 +52,7 @@ const mockPaymentEventSchema = z.object({
 
 function getMockPaymentSecret() {
   const configured = process.env.MOCK_PAYMENT_SECRET;
-  const isLocalEnvironment = process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test";
-  if (!isLocalEnvironment) {
+  if (!isLocalEnvironment(process.env)) {
     if (!configured) throw new Error("MOCK_PAYMENT_SECRET must be configured with at least 32 characters outside development and test.");
     if (publicMockPaymentSecrets.has(configured)) throw new Error("MOCK_PAYMENT_SECRET must not use a published development or CI value outside development and test.");
     if (configured.length < 32) throw new Error("MOCK_PAYMENT_SECRET must be configured with at least 32 characters outside development and test.");
@@ -176,7 +185,11 @@ export async function applyMockPaymentEvent(event: MockPaymentEvent, actorId?: s
 }
 
 function audit(client: Prisma.TransactionClient, actorId: string | undefined, action: string, entity: string, entityId: string, metadata?: Prisma.InputJsonValue) {
-  return client.auditLog.create({ data: { actorId, action, entity, entityId, metadata } });
+  const correlationId = requestCorrelation.getStore();
+  const correlatedMetadata = correlationId
+    ? { ...(metadata && typeof metadata === "object" && !Array.isArray(metadata) ? metadata : {}), correlationId } as Prisma.InputJsonObject
+    : metadata;
+  return client.auditLog.create({ data: { actorId, action, entity, entityId, metadata: correlatedMetadata } });
 }
 
 function assertStaffCinemaScope(user: NonNullable<express.Request["user"]>, ticketCinemaId: string) {
@@ -242,6 +255,26 @@ export function createApp() {
   // the API receives public requests through the Nginx web container.
   app.set("trust proxy", trustedProxyHops());
   app.disable("x-powered-by");
+  app.use((req, res, next) => {
+    const correlationId = randomUUID();
+    const startedAt = process.hrtime.bigint();
+    res.setHeader("X-Request-ID", correlationId);
+    requestCorrelation.run(correlationId, () => {
+      res.once("finish", () => {
+        const routePath = req.route?.path;
+        console.log(JSON.stringify({
+          level: "info",
+          event: "http_request",
+          correlationId,
+          method: req.method,
+          route: typeof routePath === "string" ? routePath : req.route ? "matched" : "unmatched",
+          statusCode: res.statusCode,
+          durationMs: Number((Number(process.hrtime.bigint() - startedAt) / 1_000_000).toFixed(2))
+        }));
+      });
+      next();
+    });
+  });
   app.use(helmet({ contentSecurityPolicy: false }));
   app.use((_req, res, next) => {
     res.setHeader("Content-Security-Policy", apiContentSecurityPolicy);
@@ -252,7 +285,6 @@ export function createApp() {
   const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173,http://127.0.0.1:5173").split(",").map((item) => item.trim()).filter(Boolean);
   app.use(cors({ origin: (origin, callback) => callback(null, !origin || allowedOrigins.includes(origin)) }));
   app.use(express.json({ limit: "64kb" }));
-  app.use(morgan("tiny"));
 
   const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -450,8 +482,8 @@ export function createApp() {
   }));
 
   app.post("/api/payments/mock/complete", requireAuth, requireRole(Role.CUSTOMER), asyncRoute(async (req, res) => {
-    if (process.env.NODE_ENV === "production") {
-      throw new DomainError("MOCK_PAYMENT_DISABLED", "Thanh toán mô phỏng không khả dụng trong production.", 404);
+    if (!isMockPaymentCompletionEnabled()) {
+      throw new DomainError("MOCK_PAYMENT_DISABLED", "Thanh toán mô phỏng chỉ khả dụng trong development và test.", 404);
     }
     const input = z.object({ orderId: z.string().min(1), outcome: z.enum(["SUCCEEDED", "FAILED"]).default("SUCCEEDED") }).strict().parse(req.body);
     const ownedOrder = await prisma.cinemaOrder.findFirst({ where: { id: input.orderId, userId: req.user!.id }, select: { id: true, totalVnd: true } });
@@ -874,7 +906,7 @@ export function createApp() {
       if (error.code === "P2025") return res.status(404).json({ error: "NOT_FOUND", message: "Không tìm thấy dữ liệu." });
       if (error.code === "P2034") return res.status(409).json({ error: "TRANSACTION_RETRY", message: "Dữ liệu vừa thay đổi. Vui lòng thử lại." });
     }
-    console.error(error);
+    logSafeError("http_unhandled_error", requestCorrelation.getStore() ?? "unavailable", error);
     return res.status(500).json({ error: "INTERNAL_ERROR", message: "Có lỗi hệ thống xảy ra." });
   });
 

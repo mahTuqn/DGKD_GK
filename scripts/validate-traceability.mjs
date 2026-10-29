@@ -37,6 +37,16 @@ function loadCsv(file) {
 
 const cases = loadCsv("docs/04-test-cases.csv");
 const requirements = loadCsv("docs/03-rtm.csv");
+const srsPath = path.join(root, "docs/01-srs.md");
+const srsRequirementIds = new Set();
+if (!fs.existsSync(srsPath)) errors.push("Thiếu tệp docs/01-srs.md");
+else {
+  const srs = fs.readFileSync(srsPath, "utf8");
+  for (const match of srs.matchAll(/^\|\s*(REQ-[A-Z0-9-]+)\s*\|/gm)) {
+    if (srsRequirementIds.has(match[1])) errors.push(`Requirement ID bị trùng trong SRS: ${match[1]}`);
+    srsRequirementIds.add(match[1]);
+  }
+}
 const caseIds = new Set();
 const codeTestIds = new Map();
 for (const row of cases) {
@@ -81,6 +91,9 @@ for (const row of requirements) {
   requirementCases.set(id, new Set(refs));
   for (const ref of refs) if (!caseIds.has(ref)) errors.push(`${id}: tham chiếu test không tồn tại: ${ref}`);
 }
+
+for (const id of srsRequirementIds) if (!requirementIds.has(id)) errors.push(`Requirement trong SRS chưa có trong RTM: ${id}`);
+for (const id of requirementIds) if (!srsRequirementIds.has(id)) errors.push(`Requirement trong RTM không có trong SRS: ${id}`);
 
 for (const row of cases) {
   const id = (row["Test ID"] || row["Test Case ID"]);

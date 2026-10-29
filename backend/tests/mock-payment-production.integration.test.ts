@@ -29,8 +29,7 @@ productionDescribe("production mock-payment route gate", () => {
     }
   }, 15_000);
 
-  it("[TC-SEC-18] disables customer-triggered mock payment completion in production", async () => {
-    process.env.NODE_ENV = "production";
+  it("[TC-SEC-18] disables customer-triggered mock payment completion outside local modes", async () => {
     process.env.JWT_SECRET = "production-mode-test-jwt-secret-value-32chars";
     process.env.MOCK_PAYMENT_SECRET = "production-mode-test-payment-secret-32chars";
     await prisma.$connect();
@@ -46,12 +45,32 @@ productionDescribe("production mock-payment route gate", () => {
     });
     userId = user.id;
 
-    const response = await request(createApp())
-      .post("/api/payments/mock/complete")
-      .set({ Authorization: `Bearer ${createToken(user)}` })
-      .send({ orderId: `nonexistent-${fixture}` });
+    const app = createApp();
+    const authorization = { Authorization: `Bearer ${createToken(user)}` };
 
-    expect(response.status).toBe(404);
-    expect(response.body.error).toBe("MOCK_PAYMENT_DISABLED");
+    for (const mode of ["production", "staging", "preview", undefined]) {
+      if (mode === undefined) delete process.env.NODE_ENV;
+      else process.env.NODE_ENV = mode;
+
+      const response = await request(app)
+        .post("/api/payments/mock/complete")
+        .set(authorization)
+        .send({ orderId: `nonexistent-${fixture}` });
+
+      expect(response.status).toBe(404);
+      expect(response.body.error).toBe("MOCK_PAYMENT_DISABLED");
+    }
+
+    for (const mode of ["development", "test"]) {
+      process.env.NODE_ENV = mode;
+
+      const response = await request(app)
+        .post("/api/payments/mock/complete")
+        .set(authorization)
+        .send({ orderId: `nonexistent-${fixture}` });
+
+      expect(response.status).toBe(404);
+      expect(response.body.error).toBe("ORDER_NOT_FOUND");
+    }
   }, 15_000);
 });

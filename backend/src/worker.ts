@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { HoldStatus, OrderStatus, OutboxEventStatus, OutboxEventType, PaymentStatus, Prisma, ReconciliationCaseStatus, type OutboxEvent, type PrismaClient } from "@prisma/client";
 import { prisma } from "./db.js";
+import { logSafeError } from "./safe-logger.js";
 import { createWorkerHealthServer, WORKER_HEALTH_PATH, type WorkerHealthSnapshot } from "./worker-health.js";
 
 const DEFAULT_BATCH_SIZE = 100;
@@ -277,7 +278,7 @@ export function startWorker(options: StartWorkerOptions = {}): { stop: () => Pro
   let stopping = false;
   let timer: NodeJS.Timeout | undefined;
   let currentCycle: Promise<unknown> | undefined;
-  const onError = options.onError ?? ((error: unknown) => console.error("CinemaBooking worker cycle failed.", error));
+  const onError = options.onError ?? ((error: unknown) => logSafeError("worker_cycle_failed", randomUUID(), error));
 
   const loop = async () => {
     if (stopping) return;
@@ -312,7 +313,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     },
     onError: (error) => {
       healthSnapshot.lastErrorAt = Date.now();
-      console.error("CinemaBooking worker cycle failed.", error);
+      logSafeError("worker_cycle_failed", randomUUID(), error);
     }
   });
   const shutdown = async () => {
