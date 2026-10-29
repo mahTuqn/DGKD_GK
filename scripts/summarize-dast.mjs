@@ -1,7 +1,7 @@
 import { appendFileSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
-const reportDirectory = path.resolve("reports/generated/dast");
+const reportDirectory = path.resolve(process.env.DAST_REPORT_DIRECTORY || "reports/generated/dast");
 const reportPattern = /^(unauthenticated-api|authenticated-api|preview)-\d{14}-[a-f0-9]{8}\.json$/;
 const reportKinds = ["unauthenticated-api", "authenticated-api", "preview"];
 const severityNames = ["High", "Medium", "Low", "Informational", "Unknown"];
@@ -27,7 +27,12 @@ function appendSummary(markdown) {
   }
 }
 
-const reports = reportKinds.map((kind) => ({ kind, counts: emptyCounts(), status: "missing" }));
+const reports = reportKinds.map((kind) => ({
+  kind,
+  alertCounts: emptyCounts(),
+  instanceCounts: emptyCounts(),
+  status: "missing",
+}));
 const errors = [];
 let files = [];
 try {
@@ -44,7 +49,11 @@ for (const file of files) {
     const document = JSON.parse(readFileSync(path.join(reportDirectory, file), "utf8"));
     if (!Array.isArray(document.site)) throw new Error("ZAP report has no site array");
     const alerts = document.site.flatMap((site) => Array.isArray(site.alerts) ? site.alerts : []);
-    for (const alert of alerts) report.counts[classify(alert)] += 1;
+    for (const alert of alerts) {
+      const severity = classify(alert);
+      report.alertCounts[severity] += 1;
+      report.instanceCounts[severity] += Array.isArray(alert.instances) ? alert.instances.length : 0;
+    }
     report.status = "parsed";
   } catch {
     report.status = "invalid";
@@ -52,25 +61,52 @@ for (const file of files) {
   }
 }
 
-const totals = emptyCounts();
+const alertTotals = emptyCounts();
+const instanceTotals = emptyCounts();
 for (const report of reports) {
-  if (report.status === "parsed") for (const severity of severityNames) totals[severity] += report.counts[severity];
+  if (report.status !== "parsed") continue;
+  for (const severity of severityNames) {
+    alertTotals[severity] += report.alertCounts[severity];
+    instanceTotals[severity] += report.instanceCounts[severity];
+  }
 }
 
 const header = "| Scan | High | Medium | Low | Informational | Unknown | Status |";
 const separator = "|---|---:|---:|---:|---:|---:|---|";
-const rows = reports.map((report) => `| ${report.kind} | ${report.counts.High} | ${report.counts.Medium} | ${report.counts.Low} | ${report.counts.Informational} | ${report.counts.Unknown} | ${report.status} |`);
-rows.push(`| **Parsed total** | **${totals.High}** | **${totals.Medium}** | **${totals.Low}** | **${totals.Informational}** | **${totals.Unknown}** | **${reports.filter((report) => report.status === "parsed").length}/${reports.length} reports** |`);
+function rowsFor(countsKey, totals, unit) {
+  const rows = reports.map((report) => `| ${report.kind} | ${report[countsKey].High} | ${report[countsKey].Medium} | ${report[countsKey].Low} | ${report[countsKey].Informational} | ${report[countsKey].Unknown} | ${report.status} |`);
+  rows.push(`| **Parsed total (${unit})** | **${totals.High}** | **${totals.Medium}** | **${totals.Low}** | **${totals.Informational}** | **${totals.Unknown}** | **${reports.filter((report) => report.status === "parsed").length}/${reports.length} reports** |`);
+  return rows;
+}
 const incomplete = reports.some((report) => report.status !== "parsed");
 const note = incomplete
   ? "At least one current-run report is missing or invalid; missing/invalid reports are not counted as zero findings. Review the scan and artifact before interpreting the totals."
-  : "Counts are ZAP alert instances from the current run only. Alert names, request URLs, and payloads are intentionally omitted from this summary.";
-const markdown = [`### DAST severity summary`, "", header, separator, ...rows, "", note].join("\n");
+  : "Alert counts are ZAP alert records; instance counts are the entries attached to those alerts. Both cover parsed reports from the current run only. Alert names, request URLs, and payloads are intentionally omitted from this summary.";
+const markdown = [
+  "### DAST severity summary",
+  "",
+  "#### Alert records",
+  "",
+  header,
+  separator,
+  ...rowsFor("alertCounts", alertTotals, "alert records"),
+  "",
+  "#### Alert instances",
+  "",
+  header,
+  separator,
+  ...rowsFor("instanceCounts", instanceTotals, "instances"),
+  "",
+  note,
+].join("\n");
 
-console.log("DAST severity summary (alert counts only; no alert names, URLs, or payloads):");
+console.log("DAST severity summary (alert records and instances; no alert names, URLs, or payloads):");
 for (const report of reports) {
-  console.log(`- ${report.kind}: ${severityNames.map((severity) => `${severity} ${report.counts[severity]}`).join(", ")} (${report.status})`);
+  console.log(`- ${report.kind}: ${report.status}`);
+  console.log(`  alert records: ${severityNames.map((severity) => `${severity} ${report.alertCounts[severity]}`).join(", ")}`);
+  console.log(`  instances: ${severityNames.map((severity) => `${severity} ${report.instanceCounts[severity]}`).join(", ")}`);
 }
-console.log(`- Parsed total: ${severityNames.map((severity) => `${severity} ${totals[severity]}`).join(", ")}`);
+console.log(`- Parsed alert-record total: ${severityNames.map((severity) => `${severity} ${alertTotals[severity]}`).join(", ")}`);
+console.log(`- Parsed instance total: ${severityNames.map((severity) => `${severity} ${instanceTotals[severity]}`).join(", ")}`);
 if (errors.length) for (const error of errors) console.warn(`DAST summary note: ${error}`);
 appendSummary(markdown);
