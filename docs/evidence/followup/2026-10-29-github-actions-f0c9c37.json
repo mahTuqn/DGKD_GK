@@ -1,0 +1,144 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "recordedAt": "2026-10-29",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "commit": "f0c9c3763fb839e671b904937bc957791aaf8e3a",
+  "branch": "codex/cross-browser-smoke",
+  "overall": "PASS_AUTOMATED_CI_WITH_DOCUMENTED_LIMITATIONS",
+  "codeDeltaFromPreviousVerifiedSource": "Added strict backend source/test TypeScript checking to CI; covered Admin edits to both HELD and SOLD seats; made seat accessible names include row, status, and accessible/premium/standard type; exposed the hold countdown as a named timer with non-repeating creation announcement; expanded existing axe scans to WCAG 2.0/2.1/2.2 A/AA tags and fail on all impacts. Fixed TC-E2E-20's seat-name expectation to permit the new type description.",
+  "traceability": {
+    "result": "PASS",
+    "testCases": 94,
+    "requirements": 26
+  },
+  "runs": {
+    "qualityDastCompose": {
+      "id": 40808427061,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40808427061",
+      "result": "PASS",
+      "headSha": "f0c9c3763fb839e671b904937bc957791aaf8e3a",
+      "verified": [
+        "Gitleaks and dependency audit",
+        "Database migrations, OpenAPI lint, traceability, and strict backend source/test typecheck",
+        "API integration including TC-SEC-23: Admin edits to HELD and SOLD seats return 409 with unchanged state/audit",
+        "TC-PLAN-08: 100 simultaneous requests across two API processes returned one 201 and 99 conflicts with one persisted HELD claim/hold",
+        "Live five-minute hold expiry and two-worker five-minute soak/restart",
+        "Backend/frontend production build",
+        "Chromium desktop/Pixel 7 Playwright: 50 expected, 0 unexpected, 0 skipped, 0 flaky",
+        "Isolated Compose runtime and browser smoke",
+        "Unauthenticated API, authenticated API, and web preview DAST scans",
+        "Domain coverage and mutation threshold"
+      ],
+      "artifacts": [
+        {
+          "id": 12869084996,
+          "name": "cinema-booking-browser-results-f0c9c3763fb839e671b904937bc957791aaf8e3a",
+          "sizeBytes": 342742,
+          "digest": "sha256:40f410e199659ec1d995f0d6df2461e739488b1fb97e3d7d55ec720534d303ac",
+          "digestVerified": true,
+          "summary": "Playwright 50 expected, 0 unexpected, 0 skipped, 0 flaky."
+        },
+        {
+          "id": 12869296635,
+          "name": "cinema-booking-compose-browser-results-f0c9c3763fb839e671b904937bc957791aaf8e3a",
+          "sizeBytes": 200011,
+          "digest": "sha256:c7554f951c697519f9b184ef597d605b3eb6b12d05f3edd241d8b64da66616c1"
+        },
+        {
+          "id": 12868424675,
+          "name": "cinema-booking-domain-quality-f0c9c3763fb839e671b904937bc957791aaf8e3a",
+          "sizeBytes": 144503,
+          "digest": "sha256:77f7e69bd79299565a52192344b94d94b9770983bdc41103529fa26f07441674"
+        },
+        {
+          "id": 12869587061,
+          "name": "cinema-booking-dast-reports-f0c9c3763fb839e671b904937bc957791aaf8e3a",
+          "sizeBytes": 6482,
+          "digest": "sha256:742b2cec603b9e06ca6c08224a15f454ddd009441c1bc4bba906465d0a0b07c6",
+          "digestVerified": true
+        }
+      ]
+    },
+    "crossBrowser": {
+      "id": 40808426900,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40808426900",
+      "result": "PASS",
+      "headSha": "f0c9c3763fb839e671b904937bc957791aaf8e3a",
+      "verified": [
+        "Firefox and WebKit desktop smoke"
+      ],
+      "artifact": {
+        "id": 12869187515,
+        "name": "cinema-booking-cross-browser-results-f0c9c3763fb839e671b904937bc957791aaf8e3a",
+        "sizeBytes": 222783,
+        "digest": "sha256:6978d89ec698d25a0612c0fa560d090c1a9c2d2da14aba2f00a0e247e3582848"
+      }
+    },
+    "workerLongSoak": {
+      "id": 40808427072,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40808427072",
+      "result": "PASS",
+      "headSha": "f0c9c3763fb839e671b904937bc957791aaf8e3a",
+      "verified": [
+        "TC-WORKER-07 two-worker 15-minute soak",
+        "Graceful restart and pending-event catch-up"
+      ]
+    }
+  },
+  "dastReview": {
+    "artifactDigestVerified": true,
+    "artifactDigest": "sha256:742b2cec603b9e06ca6c08224a15f454ddd009441c1bc4bba906465d0a0b07c6",
+    "reportsParsed": "3/3",
+    "alertRecords": {
+      "High": 0,
+      "Medium": 0,
+      "Low": 1,
+      "Informational": 5,
+      "Unknown": 0
+    },
+    "alertInstances": {
+      "High": 0,
+      "Medium": 0,
+      "Low": 3,
+      "Informational": 12,
+      "Unknown": 0
+    },
+    "triagedObservation": {
+      "id": "SEC-OBS-01",
+      "alert": "Cross Site Scripting Weakness (Persistent in JSON Response)",
+      "risk": "Low",
+      "confidence": "Low",
+      "instances": [
+        {
+          "path": "/api/admin/cinemas",
+          "parameter": "address"
+        },
+        {
+          "path": "/api/admin/cinemas",
+          "parameter": "name"
+        },
+        {
+          "path": "/api/cinemas",
+          "parameter": "city"
+        }
+      ],
+      "disposition": "Current frontend consumer source audit found these values use React text/form rendering; no raw HTML sink was found. /api/cinemas has no current frontend consumer. The observation remains tracked for future or external JSON consumers."
+    }
+  },
+  "remainingGates": [
+    "Requester-owned manual WCAG 2.2 AA review: keyboard-only, screen reader, contrast, zoom/reflow, and orientation",
+    "No staging environment is available; named-staging performance is unmeasured",
+    "Production backup schedule, PITR, RPO/RTO, and production restore are unverified",
+    "Exhaustive ASVS/API Top 10 and adversarial BOLA/IDOR review remain open",
+    "Reliability beyond the tested 15-minute worker soak is unmeasured",
+    "Real payment gateway/refund is outside the current SRS"
+  ],
+  "limitations": [
+    "Passing CI applies to the exact source commit above, on isolated GitHub Actions databases/runners.",
+    "The browser report covers Chromium desktop and Pixel 7 emulation; cross-browser smoke separately covers Firefox and WebKit desktop.",
+    "The DAST scans found no High/Medium alerts in their configured scopes; they are not exhaustive security certification.",
+    "Automated axe checks do not replace the requester-owned manual accessibility review.",
+    "Static frontend consumer review does not cover other repositories or future consumers."
+  ]
+}
