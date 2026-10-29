@@ -1,14 +1,16 @@
 # Báo cáo tổng hợp kiểm thử
 
-## Latest exact-source CI result — `c766be3` — 29/10/2026
+## Latest exact-source CI result — `3eac808` — 29/10/2026
+
+All three GitHub Actions workflows passed on commit `3eac80867cd5028e96430922ff324093bdecf3a3`: [quality, API, DAST, mutation and Compose run 40800961578](https://github.com/mahTuqn/DGKD_GK/actions/runs/40800961578), [Firefox/WebKit smoke 40800961547](https://github.com/mahTuqn/DGKD_GK/actions/runs/40800961547), and [15-minute worker soak 40800961561](https://github.com/mahTuqn/DGKD_GK/actions/runs/40800961561). Traceability passed at **93 cases / 26 requirements**. Quality/API included TC-PLAN-08: 100 simultaneous requests split across two OS API processes returned 1 success and 99 conflicts, with exactly one persisted HELD claim and hold. Live five-minute expiry, five-minute worker soak/restart, production build, Chromium desktop/Pixel 7 browser tests, Compose-image booking smoke, domain coverage/mutation, Firefox/WebKit desktop, and the 15-minute worker soak/restart/catch-up all passed.
+
+The current DAST artifact was downloaded and SHA-256 verified against GitHub metadata; all three reports parsed. It contains 0 High/Medium, one Low alert record with 3 instances, and 5 Informational records with 11 instances. The Low alert is the triaged `SEC-OBS-01` JSON markup observation; the tested Admin UI still renders the submitted values as text, while other JSON consumers require context-appropriate output encoding. Alert metadata and artifact digests are in the [3eac808 evidence manifest](evidence/followup/2026-10-29-github-actions-3eac808.json); payloads were not copied into documentation. The requester will complete manual WCAG review; no staging environment is available. Backend runtime code did not change in this test-focused follow-up.
+
+## Previous exact-source CI result — `c766be3` — 29/10/2026
 
 All three GitHub Actions workflows passed on commit `c766be3c79266b5a214c680175a348dc11c6917d`: [quality, DAST, mutation and Compose run 40797609007](https://github.com/mahTuqn/DGKD_GK/actions/runs/40797609007), [Firefox/WebKit smoke 40797609261](https://github.com/mahTuqn/DGKD_GK/actions/runs/40797609261), and [15-minute worker soak 40797609052](https://github.com/mahTuqn/DGKD_GK/actions/runs/40797609052). Traceability passed at **92 cases / 26 requirements**. Quality/API, TC-PLAN-01’s 100-request same-seat race (1 success/99 conflicts within one Express process), live expiry, five-minute worker soak/restart, build, Chromium desktop/Pixel 7, Compose browser, domain coverage/mutation, Firefox/WebKit and the 15-minute worker soak/restart/catch-up all passed.
 
 The worker job ran for 950 seconds and verified graceful restart and catch-up of a pending event. The current DAST artifact was downloaded, digest-verified and reviewed: 0 High/Medium, one Low alert record with 3 instances, and 5 Informational records with 12 instances. The Low finding is the triaged `SEC-OBS-01` JSON markup observation; the Admin UI regression passes, but other JSON consumers still need context-appropriate output encoding. Artifact details and digests are in the [c766be3 evidence manifest](evidence/followup/2026-10-29-github-actions-c766be3.json). The requester will complete manual WCAG review; no staging is available.
-
-## Multi-process API race follow-up — CI pending
-
-TC-PLAN-08 adds two independent Node API processes, each listening on a dynamically assigned loopback port and sharing a dedicated PostgreSQL database. The test sends 100 simultaneous Customer hold requests split between the processes and checks for one `201`, 99 `409`s, one persisted `HELD` claim and one `HELD` hold. CI creates and migrates the dedicated database; exact-source execution has not yet completed, so this is implementation status, not a passing result.
 
 ## Previous exact-source CI result — `6581a76` — 29/10/2026
 
