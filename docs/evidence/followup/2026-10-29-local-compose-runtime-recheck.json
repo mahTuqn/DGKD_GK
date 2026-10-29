@@ -1,0 +1,54 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "recordedAt": "2026-10-29",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "sourceHead": "aa7cda5c069e72860d05cfb4b53c25e4a93d4263",
+  "scope": "Read-only Docker runtime snapshot; no stack/container/image/volume mutation and no test browser journey",
+  "host": {
+    "dockerEngine": "29.7.2",
+    "memoryFreeGiB": 0.71,
+    "memoryTotalGiB": 7.19
+  },
+  "stacks": [
+    {
+      "sourceParity": "not established",
+      "project": "dgkd_gk",
+      "health": {
+        "apiHealth": 200,
+        "healthz": 200
+      },
+      "services": {
+        "migrate": "exited 0",
+        "web": "running healthy, published 127.0.0.1:8080",
+        "worker": "running; no Docker healthcheck",
+        "api": "running healthy",
+        "postgres": "running healthy, published 127.0.0.1:5434"
+      },
+      "appImagesCreated": "2026-10-27"
+    },
+    {
+      "sourceParity": "not established",
+      "project": "cinema-qa",
+      "health": {
+        "apiHealth": 200,
+        "healthz": 200
+      },
+      "services": {
+        "migrate": "exited 0",
+        "web": "running healthy, published 127.0.0.1:8081",
+        "worker": "running; no Docker healthcheck",
+        "api": "running healthy",
+        "postgres": "running healthy, published 127.0.0.1:5435"
+      },
+      "appImagesCreated": "2026-10-27"
+    }
+  ],
+  "limitations": [
+    "Free memory is below the 1.5 GiB safety threshold used for local Docker-heavy checks; no local rebuild, prune, DAST, load test, or browser flow was started.",
+    "Current source/image parity is unverified: local application images predate source commit aa7cda5 and have no verified source revision label.",
+    "Health checks establish current local liveness only, not staging/production or data recovery readiness.",
+    "No test browser journey was run because both stacks use persistent demo databases and would mutate user data.",
+    "A 15-minute isolated worker soak can run in GitHub Actions on codex/** pushes."
+  ]
+}
