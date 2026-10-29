@@ -1,0 +1,90 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "recordedAt": "2026-10-29",
+  "recordedAtUtc": "2026-10-29T09:36:06Z",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "sourceCommit": "54096734b8e99249cfb01a2b1aeacac6a584e27c",
+  "documentationCommitAtCapture": "7a30aaf5cd59b624ac1ed6dd5feb88faed05f0ae",
+  "branch": "codex/cross-browser-smoke",
+  "overall": "IN_PROGRESS_PARTIAL_EVIDENCE",
+  "sourceDelta": "Revalidate the current Staff/Admin role, cinema assignment, and authVersion under a PostgreSQL User-row share lock in both ticket check-in transactions; add deterministic ID and QR revocation race coverage; refresh route source-line traceability.",
+  "runs": {
+    "qualityDastDomainCompose": {
+      "id": 40848131505,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40848131505",
+      "result": "IN_PROGRESS_AT_CAPTURE",
+      "completedJobs": {
+        "dast": { "result": "PASS_CONFIGURED_GATE", "duration": "8m 7s" },
+        "domainCoverageAndMutation": {
+          "result": "PASS",
+          "duration": "2m 59s",
+          "scorePercent": 82.89,
+          "breakThresholdPercent": 70,
+          "killed": 155,
+          "survived": 32
+        },
+        "composeRuntimeBrowserSmoke": { "result": "PASS", "duration": "1m 47s" }
+      },
+      "qualityApiJob": { "result": "IN_PROGRESS_AT_CAPTURE", "finalConclusion": null }
+    },
+    "crossBrowser": {
+      "id": 40848131301,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40848131301",
+      "result": "PASS",
+      "duration": "1m 58s",
+      "artifact": {
+        "name": "cinema-booking-cross-browser-results-54096734b8e99249cfb01a2b1aeacac6a584e27c",
+        "sizeDisplay": "218 KB",
+        "githubDigest": "sha256:cbb34d1179622af9acc591d3d96cae88e0c63c35bd3614dd0bdaf7a63c529f37"
+      }
+    },
+    "workerSoak15m": {
+      "id": 40848131396,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40848131396",
+      "result": "IN_PROGRESS_AT_CAPTURE",
+      "finalConclusion": null
+    }
+  },
+  "dast": {
+    "jobResult": "PASS_CONFIGURED_GATE",
+    "summaryTotalsReviewed": false,
+    "artifactContentsRetrieved": false,
+    "artifact": {
+      "id": 12886336559,
+      "name": "cinema-booking-dast-reports-54096734b8e99249cfb01a2b1aeacac6a584e27c",
+      "sizeBytes": 6505,
+      "githubDigest": "sha256:d913b88d803a53c793484470a560a241ede4322f9cddc7b471c81ad779382f9a",
+      "metadataSource": "Public GitHub Actions run page and artifacts API",
+      "downloadAttempt": "Unauthenticated API request returned HTTP 401; the public run page requires sign-in to view logs.",
+      "note": "The configured DAST job passing does not establish zero findings. Do not carry alert totals or identities forward from previous source runs."
+    }
+  },
+  "localVerification": {
+    "staffScopeTest": {
+      "command": "npm run test -- tests/staff-scope.integration.test.ts",
+      "result": "PASS",
+      "testsPassed": 2,
+      "database": "Existing local Docker QA PostgreSQL at the QA loopback endpoint; fixtures cleaned by test teardown.",
+      "coverage": "Existing staff-scope case plus TC-SEC-38, which blocks ID and QR check-in while role/authVersion revocation commits and asserts no ticket/audit side effects."
+    },
+    "backendTestTypecheck": "PASS",
+    "backendBuild": "PASS",
+    "traceability": { "result": "PASS", "testCases": 110, "requirements": 28 },
+    "authorizationRouteSourceLineCheck": { "result": "PASS", "routes": 35, "mismatches": 0 },
+    "gitDiffCheck": "PASS"
+  },
+  "remainingAcceptanceGates": [
+    "Quality/API job and 15-minute worker-soak final conclusions were in progress at capture time.",
+    "Manual WCAG 2.2 AA keyboard, screen-reader, contrast, zoom and reflow checklist is requester-owned; 10 workflow rows remain Not tested.",
+    "No staging environment exists, so named-staging performance and deployment validation are unavailable.",
+    "Production backup/PITR/RPO/RTO and production restore remain unverified.",
+    "Comprehensive ASVS/API Top 10 and adversarial BOLA review remain open.",
+    "Current DAST alert names, request URLs, payloads and severity totals remain unreviewed."
+  ],
+  "limitations": [
+    "This snapshot records partial current-source CI state, not a final acceptance decision.",
+    "Previous-source DAST totals do not establish totals for this artifact.",
+    "The browser automation UI could not verify its current URL and stopped; no credentials were entered."
+  ]
+}

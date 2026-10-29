@@ -1,6 +1,10 @@
 # Báo cáo tổng hợp kiểm thử
 
-## Latest exact-source CI result — `7d6bfab` — 29/10/2026
+## Current follow-up snapshot — `5409673` — 29/10/2026
+
+Current source `54096734b8e99249cfb01a2b1aeacac6a584e27c` has passing [cross-browser run 40848131301](https://github.com/mahTuqn/DGKD_GK/actions/runs/40848131301). In [quality run 40848131505](https://github.com/mahTuqn/DGKD_GK/actions/runs/40848131505), DAST, domain/mutation and Compose/browser jobs passed; mutation score was 82.89% against a 70% threshold, but the overall quality run remains **In progress**. [The 15-minute worker soak](https://github.com/mahTuqn/DGKD_GK/actions/runs/40848131396) also remains **In progress**. TC-SEC-38 passed locally against Docker QA PostgreSQL, including both ID and QR revocation races. Current DAST artifact metadata is recorded in the [evidence snapshot](evidence/followup/2026-10-29-github-actions-5409673.json); report contents and alert counts have not been reviewed. This is partial evidence, not a final CI result.
+
+## Latest completed exact-source CI result — `7d6bfab` — 29/10/2026
 
 All three workflows passed on source commit `7d6bfab14fe27d5160489967fb22eedf5284dd90`: [quality/API/DAST/domain/Compose run 40840707655](https://github.com/mahTuqn/DGKD_GK/actions/runs/40840707655), [Firefox/WebKit smoke 40840707622](https://github.com/mahTuqn/DGKD_GK/actions/runs/40840707622), and [15-minute worker soak 40840707617](https://github.com/mahTuqn/DGKD_GK/actions/runs/40840707617). Traceability passed at **109 test cases / 28 requirements**. The full root `npm run test:api` pipeline, strict backend/test typecheck, OpenAPI lint, secret/dependency scans, production build, and configured DAST gate passed on an isolated GitHub runner.
 

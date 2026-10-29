@@ -18,7 +18,15 @@ Kiểm tra các yêu cầu trong [SRS](01-srs.md), tập trung rủi ro bán tr�
 | Hiệu năng | Đọc danh sách và hold ghế | k6 local baseline: 50 VU/5 phút; showtime p95 9.85ms, hold p95 265.35ms, lỗi ngoài conflict 0%; đạt ngưỡng đã đặt nhưng chưa phải staging |
 | Backup/restore | PostgreSQL custom-format dump, restore vào database mới và kiểm tra record counts | Rehearsal đã đạt trên PostgreSQL 17 với source/target UTF8; chưa thay thế backup schedule/PITR/RPO/RTO/production restore |
 
-## Latest exact-source CI verification — `7d6bfab` — 29/10/2026
+## Current follow-up snapshot — `5409673` — observed 29/10/2026 09:36 UTC
+
+The current application source is `54096734b8e99249cfb01a2b1aeacac6a584e27c`. [Cross-browser smoke run 40848131301](https://github.com/mahTuqn/DGKD_GK/actions/runs/40848131301) passed in 1m58s. [Quality run 40848131505](https://github.com/mahTuqn/DGKD_GK/actions/runs/40848131505) remains **In progress**: its DAST job passed in 8m07s, domain/mutation job passed in 2m59s, and Compose/browser job passed in 1m47s; mutation score was 82.89% against the 70% threshold. [Worker soak run 40848131396](https://github.com/mahTuqn/DGKD_GK/actions/runs/40848131396) also remains **In progress**. The current workflow page does not expose job logs while signed out.
+
+TC-SEC-38 passed locally against Docker QA PostgreSQL (2/2 suite cases, including ID and QR revocation races). Backend test typecheck, backend production build, traceability (110 cases / 28 requirements), source-line inventory (35/35 routes), and `git diff --check` passed locally. The DAST job uploaded artifact `12886336559` (6,505 bytes; digest `sha256:d913b88d803a53c793484470a560a241ede4322f9cddc7b471c81ad779382f9a`). Anonymous artifact download returned 401 and the public page requires sign-in to view logs, so this snapshot makes **no severity-total or alert-identity claim** for the current run. Do not carry forward counts from the prior source. See the [5409673 evidence snapshot](evidence/followup/2026-10-29-github-actions-5409673.json).
+
+The current full quality/API and 15-minute soak outcomes are pending; this partial snapshot is not an acceptance or production-readiness sign-off.
+
+## Latest completed exact-source CI verification — `7d6bfab` — 29/10/2026
 
 All three workflows passed on source commit `7d6bfab14fe27d5160489967fb22eedf5284dd90`: [quality/API/DAST/domain/Compose run 40840707655](https://github.com/mahTuqn/DGKD_GK/actions/runs/40840707655), [Firefox/WebKit smoke 40840707622](https://github.com/mahTuqn/DGKD_GK/actions/runs/40840707622), and [15-minute worker soak 40840707617](https://github.com/mahTuqn/DGKD_GK/actions/runs/40840707617). Traceability passed **109 test cases / 28 requirements**. The complete root `npm run test:api` suite, strict backend/test typecheck, OpenAPI lint, secret/dependency scans, production build, configured DAST gate, and isolated Compose/browser smoke passed. TC-SEC-37 verifies six action rate limits including the database side-effect assertion; TC-WORKER-01 verifies worker-cycle correlation IDs.
 
