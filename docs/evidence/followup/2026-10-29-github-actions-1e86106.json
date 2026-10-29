@@ -1,0 +1,148 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "recordedAt": "2026-10-29",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "commit": "1e86106a99c3338d02be771de1c0ce39b733f04a",
+  "branch": "codex/cross-browser-smoke",
+  "overall": "PASS_AUTOMATED_CI_WITH_DOCUMENTED_LIMITATIONS",
+  "codeDeltaFromPreviousVerifiedSource": "Serialized active holds per Customer across HELD and PAYMENT_PENDING; minimized signed webhook acknowledgements so QR credentials are not returned; raised all ZAP plans to fail at Medium and above; documented TC-SEC-33/34 and BUG-019 collection pagination gap.",
+  "traceability": {
+    "result": "PASS",
+    "testCases": 102,
+    "requirements": 26
+  },
+  "runs": {
+    "qualityDastCompose": {
+      "id": 40817821506,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40817821506",
+      "result": "PASS",
+      "headSha": "1e86106a99c3338d02be771de1c0ce39b733f04a",
+      "verified": [
+        "Gitleaks, dependency audit, database migrations and seed, OpenAPI lint, traceability and strict backend source/test typecheck passed.",
+        "API integration: 55/55 passed across 13 files, including TC-SEC-33 and TC-SEC-34.",
+        "TC-PLAN-08: 100 simultaneous hold requests through two API processes; one success, 99 conflicts and one persisted HELD claim/hold.",
+        "Live five-minute hold expiry and two-worker five-minute soak/restart passed.",
+        "Backend/frontend production build passed.",
+        "Chromium desktop/Pixel 7: 50 expected, 0 unexpected, 0 skipped, 0 flaky.",
+        "Isolated Compose browser smoke: 2 expected, 0 unexpected, 0 skipped, 0 flaky.",
+        "Domain tests: 13/13; mutation score 82.89% (155 killed/32 survived) against a 70% threshold.",
+        "Authenticated API, unauthenticated API and web preview DAST scopes passed with errorLevel Medium."
+      ],
+      "artifacts": [
+        {
+          "id": 12873602159,
+          "name": "cinema-booking-browser-results-1e86106a99c3338d02be771de1c0ce39b733f04a",
+          "sizeBytes": 343543,
+          "digest": "sha256:5f67e87cda79984260b85ffdec7e9bfd593608c690d519a89e4e9c9971cf43af",
+          "digestVerified": true,
+          "summary": "Playwright 50 expected, 0 unexpected, 0 skipped, 0 flaky."
+        },
+        {
+          "id": 12872598837,
+          "name": "cinema-booking-compose-browser-results-1e86106a99c3338d02be771de1c0ce39b733f04a",
+          "sizeBytes": 199972,
+          "digest": "sha256:f3e30691696f2ce55da85adb13a619bbefc29b306ba2587e04298e41e35ec3fa",
+          "digestVerified": true,
+          "summary": "Compose browser smoke 2 expected, 0 unexpected, 0 skipped, 0 flaky."
+        },
+        {
+          "id": 12873467478,
+          "name": "cinema-booking-dast-reports-1e86106a99c3338d02be771de1c0ce39b733f04a",
+          "sizeBytes": 6462,
+          "digest": "sha256:4f78ef9a9ddb7c4bbedf3419a9e6749ae765a60af912cfbd6d7f3755bdad2ffd",
+          "digestVerified": true,
+          "summary": "Three ZAP JSON reports parsed; 0 High/Medium, one Low alert record with 3 instances, and 5 Informational records with 11 instances."
+        },
+        {
+          "id": 12872694956,
+          "name": "cinema-booking-domain-quality-1e86106a99c3338d02be771de1c0ce39b733f04a",
+          "sizeBytes": 144485,
+          "digest": "sha256:7e9043699a1d1a61c940525027a53a189da36153a765433bf63205e042164f3f",
+          "digestVerified": true,
+          "summary": "Domain tests 13/13; mutation score 82.89% against 70% threshold."
+        }
+      ]
+    },
+    "crossBrowser": {
+      "id": 40817821479,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40817821479",
+      "result": "PASS",
+      "headSha": "1e86106a99c3338d02be771de1c0ce39b733f04a",
+      "verified": [
+        "Firefox and WebKit desktop smoke: 6 expected, 0 unexpected, 0 skipped, 0 flaky."
+      ],
+      "artifact": {
+        "id": 12873750209,
+        "name": "cinema-booking-cross-browser-results-1e86106a99c3338d02be771de1c0ce39b733f04a",
+        "sizeBytes": 222737,
+        "digest": "sha256:ddf05c3c04fe3a687d3609929d91dcb48c69df9babf90d2982e22cd4bac2a0d8",
+        "digestVerified": true
+      }
+    },
+    "workerLongSoak": {
+      "id": 40817821422,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40817821422",
+      "result": "PASS",
+      "headSha": "1e86106a99c3338d02be771de1c0ce39b733f04a",
+      "verificationDurationSeconds": 917,
+      "verified": [
+        "Two-worker 15-minute soak completed in 15m17s.",
+        "Graceful restart and pending-event catch-up passed."
+      ]
+    }
+  },
+  "dastReview": {
+    "artifactDigestVerified": true,
+    "artifactId": 12873467478,
+    "artifactName": "cinema-booking-dast-reports-1e86106a99c3338d02be771de1c0ce39b733f04a",
+    "artifactSizeBytes": 6462,
+    "artifactDigest": "sha256:4f78ef9a9ddb7c4bbedf3419a9e6749ae765a60af912cfbd6d7f3755bdad2ffd",
+    "reportsParsed": "3/3",
+    "alertRecords": {
+      "High": 0,
+      "Medium": 0,
+      "Low": 1,
+      "Informational": 5,
+      "Unknown": 0
+    },
+    "alertInstances": {
+      "High": 0,
+      "Medium": 0,
+      "Low": 3,
+      "Informational": 11,
+      "Unknown": 0
+    },
+    "scopeCounts": {
+      "unauthenticated-api": { "High": 0, "Medium": 0, "Low": 0, "InformationalRecords": 2, "InformationalInstances": 4 },
+      "authenticated-api": { "High": 0, "Medium": 0, "LowRecords": 1, "LowInstances": 3, "InformationalRecords": 2, "InformationalInstances": 4 },
+      "preview": { "High": 0, "Medium": 0, "Low": 0, "InformationalRecords": 1, "InformationalInstances": 3 }
+    },
+    "triagedObservation": {
+      "id": "SEC-OBS-01",
+      "alert": "Cross Site Scripting Weakness (Persistent in JSON Response)",
+      "risk": "Low",
+      "confidence": "Low",
+      "instances": [
+        { "path": "/api/admin/cinemas", "parameter": "address", "method": "GET" },
+        { "path": "/api/admin/cinemas", "parameter": "name", "method": "GET" },
+        { "path": "/api/cinemas", "parameter": "city", "method": "GET" }
+      ],
+      "disposition": "Source audit found the reviewed frontend consumer renders values as React text/form values and no raw HTML injection sink. /api/cinemas has no direct frontend API consumer. Keep tracked for external or future consumers; the report payload was not copied into documentation."
+    }
+  },
+  "remainingGates": [
+    "Requester-owned manual WCAG 2.2 AA checklist: keyboard-only operation, screen reader, contrast, zoom/reflow and orientation.",
+    "No staging environment is available; named-staging performance remains unmeasured.",
+    "Production backup schedule, PITR, RPO/RTO and production restore remain unverified.",
+    "Exhaustive ASVS/API Top 10 and adversarial BOLA/IDOR review remain open.",
+    "Unbounded order-history and Admin user-list pagination remains open as BUG-019.",
+    "A real payment gateway/refund is outside the current SRS."
+  ],
+  "limitations": [
+    "Passing CI applies only to the exact source commit above and isolated GitHub Actions databases/runners.",
+    "No High/Medium DAST alert is not an exhaustive security certification; SEC-OBS-01 remains tracked.",
+    "The consumer audit covers this repository's current frontend, not external or future consumers.",
+    "Automated accessibility does not replace the requester's manual WCAG review."
+  ]
+}
