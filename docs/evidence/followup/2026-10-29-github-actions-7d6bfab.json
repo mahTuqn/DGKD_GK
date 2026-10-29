@@ -79,6 +79,13 @@
         },
         "browserResults": {
           "result": "PASS",
+          "testsStarted": 58,
+          "testsPassed": 58,
+          "projects": ["chromium-desktop", "chromium-mobile (Pixel 7)"],
+          "distribution": { "chromium-desktop": 29, "chromium-mobile": 29 },
+          "workers": 1,
+          "duration": "3m 03s",
+          "source": "Run npm run test:browser step in quality job 123336111180; log ends with 58 passed (3.0m)",
           "artifact": {
             "id": 12882973331,
             "name": "cinema-booking-browser-results-7d6bfab14fe27d5160489967fb22eedf5284dd90",
