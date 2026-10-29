@@ -1,0 +1,115 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "recordedAt": "2026-10-29",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "commit": "0bc99d73384e3068eb2712218ac4877eae0e7535",
+  "branch": "codex/cross-browser-smoke",
+  "sourceDelta": "Bound GET /api/movies q to 120 characters, added 120/121-character API regression coverage, and updated OpenAPI maxLength. QA evidence documentation was reconciled after all exact-head workflows completed.",
+  "overall": "PASS_ALL_THREE_GITHUB_ACTIONS_WORKFLOWS_DAST_SUMMARY_REVIEWED_ZIP_CONTENTS_NOT_RETRIEVED",
+  "runs": {
+    "qualityApiDastDomainCompose": {
+      "id": 40894847152,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40894847152",
+      "result": "PASS",
+      "totalDuration": "15m 3s",
+      "jobs": {
+        "quality": "success",
+        "dastIsolatedCompose": "success",
+        "domainCoverageAndMutation": "success",
+        "composeRuntimeAndBrowserSmoke": "success"
+      },
+      "verifiedSummary": [
+        "Quality report: 19 test files and 72 test results passed.",
+        "Secret scan summary: No leaks detected.",
+        "Domain coverage and mutation threshold job passed; run annotation reports mutation score 82.89%, 155 killed, 32 survived, against a 70% break threshold.",
+        "Compose runtime/browser smoke job passed.",
+        "Configured DAST threshold job passed; the job summary parsed all three reports."
+      ],
+      "artifacts": {
+        "browser": {
+          "id": 12907357775,
+          "name": "cinema-booking-browser-results-0bc99d73384e3068eb2712218ac4877eae0e7535",
+          "displaySize": "383 KB",
+          "githubDigest": "sha256:7609241bdda0631dc724f9d525321f5d971191d38dc60fb741005367ce8c6acf"
+        },
+        "composeBrowser": {
+          "id": 12906177784,
+          "name": "cinema-booking-compose-browser-results-0bc99d73384e3068eb2712218ac4877eae0e7535",
+          "displaySize": "195 KB",
+          "githubDigest": "sha256:f8880f44e769a05fa92535c3063264661daf5bcc7ec80efee04275cad28acd76"
+        },
+        "dast": {
+          "id": 12906278746,
+          "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40894847152/artifacts/12906278746",
+          "name": "cinema-booking-dast-reports-0bc99d73384e3068eb2712218ac4877eae0e7535",
+          "displaySize": "6.33 KB",
+          "githubDigest": "sha256:b92c3d6449c744158c7a34c87127034a79c109c8661b0f5244a230084326510f",
+          "artifactContentsRetrieved": false,
+          "jobSummaryReviewed": true,
+          "reportFilesParsed": "3/3"
+        },
+        "domainQuality": {
+          "id": 12905554242,
+          "name": "cinema-booking-domain-quality-0bc99d73384e3068eb2712218ac4877eae0e7535",
+          "displaySize": "141 KB",
+          "githubDigest": "sha256:845265a10114c1e4e8fb21ba734e28f33d4a068101d396a09f70f349cc532db4"
+        }
+      },
+      "dastSummary": {
+        "countsAre": "ZAP alert records; instance counts are attached entries and are not interchangeable.",
+        "alertRecords": {
+          "unauthenticated-api": { "high": 0, "medium": 0, "low": 0, "informational": 2, "unknown": 0, "status": "parsed" },
+          "authenticated-api": { "high": 0, "medium": 0, "low": 1, "informational": 2, "unknown": 0, "status": "parsed" },
+          "preview": { "high": 0, "medium": 0, "low": 0, "informational": 1, "unknown": 0, "status": "parsed" },
+          "total": { "high": 0, "medium": 0, "low": 1, "informational": 5, "unknown": 0, "reportsParsed": "3/3" }
+        },
+        "alertInstances": {
+          "unauthenticated-api": { "high": 0, "medium": 0, "low": 0, "informational": 4, "unknown": 0 },
+          "authenticated-api": { "high": 0, "medium": 0, "low": 3, "informational": 4, "unknown": 0 },
+          "preview": { "high": 0, "medium": 0, "low": 0, "informational": 3, "unknown": 0 },
+          "total": { "high": 0, "medium": 0, "low": 3, "informational": 11, "unknown": 0 }
+        },
+        "limitations": [
+          "GitHub job summary intentionally omits alert names, request URLs, payloads and triage details.",
+          "The artifact download endpoint was blocked by the task browser client; no archive contents were extracted or reviewed.",
+          "Counts are not a finding triage and do not establish that the Low alert is a false positive or acceptable."
+        ]
+      }
+    },
+    "crossBrowserSmoke": {
+      "id": 40894847139,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40894847139",
+      "result": "PASS",
+      "scope": "Targeted Firefox and WebKit desktop smoke workflow; not the full browser suite."
+    },
+    "workerLongSoak": {
+      "id": 40894847544,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40894847544",
+      "result": "PASS",
+      "scope": "15-minute two-worker soak, graceful shutdown/restart and pending-event catch-up."
+    }
+  },
+  "localChecksOnPushedTree": {
+    "npm run lint:openapi": "PASS",
+    "npm run qa:trace": "PASS: 119 test cases / 28 requirements; all sources and links resolved.",
+    "npm run typecheck:tests": "PASS",
+    "git diff --check": "PASS before push.",
+    "databaseIntegration": "Not run locally in that turn because host memory was constrained and two Docker stacks were active; exact-head CI ran isolated jobs."
+  },
+  "remainingGates": [
+    "Requester-owned manual WCAG 2.2 AA keyboard, screen-reader, contrast, zoom/reflow and orientation checklist (90 pairs remain Not tested).",
+    "Review DAST Low and Informational alert identities, affected routes, request/response context and disposition from the full artifact.",
+    "No staging environment: named-staging performance and release validation unavailable.",
+    "Production backup schedule/PITR/RPO/RTO/restore and reliability beyond the 15-minute soak remain unverified.",
+    "Comprehensive ASVS/API Top 10 and adversarial BOLA/IDOR review remain open.",
+    "Public catalog list endpoints still return unbounded result sets; q is bounded to 120 characters but list pagination/load behavior is not implemented or verified.",
+    "Real payment gateway and refund behavior are outside the mock-payment SRS."
+  ],
+  "limitations": [
+    "Cross-browser automation remains a targeted Firefox/WebKit smoke subset.",
+    "GitHub Actions evidence uses isolated runner resources; it does not prove local image/source parity or staging/production behavior.",
+    "Automated axe scans do not replace the requester-owned manual WCAG review.",
+    "DAST thresholds passed, and aggregate counts were visible in the job summary; the Low alert has not been triaged."
+  ]
+}

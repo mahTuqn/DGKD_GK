@@ -1,12 +1,18 @@
 # Báo cáo tổng hợp kiểm thử
 
-## Latest code/workflow CI result — `a3e4c6c` — 29/10/2026
+## Latest code/workflow CI result — `0bc99d7` — 29/10/2026
 
-Commit `a3e4c6c4b38ed911331445796623e97549b03dcc` expands only the Firefox/WebKit workflow; application and test source remain at `9001ed7`. All three push workflows passed on this HEAD: [quality/API/DAST/domain/Compose 40884985524](https://github.com/mahTuqn/DGKD_GK/actions/runs/40884985524), [Firefox/WebKit smoke 40884985434](https://github.com/mahTuqn/DGKD_GK/actions/runs/40884985434), and [15-minute worker soak 40884986015](https://github.com/mahTuqn/DGKD_GK/actions/runs/40884986015). The full configured Chromium desktop/Pixel 7 suite, Compose booking flow, API/security gates, DAST threshold, domain/mutation thresholds, and 15-minute worker soak all passed.
+Exact HEAD is `0bc99d73384e3068eb2712218ac4877eae0e7535`. All three push workflows passed: [quality/API/DAST/domain/Compose 40894847152](https://github.com/mahTuqn/DGKD_GK/actions/runs/40894847152), [Firefox/WebKit smoke 40894847139](https://github.com/mahTuqn/DGKD_GK/actions/runs/40894847139), and [15-minute worker soak 40894847544](https://github.com/mahTuqn/DGKD_GK/actions/runs/40894847544). The quality summary reports 19 test files / 72 results passed; its configured Chromium desktop/Pixel 7 suite, Compose browser smoke, API/security, domain/mutation thresholds and DAST gate passed. The separate Firefox/WebKit smoke and 15-minute worker soak also passed.
 
-The Firefox/WebKit smoke now selects six existing cases per engine: customer booking, discovery/login, Staff scan success/error, keyboard navigation, payment response-loss retry, and wrong-cinema denial. Playwright `--list` confirmed 12 planned executions (six cases × two desktop engines), and the CI step passed. This remains a targeted smoke subset, not the full suite on Firefox/WebKit.
+The source follow-up bounds `GET /api/movies?q` to 120 characters; the exact-source API regression accepts a 120-character query and rejects a 121-character query with 422. The Firefox/WebKit workflow remains a targeted smoke subset, not the full suite on those engines.
 
-The current DAST artifact is ID `12902446720`, 6,485 bytes, digest `sha256:1b6fc6f9814794c183522e3f1c503610911d2c226713e7eefd1986560f905583`. Its anonymous archive download returned HTTP 401 `Requires authentication`; report contents and findings remain unreviewed. No severity totals or alert identities are claimed. See [the a3e4c6c evidence manifest](evidence/followup/2026-10-29-github-actions-a3e4c6c.json).
+The authenticated GitHub job summary parsed all 3 DAST reports. It lists 0 High, 0 Medium, 1 Low and 5 Informational alert records; the associated instance totals are 3 Low and 11 Informational. The [current artifact](https://github.com/mahTuqn/DGKD_GK/actions/runs/40894847152/artifacts/12906278746) is 6.33 KB, digest `sha256:b92c3d6449c744158c7a34c87127034a79c109c8661b0f5244a230084326510f`. The task browser blocked the ZIP download, so the report contents, alert identities, affected URLs, payloads and triage are not reviewed. No conclusion is made about whether the Low alert is acceptable. See the [0bc99d7 evidence manifest](evidence/followup/2026-10-29-github-actions-0bc99d7.json).
+
+Manual WCAG 2.2 AA, named-staging validation, production backup/PITR/RPO/RTO/restore, exhaustive ASVS/API Top 10 and adversarial BOLA/IDOR, and reliability beyond 15 minutes remain open. This is not an acceptance or production-readiness sign-off.
+
+## Previous code/workflow CI result — `a3e4c6c` — 29/10/2026
+
+Commit `a3e4c6c4b38ed911331445796623e97549b03dcc` expanded only the Firefox/WebKit workflow; application and test source remained at `9001ed7`. Its quality/API/DAST/domain/Compose, Firefox/WebKit smoke and 15-minute worker soak workflows all passed. See the [a3e4c6c evidence manifest](evidence/followup/2026-10-29-github-actions-a3e4c6c.json).
 
 ## Previous repository-head CI result — `047fffb` — 29/10/2026
 
