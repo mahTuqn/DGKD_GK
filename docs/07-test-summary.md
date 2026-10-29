@@ -1,8 +1,8 @@
 # Báo cáo tổng hợp kiểm thử
 
-## Latest code/workflow CI result — `0bc99d7` — 29/10/2026
+## Latest application/test-source CI result — `0bc99d7` — 29/10/2026
 
-Exact HEAD is `0bc99d73384e3068eb2712218ac4877eae0e7535`. All three push workflows passed: [quality/API/DAST/domain/Compose 40894847152](https://github.com/mahTuqn/DGKD_GK/actions/runs/40894847152), [Firefox/WebKit smoke 40894847139](https://github.com/mahTuqn/DGKD_GK/actions/runs/40894847139), and [15-minute worker soak 40894847544](https://github.com/mahTuqn/DGKD_GK/actions/runs/40894847544). The quality summary reports 19 test files / 72 results passed; its configured Chromium desktop/Pixel 7 suite, Compose browser smoke, API/security, domain/mutation thresholds and DAST gate passed. The separate Firefox/WebKit smoke and 15-minute worker soak also passed.
+Application/test source is commit `0bc99d73384e3068eb2712218ac4877eae0e7535`. All three push workflows passed against that source: [quality/API/DAST/domain/Compose 40894847152](https://github.com/mahTuqn/DGKD_GK/actions/runs/40894847152), [Firefox/WebKit smoke 40894847139](https://github.com/mahTuqn/DGKD_GK/actions/runs/40894847139), and [15-minute worker soak 40894847544](https://github.com/mahTuqn/DGKD_GK/actions/runs/40894847544). The quality summary reports 19 test files / 72 results passed; its configured Chromium desktop/Pixel 7 suite, Compose browser smoke, API/security, domain/mutation thresholds and DAST gate passed. The separate Firefox/WebKit smoke and 15-minute worker soak also passed.
 
 The source follow-up bounds `GET /api/movies?q` to 120 characters; the exact-source API regression accepts a 120-character query and rejects a 121-character query with 422. The Firefox/WebKit workflow remains a targeted smoke subset, not the full suite on those engines.
 
