@@ -16,6 +16,13 @@ const asyncRoute = (handler: express.RequestHandler): express.RequestHandler => 
 const businessDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
   try { calendarDateAtTime(value, 0); return true; } catch { return false; }
 }, "Ngày lịch không tồn tại.");
+const publicMovieQuerySchema = z.object({ q: z.string().optional() }).strict();
+const publicCinemaQuerySchema = z.object({}).strict();
+const publicShowtimeQuerySchema = z.object({
+  date: businessDateSchema.optional(),
+  movieId: z.string().optional(),
+  cinemaId: z.string().optional()
+}).strict();
 const apiContentSecurityPolicy = "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; img-src 'self' data: https:; object-src 'none'; script-src 'self'; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; connect-src 'self' http://localhost:4000 http://127.0.0.1:4000";
 const staffRoles = [Role.STAFF, Role.ADMIN] as const;
 const developmentMockPaymentSecret = "cinema-booking-local-mock-payment-secret-2026";
@@ -305,7 +312,8 @@ export function createApp() {
   }));
 
   app.get("/api/movies", asyncRoute(async (req, res) => {
-    const q = typeof req.query.q === "string" ? req.query.q.trim() : "";
+    const query = publicMovieQuerySchema.parse(req.query);
+    const q = query.q?.trim() ?? "";
     const movies = await prisma.movie.findMany({
       where: { status: RecordStatus.ACTIVE, ...(q ? { OR: [{ title: { contains: q, mode: "insensitive" } }, { genre: { contains: q, mode: "insensitive" } }] } : {}) },
       orderBy: [{ releaseDate: "desc" }, { title: "asc" }]
@@ -313,17 +321,19 @@ export function createApp() {
     res.json(movies.map(toMovie));
   }));
 
-  app.get("/api/cinemas", asyncRoute(async (_req, res) => {
+  app.get("/api/cinemas", asyncRoute(async (req, res) => {
+    publicCinemaQuerySchema.parse(req.query);
     res.json(await prisma.cinema.findMany({ where: { status: RecordStatus.ACTIVE }, include: { _count: { select: { auditoriums: true } } }, orderBy: [{ city: "asc" }, { name: "asc" }] }));
   }));
 
   app.get("/api/showtimes", asyncRoute(async (req, res) => {
-    const date = businessDateSchema.parse(req.query.date ?? formatBusinessDate(new Date()));
+    const query = publicShowtimeQuerySchema.parse(req.query);
+    const date = query.date ?? formatBusinessDate(new Date());
     const start = calendarDateAtTime(date, 0);
     const end = calendarDateAtTime(date, 0);
     end.setUTCDate(end.getUTCDate() + 1);
-    const movieId = typeof req.query.movieId === "string" ? req.query.movieId : undefined;
-    const cinemaId = typeof req.query.cinemaId === "string" ? req.query.cinemaId : undefined;
+    const movieId = query.movieId;
+    const cinemaId = query.cinemaId;
     const showtimes = await prisma.showtime.findMany({
       where: {
         status: RecordStatus.ACTIVE,

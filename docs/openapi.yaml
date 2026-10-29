@@ -131,7 +131,7 @@ paths:
       parameters:
         - name: q
           in: query
-          description: Tìm không phân biệt hoa thường trong tên phim và thể loại.
+          description: Tìm không phân biệt hoa thường trong tên phim và thể loại; khoảng trắng đầu/cuối được bỏ qua. Chỉ chấp nhận một giá trị q; tham số lặp hoặc tham số không hỗ trợ trả 422.
           schema: { type: string }
       responses:
         '200':
@@ -141,6 +141,7 @@ paths:
               schema:
                 type: array
                 items: { $ref: '#/components/schemas/Movie' }
+        '422': { $ref: '#/components/responses/ValidationError' }
 
   /api/cinemas:
     get:
@@ -148,6 +149,7 @@ paths:
       operationId: listCinemas
       security: []
       summary: Danh sách rạp đang hoạt động
+      description: Endpoint không hỗ trợ query parameter; tham số không hỗ trợ trả 422.
       responses:
         '200':
           description: Rạp kèm số phòng chiếu
@@ -156,6 +158,7 @@ paths:
               schema:
                 type: array
                 items: { $ref: '#/components/schemas/PublicCinema' }
+        '422': { $ref: '#/components/responses/ValidationError' }
 
   /api/showtimes:
     get:
@@ -163,7 +166,7 @@ paths:
       operationId: listShowtimes
       security: []
       summary: Tra cứu suất chiếu
-      description: Ngày nghiệp vụ theo Asia/Ho_Chi_Minh; mặc định là ngày hiện tại tại múi giờ này.
+      description: Ngày nghiệp vụ theo Asia/Ho_Chi_Minh; mặc định là ngày hiện tại tại múi giờ này. Mỗi bộ lọc chỉ được truyền một lần; tham số lặp hoặc không hỗ trợ trả 422.
       parameters:
         - name: date
           in: query

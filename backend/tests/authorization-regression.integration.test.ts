@@ -358,6 +358,123 @@ regressionDescribe("authorization regression coverage", () => {
     expect(await snapshot()).toEqual(before);
   }, 30_000);
 
+  it("[TC-SEC-30] rejects duplicate movie slugs and invalid auditorium seat batches without writes", async () => {
+    const adminAuth = { Authorization: `Bearer ${adminToken}` };
+    const conflictingSlug = `authorization-regression-conflict-${fixture}`;
+    attemptedMovieSlugs.push(conflictingSlug);
+    const conflictingMovie = await prisma.movie.create({
+      data: {
+        slug: conflictingSlug,
+        title: `Conflicting Movie ${fixture}`,
+        genre: "Test",
+        synopsis: "Fixture for duplicate movie slug mutation coverage.",
+        runtimeMinutes: 95,
+        ageRating: "P"
+      }
+    });
+    const movieSnapshot = async () => ({
+      movies: await prisma.movie.findMany({
+        where: { id: { in: [movieId!, conflictingMovie.id] } },
+        orderBy: { id: "asc" },
+        select: { id: true, slug: true, title: true }
+      }),
+      createAudits: await prisma.auditLog.count({ where: { actorId: adminId, action: "MOVIE_CREATED" } }),
+      updateAudits: await prisma.auditLog.count({ where: { actorId: adminId, action: "MOVIE_UPDATED" } })
+    });
+
+    const beforeDuplicateCreate = await movieSnapshot();
+    const duplicateCreate = await request(app).post("/api/admin/movies").set(adminAuth).send({
+      title: `Duplicate Movie ${fixture}`,
+      slug: beforeDuplicateCreate.movies.find((item) => item.id === movieId)!.slug,
+      genre: "Test",
+      synopsis: "A valid create payload with a duplicate slug.",
+      runtimeMinutes: 90,
+      ageRating: "P"
+    });
+    expect(duplicateCreate.status).toBe(409);
+    expect(duplicateCreate.body.error).toBe("RESOURCE_CONFLICT");
+    expect(await movieSnapshot()).toEqual(beforeDuplicateCreate);
+
+    const beforeDuplicatePatch = await movieSnapshot();
+    const duplicatePatch = await request(app).patch(`/api/admin/movies/${movieId!}`).set(adminAuth).send({ slug: conflictingMovie.slug });
+    expect(duplicatePatch.status).toBe(409);
+    expect(duplicatePatch.body.error).toBe("RESOURCE_CONFLICT");
+    expect(await movieSnapshot()).toEqual(beforeDuplicatePatch);
+
+    const auditoriumSnapshot = async () => {
+      const auditoriums = await prisma.auditorium.findMany({
+        where: { cinemaId: cinemaId! },
+        orderBy: { id: "asc" },
+        select: { id: true, cinemaId: true, name: true, screenType: true }
+      });
+      return {
+        auditoriums,
+        seats: await prisma.seat.findMany({
+          where: { auditoriumId: { in: auditoriums.map((item) => item.id) } },
+          orderBy: { id: "asc" },
+          select: { id: true, auditoriumId: true, label: true, row: true, column: true, type: true, isAccessible: true }
+        }),
+        createAudits: await prisma.auditLog.count({ where: { actorId: adminId, action: "AUDITORIUM_CREATED" } })
+      };
+    };
+    const invalidSeatBatches = [
+      {
+        name: `Duplicate Label ${fixture}`,
+        seats: [
+          { label: "a1", row: "A", column: 1, type: SeatType.STANDARD },
+          { label: "A1", row: "B", column: 1, type: SeatType.STANDARD }
+        ]
+      },
+      {
+        name: `Duplicate Position ${fixture}`,
+        seats: [
+          { label: "B1", row: "b", column: 1, type: SeatType.STANDARD },
+          { label: "B2", row: "B", column: 1, type: SeatType.STANDARD }
+        ]
+      },
+      {
+        name: `Accessible Flag Mismatch ${fixture}`,
+        seats: [{ label: "C1", row: "C", column: 1, type: SeatType.ACCESSIBLE, isAccessible: false }]
+      },
+      {
+        name: `Accessible Type Mismatch ${fixture}`,
+        seats: [{ label: "D1", row: "D", column: 1, type: SeatType.STANDARD, isAccessible: true }]
+      }
+    ];
+
+    for (const invalidBatch of invalidSeatBatches) {
+      attemptedRoomNames.push(invalidBatch.name);
+      const before = await auditoriumSnapshot();
+      const response = await request(app).post("/api/admin/auditoriums").set(adminAuth).send({
+        cinemaId,
+        name: invalidBatch.name,
+        seats: invalidBatch.seats
+      });
+      expect(response.status).toBe(422);
+      expect(response.body.error).toBe("VALIDATION_ERROR");
+      expect(await auditoriumSnapshot()).toEqual(before);
+    }
+  }, 30_000);
+
+  it("[TC-SEC-31] returns not found for unknown Admin catalog PATCH targets without audit writes", async () => {
+    const adminAuth = { Authorization: `Bearer ${adminToken}` };
+    const missingId = () => randomUUID();
+    const unknownPatchCases = [
+      { path: `/api/admin/cinemas/${missingId()}`, body: { name: "Missing cinema update" }, action: "CINEMA_UPDATED" },
+      { path: `/api/admin/movies/${missingId()}`, body: { title: "Missing movie update" }, action: "MOVIE_UPDATED" },
+      { path: `/api/admin/auditoriums/${missingId()}`, body: { name: "Missing auditorium update" }, action: "AUDITORIUM_UPDATED" },
+      { path: `/api/admin/seats/${missingId()}`, body: { label: "Z1" }, action: "SEAT_UPDATED" }
+    ];
+
+    for (const route of unknownPatchCases) {
+      const auditsBefore = await prisma.auditLog.count({ where: { actorId: adminId, action: route.action } });
+      const response = await request(app).patch(route.path).set(adminAuth).send(route.body);
+      expect(response.status).toBe(404);
+      expect(response.body.error).toBe("NOT_FOUND");
+      expect(await prisma.auditLog.count({ where: { actorId: adminId, action: route.action } })).toBe(auditsBefore);
+    }
+  }, 30_000);
+
   it("[TC-SEC-24] rejects Admin self-demotion and assignment of Staff to an inactive cinema without writes", async () => {
     const adminAuth = { Authorization: `Bearer ${adminToken}` };
     const adminBefore = await prisma.user.findUniqueOrThrow({
@@ -416,14 +533,15 @@ regressionDescribe("authorization regression coverage", () => {
     const assignmentAuditsBefore = await prisma.auditLog.count({
       where: { actorId: adminId, action: "STAFF_CINEMA_ASSIGNED", entity: "User", entityId: raceStaff.id }
     });
-    let signalRowLocked!: () => void;
+    let signalRowLocked!: (pid: number) => void;
     let releaseDemotion!: () => void;
-    const rowLocked = new Promise<void>((resolve) => { signalRowLocked = resolve; });
+    const rowLocked = new Promise<number>((resolve) => { signalRowLocked = resolve; });
     const waitForDemotion = new Promise<void>((resolve) => { releaseDemotion = resolve; });
 
     const demotionTransaction = prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${raceStaff.id} FOR UPDATE`;
-      signalRowLocked();
+      const [connection] = await tx.$queryRaw<Array<{ pid: number }>>`SELECT pg_backend_pid()::int AS pid`;
+      signalRowLocked(connection!.pid);
       await waitForDemotion;
       await tx.user.update({
         where: { id: raceStaff.id },
@@ -433,7 +551,7 @@ regressionDescribe("authorization regression coverage", () => {
 
     let assignmentPromise: Promise<{ status: number; body: Record<string, unknown> }> | undefined;
     try {
-      await rowLocked;
+      const demotionBackendPid = await rowLocked;
       assignmentPromise = request(app)
         .patch(`/api/admin/users/${raceStaff.id}/assigned-cinema`)
         .set({ Authorization: `Bearer ${adminToken}` })
@@ -451,6 +569,7 @@ regressionDescribe("authorization regression coverage", () => {
             AND wait_event_type = 'Lock'
             AND query ILIKE 'UPDATE%'
             AND query ILIKE '%assignedCinemaId%'
+            AND ${demotionBackendPid} = ANY(pg_blocking_pids(pid))
         `;
         updateIsBlockedOnTheLockedStaffRow = blockedUpdates.length > 0;
         if (!updateIsBlockedOnTheLockedStaffRow) await new Promise((resolve) => setTimeout(resolve, 25));

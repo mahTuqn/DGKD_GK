@@ -5,7 +5,7 @@ import request from "supertest";
 import { createApp } from "../src/app.js";
 import { createToken, hashPassword } from "../src/auth.js";
 import { prisma } from "../src/db.js";
-import { formatBusinessDate } from "../src/domain/booking-policy.js";
+import { calendarDateAtTime, formatBusinessDate } from "../src/domain/booking-policy.js";
 import { signMockPaymentEvent } from "../src/domain/mock-payment-signature.js";
 import { processOutboxBatch } from "../src/worker.js";
 
@@ -32,6 +32,8 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
   let movieId: string | undefined;
   let showtimeId: string | undefined;
   let inactiveShowtimeId: string | undefined;
+  let occupancyBoundaryShowtimeId: string | undefined;
+  let occupancyCrossCinemaShowtimeId: string | undefined;
 
   beforeAll(async () => {
     await prisma.$connect();
@@ -75,6 +77,8 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
       await prisma.showtime.deleteMany({ where: { id: showtimeId } });
     }
     if (inactiveShowtimeId) await prisma.showtime.deleteMany({ where: { id: inactiveShowtimeId } });
+    if (occupancyBoundaryShowtimeId) await prisma.showtime.deleteMany({ where: { id: occupancyBoundaryShowtimeId } });
+    if (occupancyCrossCinemaShowtimeId) await prisma.showtime.deleteMany({ where: { id: occupancyCrossCinemaShowtimeId } });
     if (staffId || adminId || userIds.length) await prisma.auditLog.deleteMany({ where: { actorId: { in: [...userIds, ...(staffId ? [staffId] : []), ...(adminId ? [adminId] : [])] } } });
     // Staff points at its assigned cinema; remove fixture users before deleting that cinema.
     if (staffId) await prisma.user.deleteMany({ where: { id: staffId } });
@@ -92,7 +96,7 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
     await prisma.$disconnect();
   }, 30_000);
 
-  it("[TC-API-01][TC-SEC-15][TC-SEC-16][TC-SEC-19][TC-PLAN-01][TC-PLAN-02][TC-PLAN-03][TC-PLAN-04][TC-PLAN-05] enforces auth, booking boundaries, payment/report rules, concurrency, and one-use staff check-in", async () => {
+  it("[TC-API-01][TC-SEC-15][TC-SEC-16][TC-SEC-19][TC-PLAN-01][TC-PLAN-02][TC-PLAN-03][TC-PLAN-04][TC-PLAN-05][TC-PLAN-09] enforces auth, booking boundaries, payment/report rules, concurrency, and one-use staff check-in", async () => {
     const guestHold = await request(app).post("/api/holds").send({ showtimeId, seatIds: ["missing"] });
     expect(guestHold.status).toBe(401);
     expectSafeError(guestHold);
@@ -175,12 +179,16 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
     const ownerAttempt = await request(app).post("/api/orders").set(authB).send({ holdId: holdResponse.body.id });
     expect(ownerAttempt.status).toBe(404);
     expectSafeError(ownerAttempt);
+    const summaryBeforeOrder = (await request(app).get("/api/admin/summary").set(adminAuth)).body as { orders: number; tickets: number; confirmedRevenueVnd: number };
     const orderResponse = await request(app).post("/api/orders").set(authA).send({ holdId: holdResponse.body.id });
     expect(orderResponse.status).toBe(201);
     expect(orderResponse.body.status).toBe(OrderStatus.PAYMENT_PENDING);
     expect((await request(app).get(`/api/orders/${orderResponse.body.id}`).set(authB)).status).toBe(404);
 
-    const revenueBeforeConfirmation = (await request(app).get("/api/admin/summary").set(adminAuth)).body.confirmedRevenueVnd as number;
+    const summaryWhilePending = (await request(app).get("/api/admin/summary").set(adminAuth)).body as { orders: number; tickets: number; confirmedRevenueVnd: number };
+    expect(summaryWhilePending.orders).toBe(summaryBeforeOrder.orders + 1);
+    expect(summaryWhilePending.tickets).toBe(summaryBeforeOrder.tickets);
+    expect(summaryWhilePending.confirmedRevenueVnd).toBe(summaryBeforeOrder.confirmedRevenueVnd);
     const payment = await request(app).post("/api/payments/mock/complete").set(authA).send({ orderId: orderResponse.body.id });
     expect(payment.status).toBe(200);
     expect(payment.body.tickets).toHaveLength(1);
@@ -188,17 +196,66 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
     expect(retryPayment.status).toBe(200);
     expect(retryPayment.body.tickets[0].id).toBe(payment.body.tickets[0].id);
     expect(await prisma.ticket.count({ where: { orderId: orderResponse.body.id } })).toBe(1);
-    const revenueAfterConfirmation = (await request(app).get("/api/admin/summary").set(adminAuth)).body.confirmedRevenueVnd as number;
-    expect(revenueAfterConfirmation).toBe(revenueBeforeConfirmation + orderResponse.body.totalVnd);
+    const summaryAfterConfirmation = (await request(app).get("/api/admin/summary").set(adminAuth)).body as { orders: number; tickets: number; confirmedRevenueVnd: number };
+    expect(summaryAfterConfirmation.orders).toBe(summaryWhilePending.orders);
+    expect(summaryAfterConfirmation.tickets).toBe(summaryWhilePending.tickets + 1);
+    expect(summaryAfterConfirmation.confirmedRevenueVnd).toBe(summaryWhilePending.confirmedRevenueVnd + orderResponse.body.totalVnd);
     const fixtureShowtime = await prisma.showtime.findUniqueOrThrow({ where: { id: showtimeId! }, select: { startAt: true } });
     const fixtureDate = formatBusinessDate(fixtureShowtime.startAt);
+    const nextCalendarDate = new Date(`${fixtureDate}T00:00:00.000Z`);
+    nextCalendarDate.setUTCDate(nextCalendarDate.getUTCDate() + 1);
+    const nextFixtureDate = nextCalendarDate.toISOString().slice(0, 10);
+    const nextDayBoundary = calendarDateAtTime(nextFixtureDate, 0);
+    const crossCinemaBoundaryStart = calendarDateAtTime(fixtureDate, 23, 59);
+    const boundaryShowtime = await prisma.showtime.create({
+      data: {
+        movieId: movieId!,
+        auditoriumId: foreignAuditoriumId!,
+        startAt: nextDayBoundary,
+        endAt: new Date(nextDayBoundary.getTime() + 90 * 60_000),
+        priceVnd: 90_000
+      }
+    });
+    occupancyBoundaryShowtimeId = boundaryShowtime.id;
+    const crossCinemaBoundaryShowtime = await prisma.showtime.create({
+      data: {
+        movieId: movieId!,
+        auditoriumId: adminAuditoriumId!,
+        startAt: crossCinemaBoundaryStart,
+        endAt: new Date(crossCinemaBoundaryStart.getTime() + 90 * 60_000),
+        priceVnd: 90_000
+      }
+    });
+    occupancyCrossCinemaShowtimeId = crossCinemaBoundaryShowtime.id;
     const occupancy = await request(app).get(`/api/admin/reports/occupancy?from=${fixtureDate}&to=${fixtureDate}`).set(adminAuth);
     expect(occupancy.status).toBe(200);
-    expect(occupancy.body.showtimeCount).toBe(1);
+    expect(occupancy.body.showtimeCount).toBe(2);
     expect(occupancy.body.soldSeats).toBe(1);
-    expect(occupancy.body.capacitySeats).toBe(9);
-    expect(occupancy.body.fillRatePercent).toBe(11.11);
+    expect(occupancy.body.capacitySeats).toBe(10);
+    expect(occupancy.body.fillRatePercent).toBe(10);
     expect(occupancy.body.definition).toContain("SeatClaim SOLD");
+
+    const incompleteRange = await request(app).get("/api/admin/reports/occupancy").query({ from: fixtureDate }).set(adminAuth);
+    expect(incompleteRange.status).toBe(422);
+    expect(incompleteRange.body.error).toBe("VALIDATION_ERROR");
+    const invalidCalendarDate = await request(app).get("/api/admin/reports/occupancy").query({ from: "2026-02-30", to: "2026-02-30" }).set(adminAuth);
+    expect(invalidCalendarDate.status).toBe(422);
+    expect(invalidCalendarDate.body.error).toBe("VALIDATION_ERROR");
+    const unsupportedFilter = await request(app).get("/api/admin/reports/occupancy").query({ from: fixtureDate, to: fixtureDate, cinemaId }).set(adminAuth);
+    expect(unsupportedFilter.status).toBe(422);
+    expect(unsupportedFilter.body.error).toBe("VALIDATION_ERROR");
+    const reversedRange = await request(app).get("/api/admin/reports/occupancy").query({ from: nextFixtureDate, to: fixtureDate }).set(adminAuth);
+    expect(reversedRange.status).toBe(422);
+    expect(reversedRange.body.error).toBe("INVALID_DATE_RANGE");
+
+    const inclusiveEndDateRange = await request(app).get("/api/admin/reports/occupancy")
+      .query({ from: fixtureDate, to: nextFixtureDate }).set(adminAuth);
+    expect(inclusiveEndDateRange.status).toBe(200);
+    expect(inclusiveEndDateRange.body).toMatchObject({ showtimeCount: 3, soldSeats: 1, capacitySeats: 11, fillRatePercent: 9.09 });
+    const nextDateOnlyRange = await request(app).get("/api/admin/reports/occupancy")
+      .query({ from: nextFixtureDate, to: nextFixtureDate }).set(adminAuth);
+    expect(nextDateOnlyRange.status).toBe(200);
+    expect(nextDateOnlyRange.body).toMatchObject({ showtimeCount: 1, soldSeats: 0, capacitySeats: 1, fillRatePercent: 0 });
     expect((await request(app).get("/api/admin/summary").set(adminAuth)).body.occupancy.capacitySeats).toBeGreaterThanOrEqual(9);
 
     const staffLogin = await request(app).post("/api/auth/login").send({ email: `staff-${fixture}@test.local`, password: "StaffIntegration123!" });
@@ -276,14 +333,14 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
     expect(await prisma.seatHold.count({ where: { id: secondHold.body.id } })).toBe(1);
 
     const revenueWithPending = (await request(app).get("/api/admin/summary").set(adminAuth)).body.confirmedRevenueVnd as number;
-    expect(revenueWithPending).toBe(revenueAfterConfirmation);
+    expect(revenueWithPending).toBe(summaryAfterConfirmation.confirmedRevenueVnd);
     const failedPayment = await request(app).post("/api/payments/mock/complete").set(authA).send({ orderId: secondOrder.body.id, outcome: "FAILED" });
     expect(failedPayment.status).toBe(402);
     const failedOrder = await request(app).get(`/api/orders/${secondOrder.body.id}`).set(authA);
     expect(failedOrder.body.status).toBe(OrderStatus.PAYMENT_FAILED);
     expect(failedOrder.body.tickets).toHaveLength(0);
     const revenueWithFailed = (await request(app).get("/api/admin/summary").set(adminAuth)).body.confirmedRevenueVnd as number;
-    expect(revenueWithFailed).toBe(revenueAfterConfirmation);
+    expect(revenueWithFailed).toBe(summaryAfterConfirmation.confirmedRevenueVnd);
 
     // The order total is an immutable snapshot of the server-priced seat claim.
     const priceSnapshotHold = await request(app).post("/api/holds").set(authA).send({ showtimeId, seatIds: [seatIds[2]] });
