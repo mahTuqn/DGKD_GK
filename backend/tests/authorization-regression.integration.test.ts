@@ -401,6 +401,83 @@ regressionDescribe("authorization regression coverage", () => {
     })).toBe(assignmentAuditsBefore);
   }, 30_000);
 
+  it("[TC-SEC-29] does not assign a cinema after a concurrent Staff demotion", async () => {
+    const raceStaff = await prisma.user.create({
+      data: {
+        name: "Concurrent Staff Assignment Regression",
+        email: `concurrent-staff-assignment-${fixture}@test.local`,
+        passwordHash: "unused-in-concurrent-assignment-test",
+        role: Role.STAFF,
+        assignedCinemaId: cinemaId
+      }
+    });
+    userIds.push(raceStaff.id);
+
+    const assignmentAuditsBefore = await prisma.auditLog.count({
+      where: { actorId: adminId, action: "STAFF_CINEMA_ASSIGNED", entity: "User", entityId: raceStaff.id }
+    });
+    let signalRowLocked!: () => void;
+    let releaseDemotion!: () => void;
+    const rowLocked = new Promise<void>((resolve) => { signalRowLocked = resolve; });
+    const waitForDemotion = new Promise<void>((resolve) => { releaseDemotion = resolve; });
+
+    const demotionTransaction = prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${raceStaff.id} FOR UPDATE`;
+      signalRowLocked();
+      await waitForDemotion;
+      await tx.user.update({
+        where: { id: raceStaff.id },
+        data: { role: Role.CUSTOMER, assignedCinemaId: null, authVersion: { increment: 1 } }
+      });
+    }, { timeout: 15_000 });
+
+    let assignmentPromise: Promise<{ status: number; body: Record<string, unknown> }> | undefined;
+    try {
+      await rowLocked;
+      assignmentPromise = request(app)
+        .patch(`/api/admin/users/${raceStaff.id}/assigned-cinema`)
+        .set({ Authorization: `Bearer ${adminToken}` })
+        .send({ cinemaId: foreignCinemaId })
+        .then((response) => ({ status: response.status, body: response.body as Record<string, unknown> }));
+
+      let updateIsBlockedOnTheLockedStaffRow = false;
+      const deadline = Date.now() + 8_000;
+      while (!updateIsBlockedOnTheLockedStaffRow && Date.now() < deadline) {
+        const blockedUpdates = await prisma.$queryRaw<Array<{ pid: number }>>`
+          SELECT pid::int AS pid
+          FROM pg_stat_activity
+          WHERE datname = current_database()
+            AND state = 'active'
+            AND wait_event_type = 'Lock'
+            AND query ILIKE 'UPDATE%'
+            AND query ILIKE '%assignedCinemaId%'
+        `;
+        updateIsBlockedOnTheLockedStaffRow = blockedUpdates.length > 0;
+        if (!updateIsBlockedOnTheLockedStaffRow) await new Promise((resolve) => setTimeout(resolve, 25));
+      }
+      expect(updateIsBlockedOnTheLockedStaffRow).toBe(true);
+
+      releaseDemotion();
+      await demotionTransaction;
+      const assignment = await assignmentPromise;
+      expect(assignment.status).toBe(422);
+      expect(assignment.body.error).toBe("STAFF_REQUIRED");
+
+      const after = await prisma.user.findUniqueOrThrow({
+        where: { id: raceStaff.id },
+        select: { role: true, assignedCinemaId: true, authVersion: true }
+      });
+      expect(after).toMatchObject({ role: Role.CUSTOMER, assignedCinemaId: null, authVersion: raceStaff.authVersion + 1 });
+      expect(await prisma.auditLog.count({
+        where: { actorId: adminId, action: "STAFF_CINEMA_ASSIGNED", entity: "User", entityId: raceStaff.id }
+      })).toBe(assignmentAuditsBefore);
+    } finally {
+      releaseDemotion();
+      await demotionTransaction.catch(() => undefined);
+      await assignmentPromise?.catch(() => undefined);
+    }
+  }, 30_000);
+
   it("[TC-SEC-25] exposes only the allowlisted fields in Admin users and nested cinema responses", async () => {
     const response = await request(app).get("/api/admin/users").set({ Authorization: `Bearer ${adminToken}` });
     expect(response.status).toBe(200);

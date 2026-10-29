@@ -105,7 +105,7 @@ Các phép đo unit/coverage, hiệu năng, ZAP và Gitleaks dùng fixture/histo
 ## Còn thiếu so với kế hoạch
 
 - Người yêu cầu chưa hoàn tất manual WCAG 2.2 AA/screen-reader/contrast/zoom/reflow/orientation/keyboard checklist.
-- Chưa có staging; k6 local không chứng minh performance staging/production. TC-PLAN-08 đã được triển khai cho API contention giữa hai process/replica, nhưng chưa có kết quả CI; không thay thế load test trên staging.
+- Chưa có staging; k6 local không chứng minh performance staging/production. TC-PLAN-08 đã pass trên hai API process độc lập trong exact-source CI run 40808427061 (1 request thành công, 99 conflict); kết quả contention này không thay thế load test trên staging.
 - DAST đã được xác minh và triaged, nhưng exhaustive ASVS/API Top 10 và adversarial BOLA/IDOR review rộng hơn route matrix còn mở.
 - Restore rehearsal không đánh giá lịch backup, PITR, RPO/RTO hay production restore. Worker reliability dài hơn 15 phút và gateway timeout chưa được đo.
 - Không có hazard analysis; safety chưa đánh giá. Payment vẫn là mock, không phải cổng thanh toán thật.

@@ -803,9 +803,18 @@ export function createApp() {
         const cinema = await tx.cinema.findFirst({ where: { id: input.cinemaId, status: RecordStatus.ACTIVE }, select: { id: true } });
         if (!cinema) throw new DomainError("CINEMA_NOT_FOUND", "Không tìm thấy rạp đang hoạt động.", 404);
       }
-      const user = await tx.user.update({
-        where: { id: target.id },
+      // Keep the Staff predicate in the write itself so a concurrent demotion cannot restore a cinema assignment.
+      const assignment = await tx.user.updateMany({
+        where: { id: target.id, role: Role.STAFF },
         data: { assignedCinemaId: input.cinemaId, authVersion: { increment: 1 } },
+      });
+      if (assignment.count !== 1) {
+        const currentTarget = await tx.user.findUnique({ where: { id: target.id }, select: { id: true } });
+        if (!currentTarget) throw new DomainError("USER_NOT_FOUND", "Không tìm thấy người dùng.", 404);
+        throw new DomainError("STAFF_REQUIRED", "Chỉ có thể phân công rạp cho tài khoản STAFF.", 422);
+      }
+      const user = await tx.user.findUniqueOrThrow({
+        where: { id: target.id },
         select: { id: true, name: true, email: true, role: true, assignedCinemaId: true, assignedCinema: { select: { id: true, name: true } } }
       });
       await audit(tx, req.user!.id, "STAFF_CINEMA_ASSIGNED", "User", user.id, { assignedCinemaId: user.assignedCinemaId });
