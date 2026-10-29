@@ -2,6 +2,7 @@
 
 :root { font-family: 'DM Sans', sans-serif; color: #f4f0eb; background: #10100f; font-synthesis: none; text-rendering: optimizeLegibility; font-smooth: always; --bg: #10100f; --surface: #181817; --surface-2: #20201e; --line: rgba(255,255,255,.11); --muted: #a39f98; --cream: #f4f0eb; --orange: #ff7048; --orange-2: #ff9876; --green: #8ad7a2; }
 * { box-sizing: border-box; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 html { scroll-behavior: smooth; }
 body { margin: 0; min-width: 320px; min-height: 100vh; background: var(--bg); }
 button, input, select, textarea { font: inherit; }

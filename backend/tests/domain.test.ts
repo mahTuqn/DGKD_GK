@@ -108,7 +108,7 @@ describe("Property-based domain invariants", () => {
     {
       base: fc.integer({ min: 0, max: 500_000 }),
       surcharge: fc.integer({ min: 0, max: 200_000 }),
-      seatType: fc.constantFrom("STANDARD", "PREMIUM", "ACCESSIBLE")
+      seatType: fc.constantFrom("STANDARD" as const, "PREMIUM" as const, "ACCESSIBLE" as const)
     },
     { numRuns: 200, seed: 20261028 }
   )("[TC-UNIT-11] prices generated seat inputs as safe integer VND", ({ base, surcharge, seatType }) => {
@@ -129,7 +129,7 @@ describe("Property-based domain invariants", () => {
     {
       eventId: fc.string({ maxLength: 32 }),
       orderId: fc.string({ maxLength: 32 }),
-      status: fc.constantFrom("SUCCEEDED", "FAILED"),
+      status: fc.constantFrom("SUCCEEDED" as const, "FAILED" as const),
       amountVnd: fc.integer({ min: 0, max: 49_999_999 })
     },
     { numRuns: 200, seed: 20261030 }

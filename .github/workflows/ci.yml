@@ -65,6 +65,8 @@ jobs:
       - run: npm run db:seed
       - run: npm run lint:openapi
       - run: npm run qa:trace
+      - name: Type-check backend source and test code
+        run: npm run typecheck:tests
       - run: npm run test:api
       - name: Verify live five-minute hold expiry over HTTP
         run: npm run test:worker-live --workspace backend

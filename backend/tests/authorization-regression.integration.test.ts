@@ -303,7 +303,7 @@ regressionDescribe("authorization regression coverage", () => {
     expect(profileAfter.body).toMatchObject({ role: Role.CUSTOMER, assignedCinemaId: null });
   }, 30_000);
 
-  it("[TC-SEC-23] rejects auditorium and seat ownership mass assignment and blocks mutation of a held seat", async () => {
+  it("[TC-SEC-23] rejects auditorium and seat ownership mass assignment and blocks mutation of held or sold seats", async () => {
     const adminAuth = { Authorization: `Bearer ${adminToken}` };
     const snapshot = async () => ({
       auditoriums: await prisma.auditorium.findMany({
@@ -316,7 +316,10 @@ regressionDescribe("authorization regression coverage", () => {
         orderBy: { id: "asc" },
         select: { id: true, auditoriumId: true, label: true, row: true, column: true, type: true, isAccessible: true }
       }),
-      claim: await prisma.seatClaim.findUniqueOrThrow({ where: { showtimeId_seatId: { showtimeId: showtimeId!, seatId: seatId! } } }),
+      claims: await prisma.seatClaim.findMany({
+        where: { showtimeId, seatId: { in: [seatId!, roleSeatIds[0]!] } },
+        orderBy: { seatId: "asc" }
+      }),
       createAudits: await prisma.auditLog.count({ where: { actorId: adminId, action: "AUDITORIUM_CREATED" } }),
       auditoriumUpdateAudits: await prisma.auditLog.count({ where: { actorId: adminId, action: "AUDITORIUM_UPDATED" } }),
       seatUpdateAudits: await prisma.auditLog.count({ where: { actorId: adminId, action: "SEAT_UPDATED" } })
@@ -347,6 +350,11 @@ regressionDescribe("authorization regression coverage", () => {
     const heldSeatMutation = await request(app).patch(`/api/admin/seats/${seatId!}`).set(adminAuth).send({ label: "R2" });
     expect(heldSeatMutation.status).toBe(409);
     expect(heldSeatMutation.body.error).toBe("SEAT_HAS_BOOKINGS");
+    expect(await snapshot()).toEqual(before);
+
+    const soldSeatMutation = await request(app).patch(`/api/admin/seats/${roleSeatIds[0]!}`).set(adminAuth).send({ label: "R4" });
+    expect(soldSeatMutation.status).toBe(409);
+    expect(soldSeatMutation.body.error).toBe("SEAT_HAS_BOOKINGS");
     expect(await snapshot()).toEqual(before);
   }, 30_000);
 

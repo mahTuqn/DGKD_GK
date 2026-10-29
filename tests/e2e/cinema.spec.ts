@@ -5,6 +5,11 @@ const API_URL = process.env.E2E_API_URL || "http://127.0.0.1:4000/api";
 const PREVIEW_URL = process.env.E2E_PREVIEW_URL || "http://127.0.0.1:5174/";
 const uniqueEmail = () => `qa-${Date.now()}-${Math.random().toString(16).slice(2)}@example.test`;
 const amountFromCurrencyText = (text: string) => Number(text.replace(/\D/g, ""));
+const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
+
+function wcagAxe(page: Page) {
+  return new AxeBuilder({ page }).withTags(WCAG_TAGS);
+}
 
 async function openLogin(page: Page) {
   const desktopButton = page.getByRole("button", { name: "Đăng nhập", exact: true });
@@ -36,9 +41,8 @@ async function expectVisibleKeyboardFocus(target: Locator) {
   expect(outline).toEqual({ style: "solid", width: "2px" });
 }
 
-function seriousAxeViolations(violations: Awaited<ReturnType<AxeBuilder["analyze"]>>["violations"]) {
-  return violations.filter((violation) => ["serious", "critical"].includes(violation.impact ?? ""))
-    .map(({ id, impact, nodes }) => ({ id, impact, targets: nodes.map((node) => node.target), failureSummaries: nodes.map((node) => node.failureSummary) }));
+function axeViolations(violations: Awaited<ReturnType<AxeBuilder["analyze"]>>["violations"]) {
+  return violations.map(({ id, impact, nodes }) => ({ id, impact, targets: nodes.map((node) => node.target), failureSummaries: nodes.map((node) => node.failureSummary) }));
 }
 
 async function waitForOverlayAnimations(page: Page) {
@@ -94,7 +98,7 @@ async function buyOneTicket(page: Page) {
   await expect(checkoutDialog.getByRole("heading", { name: "Hẹn gặp bạn tại rạp." })).toBeVisible();
   await expect(checkoutDialog.getByText("Thanh toán demo thành công.")).toBeVisible();
   await waitForOverlayAnimations(page);
-  expect(seriousAxeViolations((await new AxeBuilder({ page }).include(".checkout-dialog").analyze()).violations)).toEqual([]);
+  expect(axeViolations((await wcagAxe(page).include(".checkout-dialog").analyze()).violations)).toEqual([]);
   await page.getByRole("button", { name: "Xem vé của tôi" }).click();
 
   await expect(page.getByRole("heading", { name: "Vé của bạn" })).toBeVisible();
@@ -137,15 +141,14 @@ test("[TC-E2E-10][TC-PLAN-07] trang web gửi security headers cơ bản", async
 test("[TC-E2E-01][TC-E2E-26] customer đăng ký, đặt vé, quét axe màn hình thanh toán thành công và xem vé", async ({ page }) => {
   await registerCustomer(page);
   await buyOneTicket(page);
-  expect(seriousAxeViolations((await new AxeBuilder({ page }).include(".content-page").analyze()).violations)).toEqual([]);
+  expect(axeViolations((await wcagAxe(page).include(".content-page").analyze()).violations)).toEqual([]);
 });
 
 test("[TC-E2E-02] trang khám phá và dialog đăng nhập không có lỗi axe nghiêm trọng", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByTestId("movie-card").first()).toBeVisible();
-  const result = await new AxeBuilder({ page }).analyze();
-  const serious = result.violations.filter((violation) => ["serious", "critical"].includes(violation.impact ?? ""));
-  expect(serious.map(({ id, impact, nodes }) => ({ id, impact, targets: nodes.map((node) => node.target) }))).toEqual([]);
+  const result = await wcagAxe(page).analyze();
+  expect(axeViolations(result.violations)).toEqual([]);
 
   const desktopLogin = page.getByRole("button", { name: "Đăng nhập", exact: true });
   const restoreFocus = await desktopLogin.isVisible() ? desktopLogin : page.getByRole("button", { name: "Mở tài khoản" });
@@ -153,7 +156,7 @@ test("[TC-E2E-02] trang khám phá và dialog đăng nhập không có lỗi axe
   const loginDialog = page.locator(".auth-dialog");
   await expect(loginDialog).toBeVisible();
   await waitForOverlayAnimations(page);
-  expect(seriousAxeViolations((await new AxeBuilder({ page }).include(".auth-dialog").analyze()).violations)).toEqual([]);
+  expect(axeViolations((await wcagAxe(page).include(".auth-dialog").analyze()).violations)).toEqual([]);
 
   const email = loginDialog.getByLabel("Email");
   await expect(email).toBeFocused();
@@ -189,12 +192,12 @@ test("[TC-E2E-03][TC-E2E-25] staff soát QR và thông báo thành công/lỗi c
   await page.getByLabel("Mã QR vé").fill(qrToken);
   await page.getByRole("button", { name: "Xác nhận vào rạp" }).click();
   await expect(page.getByRole("status")).toContainText("Vé hợp lệ");
-  expect(seriousAxeViolations((await new AxeBuilder({ page }).include(".scan-panel").analyze()).violations)).toEqual([]);
+  expect(axeViolations((await wcagAxe(page).include(".scan-panel").analyze()).violations)).toEqual([]);
 
   await page.getByLabel("Mã QR vé").fill(qrToken);
   await page.getByRole("button", { name: "Xác nhận vào rạp" }).click();
   await expect(page.getByRole("alert")).toContainText("đã được sử dụng");
-  expect(seriousAxeViolations((await new AxeBuilder({ page }).include(".scan-panel").analyze()).violations)).toEqual([]);
+  expect(axeViolations((await wcagAxe(page).include(".scan-panel").analyze()).violations)).toEqual([]);
 });
 
 test("[TC-E2E-23] hai lượt quét QR đồng thời chỉ ghi nhận một vé", async ({ page }) => {
@@ -280,7 +283,7 @@ test("[TC-E2E-04] Admin xem báo cáo doanh thu và tỉ lệ lấp đầy ở c
   await expect(occupancy.getByText(/[\d.,]+ \/ [\d.,]+ ghế đã bán/)).toBeVisible();
   await expect(occupancy.getByText(/\d+ suất đang mở/)).toBeVisible();
   await expect(occupancy.getByRole("progressbar", { name: "Tỉ lệ lấp đầy ghế" })).toHaveAttribute("value", /\d/);
-  expect(seriousAxeViolations((await new AxeBuilder({ page }).include(".admin-view").analyze()).violations)).toEqual([]);
+  expect(axeViolations((await wcagAxe(page).include(".admin-view").analyze()).violations)).toEqual([]);
 });
 
 test("[TC-E2E-05] Admin tạo rạp, cập nhật trạng thái và thấy trạng thái được lưu", async ({ page }) => {
@@ -423,7 +426,7 @@ test("[TC-E2E-08] Axe không báo lỗi serious hoặc critical ở sơ đồ gh
   const availableSeat = seatDialog.locator('[data-testid="seat"][aria-label*="trống"]:not([disabled])').first();
   await expect(availableSeat).toBeVisible();
   await waitForOverlayAnimations(page);
-  expect(seriousAxeViolations((await new AxeBuilder({ page }).analyze()).violations)).toEqual([]);
+  expect(axeViolations((await wcagAxe(page).analyze()).violations)).toEqual([]);
 
   await page.route("**/api/holds", async (route) => {
     const input = route.request().postDataJSON() as { showtimeId: string; seatIds: string[] };
@@ -441,7 +444,7 @@ test("[TC-E2E-08] Axe không báo lỗi serious hoặc critical ở sơ đồ gh
   await expect(page.getByTestId("hold-countdown")).toBeVisible();
   await expect(page.getByTestId("checkout-submit")).toBeEnabled();
   await waitForOverlayAnimations(page);
-  expect(seriousAxeViolations((await new AxeBuilder({ page }).analyze()).violations)).toEqual([]);
+  expect(axeViolations((await wcagAxe(page).analyze()).violations)).toEqual([]);
 });
 
 test("[TC-E2E-09][TC-PLAN-06] Bàn phím đi từ đăng nhập đến ghế chọn và nút checkout", async ({ page }) => {

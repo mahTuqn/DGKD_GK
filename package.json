@@ -26,6 +26,7 @@
     "test:browser": "playwright test",
     "test:browser:ui": "playwright test --ui",
     "build": "npm run build --workspace backend && npm run build --workspace frontend",
+    "typecheck:tests": "npm run typecheck:tests --workspace backend",
     "lint:openapi": "node scripts/lint-openapi.mjs",
     "scan:dast:api": "node scripts/run-dast-api.mjs",
     "scan:secrets": "node scripts/scan-secrets.mjs",

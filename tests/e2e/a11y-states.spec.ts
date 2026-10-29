@@ -54,6 +54,16 @@ const showtime = {
   status: "ACTIVE",
 };
 
+const seatMap = {
+  showtime,
+  seats: [
+    { id: "a11y-seat-available", label: "A1", row: "A", column: 1, type: "STANDARD", isAccessible: false, status: "AVAILABLE", priceVnd: 85_000 },
+    { id: "a11y-seat-accessible", label: "A2", row: "A", column: 2, type: "ACCESSIBLE", isAccessible: true, status: "AVAILABLE", priceVnd: 85_000 },
+    { id: "a11y-seat-held", label: "A3", row: "A", column: 3, type: "PREMIUM", isAccessible: false, status: "HELD", priceVnd: 115_000 },
+    { id: "a11y-seat-sold", label: "A4", row: "A", column: 4, type: "ACCESSIBLE", isAccessible: true, status: "SOLD", priceVnd: 85_000 },
+  ],
+};
+
 type MockOptions = {
   loginError?: { status: number; error: string; message: string };
   registrationError?: { status: number; error: string; message: string };
@@ -74,6 +84,8 @@ async function mockApi(page: Page, options: MockOptions = {}) {
       await fulfillJson(route, 200, [movie]);
     } else if (request.method() === "GET" && pathname === "/api/showtimes") {
       await fulfillJson(route, 200, [showtime]);
+    } else if (request.method() === "GET" && pathname === `/api/showtimes/${showtime.id}/seats`) {
+      await fulfillJson(route, 200, seatMap);
     } else if (request.method() === "POST" && pathname === "/api/auth/login") {
       requests.login += 1;
       const error = options.loginError;
@@ -107,15 +119,28 @@ async function mockApi(page: Page, options: MockOptions = {}) {
   return requests;
 }
 
-function seriousAxeViolations(violations: Awaited<ReturnType<AxeBuilder["analyze"]>>["violations"]) {
-  return violations.filter((violation) => ["serious", "critical"].includes(violation.impact ?? ""))
-    .map(({ id, impact, nodes }) => ({ id, impact, targets: nodes.map((node) => node.target), failureSummaries: nodes.map((node) => node.failureSummary) }));
+function allAxeViolations(violations: Awaited<ReturnType<AxeBuilder["analyze"]>>["violations"]) {
+  return violations.map(({ id, impact, nodes }) => ({ id, impact, targets: nodes.map((node) => node.target), failureSummaries: nodes.map((node) => node.failureSummary) }));
 }
 
-async function expectNoSeriousOrCriticalAxeViolations(page: Page, selector: string) {
-  const result = await new AxeBuilder({ page }).include(selector).analyze();
-  expect(seriousAxeViolations(result.violations)).toEqual([]);
+async function expectNoWcagAxeViolations(page: Page, selector: string) {
+  const result = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).include(selector).analyze();
+  expect(allAxeViolations(result.violations)).toEqual([]);
 }
+
+test("[TC-E2E-27] nhãn sơ đồ ghế mô tả trạng thái và loại ghế tiếp cận", async ({ page }) => {
+  await mockApi(page);
+  await page.goto("/");
+  await expect(page.getByTestId("movie-card").first()).toBeVisible();
+  await page.getByTestId("movie-card").first().getByRole("button", { name: "Xem suất chiếu" }).click();
+  await page.getByTestId("showtime-option").first().click();
+
+  const dialog = page.getByRole("dialog", { name: movie.title });
+  await expect(dialog.getByRole("button", { name: "Ghế A 1 — trống — ghế tiêu chuẩn" })).toBeEnabled();
+  await expect(dialog.getByRole("button", { name: "Ghế A 2 — trống — ghế hỗ trợ tiếp cận" })).toBeEnabled();
+  await expect(dialog.getByRole("button", { name: "Ghế A 3 — đang giữ — ghế cao cấp" })).toBeDisabled();
+  await expect(dialog.getByRole("button", { name: "Ghế A 4 — đã bán — ghế hỗ trợ tiếp cận" })).toBeDisabled();
+});
 
 async function openLogin(page: Page) {
   const desktopButton = page.getByRole("button", { name: "Đăng nhập", exact: true });
@@ -151,7 +176,7 @@ test("[TC-E2E-16] dialog đăng ký có tên trường và trạng thái validat
   await expect(name).toHaveAttribute("required", "");
   await expect(email).toHaveAttribute("required", "");
   await expect(password).toHaveAttribute("required", "");
-  await expectNoSeriousOrCriticalAxeViolations(page, ".auth-dialog");
+  await expectNoWcagAxeViolations(page, ".auth-dialog");
 
   await dialog.getByRole("button", { name: "Tạo tài khoản", exact: true }).click();
   expect(await name.evaluate((input: HTMLInputElement) => input.validity.valid)).toBe(false);
@@ -174,7 +199,7 @@ test("[TC-E2E-16] dialog đăng ký có tên trường và trạng thái validat
   await expect(alert).toBeVisible();
   await expect(alert).toHaveText("Email này đã được đăng ký.");
   expect(requests.registration).toBe(1);
-  await expectNoSeriousOrCriticalAxeViolations(page, ".auth-dialog");
+  await expectNoWcagAxeViolations(page, ".auth-dialog");
 });
 
 test("[TC-E2E-17] lỗi đăng nhập được đưa vào live alert trong dialog", async ({ page }) => {
@@ -192,7 +217,7 @@ test("[TC-E2E-17] lỗi đăng nhập được đưa vào live alert trong dialo
   await expect(alert).toBeVisible();
   await expect(alert).toHaveText("Email hoặc mật khẩu không chính xác.");
   await expect(alert).toHaveAttribute("role", "alert");
-  await expectNoSeriousOrCriticalAxeViolations(page, ".auth-dialog");
+  await expectNoWcagAxeViolations(page, ".auth-dialog");
 });
 
 test("[TC-E2E-18] Admin details mở rộng có thể truy cập bằng tên summary và axe", async ({ page }) => {
@@ -239,5 +264,5 @@ test("[TC-E2E-18] Admin details mở rộng có thể truy cập bằng tên sum
   await expect(seatDetails).toHaveAttribute("open", "");
   await expect(page.getByTestId("admin-seat-edit-form-a11y-seat-1").getByLabel("Loại ghế")).toBeVisible();
 
-  await expectNoSeriousOrCriticalAxeViolations(page, ".admin-view");
+  await expectNoWcagAxeViolations(page, ".admin-view");
 });

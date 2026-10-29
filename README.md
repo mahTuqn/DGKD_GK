@@ -86,12 +86,15 @@ Admin tạo hoặc sửa suất chiếu không thể xếp hai suất trong cùn
 ## Kiểm thử
 
 ```powershell
+npm run typecheck:tests
 npm run test:api
 npx playwright install chromium
 npm run test:browser
 npm run test:worker-live
 npm run build
 ```
+
+`npm run typecheck:tests` chạy TypeScript strict trên backend source, seed, Vitest configs và toàn bộ test/harness TypeScript. CI chạy cổng này trước API tests; lệnh không cần truy cập database.
 
 `npm test` chạy liền API/integration và browser E2E trên Chromium desktop + mobile. Các test API và E2E tạo dữ liệu; không trỏ `DATABASE_URL_TEST` hoặc `DATABASE_URL` vào database demo `cinema` trên cổng 5434. Local browser suite cần một database test riêng đã migrate/seed và không được dùng lại API đang chạy.
 
