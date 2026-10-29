@@ -479,12 +479,25 @@ export function createApp() {
     const hold = await prisma.$transaction(async (tx) => {
       // Serialize all booking attempts for a Customer, including requests for different seats.
       await lockCurrentActor(tx, { id: req.user!.id, authVersion: req.authVersion }, [Role.CUSTOMER], "update");
-      const showtime = await tx.showtime.findFirst({ where: { id: input.showtimeId, status: RecordStatus.ACTIVE, startAt: { gt: now }, movie: { status: RecordStatus.ACTIVE }, auditorium: { cinema: { status: RecordStatus.ACTIVE } } }, include: { auditorium: { include: { seats: { where: { id: { in: seatIds } } } } } } });
+      const showtime = await tx.showtime.findFirst({ where: { id: input.showtimeId, status: RecordStatus.ACTIVE, startAt: { gt: now }, movie: { status: RecordStatus.ACTIVE }, auditorium: { cinema: { status: RecordStatus.ACTIVE } } } });
       if (!showtime) throw new DomainError("SHOWTIME_UNAVAILABLE", "Suất chiếu không còn mở bán.", 404);
-      if (showtime.auditorium.seats.length !== seatIds.length) throw new DomainError("SEAT_NOT_FOUND", "Một hoặc nhiều ghế không thuộc phòng chiếu này.", 422);
+      // Hold a shared Seat-row lock before using its label/type. Admin seat edits
+      // take an exclusive lock on the same row, so either the edit wins first and
+      // this read sees its new shape, or the hold wins and the edit sees the claim.
+      const lockedSeats = await tx.$queryRaw<Array<{ id: string }>>`
+        SELECT "id" FROM "Seat"
+        WHERE "id" IN (${Prisma.join(seatIds)}) AND "auditoriumId" = ${showtime.auditoriumId}
+        ORDER BY "id"
+        FOR SHARE
+      `;
+      if (lockedSeats.length !== seatIds.length) throw new DomainError("SEAT_NOT_FOUND", "Một hoặc nhiều ghế không thuộc phòng chiếu này.", 422);
+      // Re-read after acquiring the row locks so the claim price and seat data
+      // come from the same serialized seat shape that will remain attached.
+      const seats = await tx.seat.findMany({ where: { id: { in: seatIds }, auditoriumId: showtime.auditoriumId } });
+      if (seats.length !== seatIds.length) throw new DomainError("SEAT_NOT_FOUND", "Một hoặc nhiều ghế không thuộc phòng chiếu này.", 422);
 
       // Lock existing claims. A concurrent first insert is still protected by the composite unique constraint.
-      await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`SELECT "id" FROM "SeatClaim" WHERE "showtimeId" = ${input.showtimeId} AND "seatId" IN (${Prisma.join(seatIds)}) FOR UPDATE`);
+      await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`SELECT "id" FROM "SeatClaim" WHERE "showtimeId" = ${input.showtimeId} AND "seatId" IN (${Prisma.join(seatIds)}) ORDER BY "seatId" FOR UPDATE`);
       const existing = await tx.seatClaim.findMany({ where: { showtimeId: input.showtimeId, seatId: { in: seatIds } } });
       const bySeat = new Map(existing.map((claim) => [claim.seatId, claim]));
       for (const claim of existing) {
@@ -497,7 +510,7 @@ export function createApp() {
 
       const createdHold = await tx.seatHold.create({ data: { userId: req.user!.id, showtimeId: input.showtimeId, expiresAt } });
       let totalVnd = 0;
-      const seatById = new Map(showtime.auditorium.seats.map((seat) => [seat.id, seat]));
+      const seatById = new Map(seats.map((seat) => [seat.id, seat]));
       for (const seatId of seatIds) {
         const seat = seatById.get(seatId)!;
         const priceVnd = computeSeatPrice(showtime.priceVnd, showtime.premiumSurchargeVnd, seat.type);
@@ -828,6 +841,9 @@ export function createApp() {
     }).partial().strict().refine((value) => Object.keys(value).length > 0, "Cần ít nhất một trường để cập nhật.").parse(req.body);
     const seat = await prisma.$transaction(async (tx) => {
       await lockCurrentActor(tx, { id: req.user!.id, authVersion: req.authVersion }, [Role.ADMIN]);
+      // Serialize the no-active-claim check and seat mutation with POST /api/holds.
+      // Holds take FOR SHARE on this row before reading price/label/type.
+      await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`SELECT "id" FROM "Seat" WHERE "id" = ${String(req.params.id)} FOR UPDATE`);
       const current = await tx.seat.findUnique({ where: { id: String(req.params.id) } });
       if (!current) throw new DomainError("SEAT_NOT_FOUND", "Không tìm thấy ghế.", 404);
       const claimed = await tx.seatClaim.count({ where: { seatId: current.id, status: { in: [ClaimStatus.HELD, ClaimStatus.SOLD] } } });

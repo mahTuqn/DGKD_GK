@@ -1,0 +1,39 @@
+{
+  "testId": "TC-SEC-41",
+  "observedOn": "2026-10-29",
+  "environment": {
+    "database": "PostgreSQL 17",
+    "isolation": "fresh disposable container with tmpfs storage",
+    "sharedDockerVolumesUsed": false
+  },
+  "execution": {
+    "result": "PASS",
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "scope": "targeted seat-edit/hold race regression",
+    "exactSourceCi": "pending"
+  },
+  "baseline": {
+    "result": "reproduced before fix",
+    "seatTypeAfterEdit": "PREMIUM",
+    "seatPriceVndAfterEdit": 130000,
+    "holdResponseStatus": 201,
+    "holdPriceVnd": 100000
+  },
+  "fixedExpectations": {
+    "editWinsFirst": {
+      "holdStatus": 201,
+      "holdPriceVnd": 130000
+    },
+    "holdWinsFirst": {
+      "editStatus": 409,
+      "error": "SEAT_HAS_BOOKINGS"
+    }
+  },
+  "verification": "The test checks persisted seat, hold, claim, audit metadata, and request correlation for both lock orderings.",
+  "limitations": [
+    "Exact-source GitHub CI has not run for this working tree.",
+    "This targeted database regression is not a load/soak test."
+  ]
+}
