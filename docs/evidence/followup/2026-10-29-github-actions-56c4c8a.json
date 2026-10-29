@@ -1,0 +1,158 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "recordedAt": "2026-10-29",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "commit": "56c4c8a9e09da166f94821f3053113524516a03c",
+  "branch": "codex/cross-browser-smoke",
+  "overall": "PASS_EXACT_SOURCE_CI_WITH_DOCUMENTED_LIMITATIONS",
+  "sourceDelta": "Aligned browser mocks and assertions with the paginated {items,nextCursor} contracts for customer orders and Admin users.",
+  "runs": {
+    "qualityDastDomainCompose": {
+      "id": 40823705208,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40823705208",
+      "result": "PASS",
+      "duration": "15m 24s",
+      "jobs": {
+        "quality": {
+          "result": "PASS",
+          "duration": "15m 20s",
+          "traceability": {
+            "result": "PASS",
+            "testCases": 106,
+            "requirements": 27
+          },
+          "apiIntegration": {
+            "result": "PASS",
+            "testsPassed": 57,
+            "testFilesPassed": 14
+          },
+          "liveHoldExpiry": {
+            "testId": "TC-WORKER-03",
+            "result": "PASS",
+            "duration": "5m 2s"
+          },
+          "workerFiveMinuteSoak": {
+            "testId": "TC-WORKER-06",
+            "result": "PASS",
+            "testPassed": 1,
+            "durationMs": 305676,
+            "gracefulRestartAndCatchUp": "PASS"
+          },
+          "playwright": {
+            "result": "PASS",
+            "testsSelected": 54,
+            "projects": [
+              "chromium-desktop",
+              "chromium-mobile (Pixel 7)"
+            ],
+            "duration": "2m 29s",
+            "artifact": {
+              "id": 12876720289,
+              "name": "cinema-booking-browser-results-56c4c8a9e09da166f94821f3053113524516a03c",
+              "sizeBytes": 352256,
+              "githubDigest": "sha256:63f5862dd58611a0a33c6ef8f4112d897b70f8144b9ae236369e8226efe4b4ae"
+            }
+          },
+          "otherPassingGates": [
+            "Gitleaks secret scan",
+            "npm audit --audit-level=moderate",
+            "Prisma generation and database migrations/seed",
+            "OpenAPI lint",
+            "Strict backend source and test typecheck",
+            "Backend and frontend production build"
+          ]
+        },
+        "composeRuntimeBrowserSmoke": {
+          "result": "PASS",
+          "duration": "1m 51s",
+          "artifact": {
+            "id": 12875692821,
+            "name": "cinema-booking-compose-browser-results-56c4c8a9e09da166f94821f3053113524516a03c",
+            "sizeBytes": 199680,
+            "githubDigest": "sha256:d0cc5e29d64038609f93b3f70063f372625363e640bb8b47cdf2e89323fb196f"
+          }
+        },
+        "domainCoverageAndMutation": {
+          "result": "PASS",
+          "domainTestsPassed": 13,
+          "mutationScorePercent": 82.89,
+          "mutationThresholdPercent": 70,
+          "mutantsKilled": 155,
+          "mutantsSurvived": 32,
+          "artifact": {
+            "id": 12875876199,
+            "name": "cinema-booking-domain-quality-56c4c8a9e09da166f94821f3053113524516a03c",
+            "sizeBytes": 144384,
+            "githubDigest": "sha256:733c870fac59b6c40963129b71601f8514fa01631fa2807c558c355ece3cb0e8"
+          }
+        },
+        "dast": {
+          "result": "PASS",
+          "scopes": [
+            "unauthenticated API",
+            "authenticated API",
+            "production web preview"
+          ],
+          "reportsParsedByCi": "3/3",
+          "alertRecords": {
+            "critical": 0,
+            "high": 0,
+            "medium": 0,
+            "low": 1,
+            "informational": 5,
+            "unknown": 0
+          },
+          "alertInstances": {
+            "critical": 0,
+            "high": 0,
+            "medium": 0,
+            "low": 3,
+            "informational": 11,
+            "unknown": 0
+          },
+          "artifact": {
+            "id": 12875823387,
+            "name": "cinema-booking-dast-reports-56c4c8a9e09da166f94821f3053113524516a03c",
+            "sizeBytes": 6471,
+            "githubDigest": "sha256:d5a67caf8e8bd3350a17b2ac284ab31f4ed75f8682a80477c70e470808399891",
+            "note": "GitHub job summary exposes severity counts only; report payloads were not independently downloaded in this review."
+          }
+        }
+      }
+    },
+    "crossBrowserSmoke": {
+      "id": 40823705157,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40823705157",
+      "result": "PASS",
+      "duration": "about 2m 9s",
+      "scope": "Firefox and WebKit desktop smoke"
+    },
+    "workerLongSoak": {
+      "id": 40823705169,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40823705169",
+      "result": "PASS",
+      "duration": "15m 49s",
+      "scope": "Two-worker 15-minute soak, graceful restart and pending-event catch-up"
+    }
+  },
+  "environment": {
+    "runner": "GitHub Actions clean checkout",
+    "database": "Isolated ephemeral PostgreSQL databases",
+    "staging": "Not available; the requester identified Docker local as the available environment"
+  },
+  "remainingGates": [
+    "Requester-owned manual WCAG 2.2 AA keyboard, screen-reader, contrast, zoom/reflow and orientation checklist",
+    "Named staging performance validation; no staging environment is available",
+    "Production backup schedule, PITR, RPO/RTO and restore verification",
+    "Exhaustive ASVS/API Top 10 and adversarial BOLA/IDOR review",
+    "Reliability beyond the tested 15-minute worker soak",
+    "Real payment gateway/refund behavior is outside the current SRS, which specifies mock payment"
+  ],
+  "limitations": [
+    "Passing CI applies to the exact source commit and isolated GitHub Actions databases/runners.",
+    "DAST had no High/Medium alert records in its configured scopes; this is not exhaustive security certification.",
+    "Automated axe/browser checks do not replace the requester's manual accessibility review.",
+    "No staging or production behavior is inferred from local or CI results."
+  ]
+}

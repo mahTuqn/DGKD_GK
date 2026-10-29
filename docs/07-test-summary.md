@@ -1,6 +1,16 @@
 # Báo cáo tổng hợp kiểm thử
 
-## Latest exact-source CI result — `1e86106` — 29/10/2026
+## Latest exact-source CI result — `56c4c8a` — 29/10/2026
+
+All CI workflows passed on source commit `56c4c8a9e09da166f94821f3053113524516a03c`: [quality/API/DAST/domain/Compose run 40823705208](https://github.com/mahTuqn/DGKD_GK/actions/runs/40823705208), [Firefox/WebKit smoke 40823705157](https://github.com/mahTuqn/DGKD_GK/actions/runs/40823705157), and [15-minute worker soak 40823705169](https://github.com/mahTuqn/DGKD_GK/actions/runs/40823705169). This commit aligns browser fixtures with the paginated order and Admin-user API envelopes. Traceability passed at **106 test cases / 27 requirements**; API integration passed **57/57 across 14 files**. OpenAPI lint, strict backend source/test typecheck, secret/dependency scans, and production build passed. TC-WORKER-03 live expiry passed, as did TC-WORKER-06's two-worker five-minute soak and graceful restart/catch-up.
+
+The Chromium desktop/Pixel 7 Playwright step passed with **54 tests selected**. The isolated Compose runtime/browser smoke, domain checks (**13/13**) and mutation threshold passed; mutation score was **82.89% (155 killed/32 survived)** against 70%. Firefox/WebKit desktop smoke passed, and the separate two-worker soak passed in a **15m 49s** workflow run.
+
+The DAST job passed all three scopes and its CI summary parsed **3/3 reports**: **0 High, 0 Medium, 1 Low alert record (3 instances), and 5 Informational records (11 instances)**. The summary does not expose alert names, URLs or payloads; the report artifact is linked in the [exact-source evidence manifest](evidence/followup/2026-10-29-github-actions-56c4c8a.json). This records the configured DAST gate, not a full security certification.
+
+The requester will complete the manual WCAG 2.2 AA keyboard/screen-reader checklist. No staging environment is available, so named-staging performance is not measured; production backup/PITR/RPO/RTO/restore and exhaustive ASVS/BOLA review remain open. The SRS specifies mock payment, so real gateway/refund behavior is outside acceptance scope.
+
+## Previous exact-source CI result — `1e86106` — 29/10/2026
 
 All three GitHub Actions workflows passed on commit `1e86106a99c3338d02be771de1c0ce39b733f04a`: [quality/API/DAST/Compose run 40817821506](https://github.com/mahTuqn/DGKD_GK/actions/runs/40817821506), [Firefox/WebKit smoke 40817821479](https://github.com/mahTuqn/DGKD_GK/actions/runs/40817821479), and [15-minute worker soak 40817821422](https://github.com/mahTuqn/DGKD_GK/actions/runs/40817821422). Traceability passed at **102 test cases / 26 requirements**. Strict backend source/test typecheck and API integration passed **55/55 across 13 files**. This includes TC-SEC-33's one-active-booking cap through `HELD`/`PAYMENT_PENDING`, release after failed payment, and two simultaneous distinct-seat holds for one Customer (one 201, one 409); and TC-SEC-34's signed webhook success/replay acknowledgement allowlist, with no QR token in the response. TC-PLAN-08 sent 100 concurrent requests through two API processes: one success, 99 conflicts, and one persisted HELD claim/hold. Live five-minute expiry, the two-worker five-minute soak/restart, backend/frontend build and Chromium browser tests all passed.
 
@@ -8,7 +18,7 @@ Playwright evidence reports **50/50** Chromium desktop/Pixel 7 tests, **2/2** is
 
 The current DAST artifact SHA-256 matches GitHub's digest; all **3/3** JSON reports parsed. It contains **0 High, 0 Medium, 1 Low alert record with 3 instances, and 5 Informational records with 11 instances**. The Low-confidence `SEC-OBS-01` JSON markup observation is on `/api/admin/cinemas` (`address`, `name`) and `/api/cinemas` (`city`). A current source audit found no raw HTML injection sink; Admin renders these values as React text/form values, and `/api/cinemas` has no direct frontend API consumer. Keep the observation tracked for external or future consumers. Artifact IDs, sizes and digests are in the [1e86106 evidence manifest](evidence/followup/2026-10-29-github-actions-1e86106.json); report payloads were not copied into this document.
 
-The requester will complete manual WCAG review; no staging environment exists. Production backup/PITR/RPO/RTO and restore, exhaustive ASVS/API Top 10 and adversarial BOLA review remain open. The current working tree implements BUG-019 cursor pagination and the Admin user controls; API/browser CI retest on an isolated database is pending. Real payment/refund remains outside the SRS.
+The requester will complete manual WCAG review; no staging environment exists. Production backup/PITR/RPO/RTO and restore, exhaustive ASVS/API Top 10 and adversarial BOLA review remain open. BUG-019 cursor pagination and Admin user controls were implemented in `2105c5f` and retested in the passing API/browser CI run on `56c4c8a`. Real payment/refund remains outside the SRS.
 
 ## Previous exact-source CI result — `f0c9c37` — 29/10/2026
 
