@@ -62,10 +62,14 @@ availabilityDescribe("TC-CAT-05 inactive catalog availability gate", () => {
     movieBId = movieB.id;
     movieIds.push(movieB.id);
 
-    showtimeStart = new Date(Date.now() + 4 * 86_400_000);
+    // Both fixtures must share the queried business date. A rolling start
+    // near 23:00 in Vietnam would put the second showtime on the next day.
+    const fixtureDate = formatBusinessDate(new Date(Date.now() + 4 * 86_400_000));
+    showtimeStart = new Date(`${fixtureDate}T12:00:00+07:00`);
     const showtimeA = await prisma.showtime.create({ data: { movieId: movieA.id, auditoriumId: auditoriumA.id, startAt: showtimeStart, endAt: new Date(showtimeStart.getTime() + 90 * 60_000), priceVnd: 100_000, status: RecordStatus.ACTIVE } });
     showtimeIds.push(showtimeA.id);
     const showtimeBStart = new Date(showtimeStart.getTime() + 60 * 60_000);
+    expect(formatBusinessDate(showtimeBStart)).toBe(fixtureDate);
     const showtimeB = await prisma.showtime.create({ data: { movieId: movieB.id, auditoriumId: auditoriumB.id, startAt: showtimeBStart, endAt: new Date(showtimeBStart.getTime() + 90 * 60_000), priceVnd: 100_000, status: RecordStatus.ACTIVE } });
     showtimeAId = showtimeA.id;
     showtimeBId = showtimeB.id;
