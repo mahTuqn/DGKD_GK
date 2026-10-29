@@ -50,6 +50,7 @@ CinemaBooking là ứng dụng web responsive đặt vé cho một cụm rạp, 
 | REQ-ADMIN-01 | Quản lý dữ liệu | Chỉ Admin được tạo/sửa phim và suất; dữ liệu sai trả lỗi có cấu trúc |
 | REQ-REPORT-01 | Báo cáo doanh thu | Doanh thu chỉ tính theo đơn xác nhận; không tính đơn chưa thanh toán |
 | REQ-REPORT-02 | Báo cáo lấp đầy | Admin xem số ghế bán / tổng sức chứa, số suất đang mở và phần trăm lấp đầy |
+| REQ-PERF-01 | Phân trang danh sách | Lịch sử đơn Customer và danh sách người dùng Admin có thứ tự ổn định, mặc định 20 và tối đa 50 bản ghi mỗi trang; cursor cho phép tải tiếp, giao diện chỉ tải trang hiện tại |
 | REQ-API-01 | Health readiness API | `GET /api/health` trả `200` và trạng thái `ok` khi dịch vụ sẵn sàng |
 | REQ-CONTRACT-01 | OpenAPI contract được kiểm tra tự động | `docs/openapi.yaml` phải lint hợp lệ bằng Redocly không có warning; CI chạy cùng quality workflow và fail khi contract/schema có lỗi |
 | REQ-SEC-01 | Bảo vệ dữ liệu | Không lộ password/token; lỗi API không trả stack; log không chứa secret; nội dung quản trị có markup phải hiển thị an toàn như text trong UI |

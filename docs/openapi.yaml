@@ -260,15 +260,18 @@ paths:
       tags: [Booking]
       operationId: listMyOrders
       summary: Lịch sử đơn của tài khoản hiện tại
+      description: Trả một trang có thứ tự ổn định theo createdAt và id giảm dần. Dùng nextCursor để lấy trang tiếp theo.
+      parameters:
+        - $ref: '#/components/parameters/PaginationLimit'
+        - $ref: '#/components/parameters/PaginationCursor'
       responses:
         '200':
-          description: Đơn mới nhất trước, bao gồm ghế và vé nếu đã xác nhận
+          description: Tối đa 50 đơn; mặc định 20, đơn mới nhất trước, bao gồm ghế và vé nếu đã xác nhận
           content:
             application/json:
-              schema:
-                type: array
-                items: { $ref: '#/components/schemas/Order' }
+              schema: { $ref: '#/components/schemas/OrderCollectionPage' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '422': { $ref: '#/components/responses/ValidationError' }
 
   /api/orders/{id}:
     get:
@@ -718,16 +721,18 @@ paths:
       operationId: listUsers
       summary: Danh sách người dùng và rạp được phân công
       description: Chỉ ADMIN.
+      parameters:
+        - $ref: '#/components/parameters/PaginationLimit'
+        - $ref: '#/components/parameters/PaginationCursor'
       responses:
         '200':
-          description: Danh sách người dùng
+          description: Tối đa 50 người dùng; mặc định 20, sắp xếp ổn định theo createdAt và id tăng dần
           content:
             application/json:
-              schema:
-                type: array
-                items: { $ref: '#/components/schemas/AdminUser' }
+              schema: { $ref: '#/components/schemas/AdminUserCollectionPage' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
 
   /api/admin/users/{id}/role:
     patch:
@@ -801,6 +806,18 @@ components:
       in: path
       required: true
       schema: { type: string }
+    PaginationLimit:
+      name: limit
+      in: query
+      required: false
+      description: Số bản ghi mỗi trang; mặc định 20, tối đa 50.
+      schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
+    PaginationCursor:
+      name: cursor
+      in: query
+      required: false
+      description: Cursor opaque lấy từ trường nextCursor của trang trước.
+      schema: { type: string, maxLength: 256 }
   responses:
     Unauthorized:
       description: Thiếu, sai hoặc hết hạn token; một số callback trả lỗi chữ ký.
@@ -1117,6 +1134,16 @@ components:
         tickets:
           type: array
           items: { $ref: '#/components/schemas/Ticket' }
+    OrderCollectionPage:
+      type: object
+      additionalProperties: false
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          maxItems: 50
+          items: { $ref: '#/components/schemas/Order' }
+        nextCursor: { type: [string, 'null'], maxLength: 256 }
     MockPaymentWebhookRequest:
       type: object
       additionalProperties: false
@@ -1290,6 +1317,16 @@ components:
               oneOf:
                 - { $ref: '#/components/schemas/AssignedCinemaSummary' }
                 - { type: 'null' }
+    AdminUserCollectionPage:
+      type: object
+      additionalProperties: false
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          maxItems: 50
+          items: { $ref: '#/components/schemas/AdminUser' }
+        nextCursor: { type: [string, 'null'], maxLength: 256 }
     AssignedCinemaSummary:
       type: object
       required: [id, name]

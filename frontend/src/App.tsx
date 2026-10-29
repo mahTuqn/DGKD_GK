@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { AdminAuditorium, AdminCinema, AdminSummary, api, ApiError, businessDateOffset, formatVnd, Hold, Movie, Order, Seat, SeatMap, SeatType, Session, Showtime, Ticket } from "./api";
+import { AdminAuditorium, AdminCinema, AdminSummary, AdminUser, api, ApiError, businessDateOffset, formatVnd, Hold, Movie, Order, Role, Seat, SeatMap, SeatType, Session, Showtime, Ticket } from "./api";
 
 type View = "discover" | "tickets" | "admin" | "scan";
 type AuthMode = "login" | "register";
@@ -213,8 +213,9 @@ function AdminPanel({ session }: { session: Session }) {
   const [summary, setSummary] = useState<AdminSummary | null>(null);
   const [movies, setMovies] = useState<Movie[]>([]); const [cinemas, setCinemas] = useState<AdminCinema[]>([]);
   const [auditoriums, setAuditoriums] = useState<AdminAuditorium[]>([]); const [adminShowtimes, setAdminShowtimes] = useState<Showtime[]>([]);
+  const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]); const [usersNextCursor, setUsersNextCursor] = useState<string | null>(null); const [usersLoading, setUsersLoading] = useState(false);
   const [notice, setNotice] = useState(""); const [error, setError] = useState(""); const [busy, setBusy] = useState(false);
-  const load = async () => { try { const [s, m, c, a, st] = await Promise.all([api.adminSummary(session.token), api.adminMovies(session.token), api.adminCinemas(session.token), api.auditoriums(session.token), api.adminShowtimes(session.token)]); setSummary(s); setMovies(m); setCinemas(c); setAuditoriums(a); setAdminShowtimes(st); } catch (reason) { setError(humanError(reason)); } };
+  const load = async () => { try { const [s, m, c, a, st, users] = await Promise.all([api.adminSummary(session.token), api.adminMovies(session.token), api.adminCinemas(session.token), api.auditoriums(session.token), api.adminShowtimes(session.token), api.adminUsers(session.token)]); setSummary(s); setMovies(m); setCinemas(c); setAuditoriums(a); setAdminShowtimes(st); setAdminUsers(users.items); setUsersNextCursor(users.nextCursor); } catch (reason) { setError(humanError(reason)); } };
   useEffect(() => { void load(); }, []);
   async function runAdminAction(action: () => Promise<unknown>, successMessage: string): Promise<boolean> {
     setBusy(true); setNotice(""); setError("");
@@ -277,6 +278,27 @@ function AdminPanel({ session }: { session: Session }) {
     if (!id) return;
     await runAdminAction(() => api.updateShowtime(session.token, id, { priceVnd: Number(values.get("priceVnd")), premiumSurchargeVnd: Number(values.get("premiumSurchargeVnd")), status: String(values.get("status")) as "ACTIVE" | "INACTIVE" }), "Đã cập nhật giá và trạng thái suất chiếu.");
   }
+  async function updateAdminUserRole(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); const form = event.currentTarget; const values = new FormData(form); const id = form.dataset.userId;
+    if (!id) return;
+    await runAdminAction(() => api.updateUserRole(session.token, id, String(values.get("role")) as Role), "Đã cập nhật vai trò người dùng.");
+  }
+  async function updateAdminUserCinema(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); const form = event.currentTarget; const values = new FormData(form); const id = form.dataset.userId;
+    if (!id) return;
+    const cinemaId = String(values.get("cinemaId")) || null;
+    await runAdminAction(() => api.assignUserCinema(session.token, id, cinemaId), "Đã cập nhật rạp phân công cho Staff.");
+  }
+  async function loadMoreAdminUsers() {
+    if (!usersNextCursor || usersLoading) return;
+    setUsersLoading(true);
+    try {
+      const page = await api.adminUsers(session.token, usersNextCursor);
+      setAdminUsers((current) => [...current, ...page.items]);
+      setUsersNextCursor(page.nextCursor);
+    } catch (reason) { setError(humanError(reason)); }
+    finally { setUsersLoading(false); }
+  }
   const occupancy = summary?.occupancy;
   const fillRate = occupancy?.fillRatePercent ?? 0;
   return <div className="admin-view">
@@ -292,6 +314,7 @@ function AdminPanel({ session }: { session: Session }) {
       <section className="panel"><div className="panel-title"><span className="eyebrow">AUDITORIUMS</span><h2>Tạo phòng và sơ đồ ghế</h2></div><form className="form-stack admin-create-form" onSubmit={createAuditorium}><label className="field-label">Rạp<select name="cinemaId" required>{cinemas.filter((cinema) => cinema.status === "ACTIVE").map((cinema) => <option key={cinema.id} value={cinema.id}>{cinema.name} · {cinema.city}</option>)}</select></label><div className="form-grid"><label className="field-label">Tên phòng<input name="name" required placeholder="Phòng 03" /></label><label className="field-label">Định dạng<input name="screenType" required defaultValue="STANDARD" /></label></div><div className="form-grid"><label className="field-label">Số hàng<input name="rows" type="number" min={1} max={26} defaultValue={8} required /></label><label className="field-label">Số ghế mỗi hàng<input name="columns" type="number" min={1} max={100} defaultValue={12} required /></label></div><small className="muted">Tạo ghế chuẩn theo nhãn A1, A2… Tối đa 300 ghế mỗi phòng.</small><button className="button button-primary" disabled={busy || !cinemas.some((cinema) => cinema.status === "ACTIVE")}>Tạo phòng</button></form><div className="admin-record-list">{auditoriums.map((room) => <details className="admin-record-detail" key={room.id}><summary><b>{room.cinemaName} · {room.name}</b><span>{room.seatCount} ghế · {room.screenType}</span></summary><form className="form-grid admin-inline-form" data-auditorium-id={room.id} onSubmit={updateAuditorium}><label className="field-label">Tên phòng<input name="name" defaultValue={room.name} required /></label><label className="field-label">Định dạng<input name="screenType" defaultValue={room.screenType} required /></label><button className="button button-outline button-small" disabled={busy}>Lưu thay đổi</button></form><details className="admin-seat-detail"><summary>Quản lý sơ đồ ghế ({room.seatCount ?? room.seats?.length ?? 0})</summary><p className="muted tiny">Đổi hàng/cột hoặc loại ghế. Ghế đang được giữ/đã bán sẽ bị từ chối cập nhật và giữ nguyên lịch sử.</p><div className="admin-seat-list">{room.seats?.map((seat) => <form className="admin-seat-form" data-seat-id={seat.id} data-testid={`admin-seat-edit-form-${seat.id}`} key={seat.id} onSubmit={updateSeat}><label className="field-label">Hàng<input name="row" defaultValue={seat.row} required maxLength={3} pattern="[A-Za-z]{1,3}" title="Tối đa 3 chữ cái" /></label><label className="field-label">Số ghế<input type="number" name="column" defaultValue={seat.column} min={1} max={100} step={1} required /></label><label className="field-label">Loại ghế<select name="type" defaultValue={seat.type}><option value="STANDARD">Thường</option><option value="PREMIUM">VIP</option><option value="ACCESSIBLE">Hỗ trợ tiếp cận</option></select></label><button className="button button-outline button-small" disabled={busy}>Lưu ghế {seat.label}</button></form>)}</div></details></details>)}</div></section>
     </div>
     <section className="panel admin-section"><div className="panel-title"><span className="eyebrow">SHOWTIME CONTROL</span><h2>Giá và trạng thái suất chiếu</h2></div><div className="admin-showtime-list">{adminShowtimes.map((showtime) => <form className="admin-showtime-row" data-showtime-id={showtime.id} key={showtime.id} onSubmit={updateShowtime}><div className="admin-showtime-title"><b>{showtime.movieTitle}</b><span>{showtime.cinemaName} · {showtime.auditoriumName} · {shortDate(showtime.date)} {timeOf(showtime.startAt)}</span></div><label className="field-label">Giá vé<input type="number" name="priceVnd" min={1000} max={1000000} step={1000} defaultValue={showtime.priceVnd} required /></label><label className="field-label">Phụ thu ghế VIP<input type="number" name="premiumSurchargeVnd" min={0} max={500000} step={1000} defaultValue={showtime.premiumSurchargeVnd ?? 30000} required /></label><label className="field-label">Trạng thái<select name="status" defaultValue={showtime.status ?? "ACTIVE"}><option value="ACTIVE">Đang mở bán</option><option value="INACTIVE">Tạm ngừng</option></select></label><button className="button button-outline button-small" disabled={busy}>Cập nhật</button></form>)}{!adminShowtimes.length && <p className="muted">Chưa có suất chiếu để quản lý.</p>}</div></section>
+    <section className="panel admin-section admin-users-panel"><div className="panel-title"><span className="eyebrow">ACCOUNT CONTROL</span><h2>Quản lý người dùng</h2><p className="muted">Đổi vai trò và phân công rạp cho Staff. Chỉ tải tối đa 20 tài khoản mỗi lượt.</p></div><div className="admin-user-list">{adminUsers.map((user) => <article className="admin-user-row" data-testid={`admin-user-row-${user.id}`} key={user.id}><div className="admin-user-identity"><b>{user.name}</b><span>{user.email}</span><small>{user.assignedCinema ? `Rạp hiện tại: ${user.assignedCinema.name}` : "Chưa phân công rạp"}</small></div><form className="admin-user-role-form" data-user-id={user.id} onSubmit={updateAdminUserRole}><label className="field-label">Vai trò<select aria-label={`Vai trò của ${user.email}`} name="role" defaultValue={user.role}><option value="CUSTOMER">Khách hàng</option><option value="STAFF">Nhân viên</option><option value="ADMIN">Quản trị</option></select></label><button className="button button-outline button-small" disabled={busy}>Lưu vai trò</button></form>{user.role === "STAFF" && <form className="admin-user-cinema-form" data-user-id={user.id} onSubmit={updateAdminUserCinema}><label className="field-label">Rạp phân công<select aria-label={`Rạp phân công cho ${user.email}`} name="cinemaId" defaultValue={user.assignedCinemaId ?? ""}><option value="">Chưa phân công</option>{cinemas.filter((cinema) => cinema.status === "ACTIVE" || cinema.id === user.assignedCinemaId).map((cinema) => <option key={cinema.id} value={cinema.id} disabled={cinema.status === "INACTIVE"}>{cinema.name}{cinema.status === "INACTIVE" ? " · Tạm dừng" : ""}</option>)}</select></label><button className="button button-outline button-small" disabled={busy}>Lưu rạp</button></form>}</article>)}</div>{usersLoading && <p role="status" className="muted">Đang tải thêm người dùng…</p>}{usersNextCursor && <button className="button button-outline admin-load-more" disabled={busy || usersLoading} onClick={() => void loadMoreAdminUsers()}>{usersLoading ? "Đang tải…" : "Tải thêm người dùng"}</button>}</section>
   </div>;
 }
 
@@ -310,7 +333,7 @@ export default function App() {
   const [queuedSelection, setQueuedSelection] = useState<{ showtimeId: string; seatIds: string[] } | null>(null);
   const [hold, setHold] = useState<Hold | null>(null); const [holdMap, setHoldMap] = useState<SeatMap | null>(null); const [secondsLeft, setSecondsLeft] = useState(0);
   const [bookingStep, setBookingStep] = useState<BookingStep>("seats"); const [order, setOrder] = useState<Order | null>(null); const [paidTickets, setPaidTickets] = useState<Ticket[]>([]);
-  const [orders, setOrders] = useState<Order[]>([]); const [ordersLoading, setOrdersLoading] = useState(false); const [checkoutBusy, setCheckoutBusy] = useState(false);
+  const [orders, setOrders] = useState<Order[]>([]); const [ordersNextCursor, setOrdersNextCursor] = useState<string | null>(null); const [ordersLoading, setOrdersLoading] = useState(false); const [checkoutBusy, setCheckoutBusy] = useState(false);
   const checkoutDialogRef = useRef<HTMLElement | null>(null);
   const seatShowtimeOpenerRef = useRef<HTMLElement | null>(null);
   const cinemas = useMemo(() => [...new Map(showtimes.map((showtime) => [showtime.cinemaId, showtime.cinemaName])).entries()].map(([id, name]) => ({ id, name })), [showtimes]);
@@ -351,7 +374,7 @@ export default function App() {
       const result = await api.payDemo(session.token, order.id);
       setPaidTickets(result.tickets);
       setBookingStep("success");
-      try { setOrders(await api.orders(session.token)); }
+      try { const page = await api.orders(session.token); setOrders(page.items); setOrdersNextCursor(page.nextCursor); }
       catch { /* Payment is already confirmed; the success response contains the tickets. */ }
     }
     catch (reason) {
@@ -368,10 +391,17 @@ export default function App() {
   async function loadOrders() {
     if (!session) { setAuthMode("login"); setAuthOpen(true); return; }
     setView("tickets"); setOrdersLoading(true); setError("");
-    try { setOrders(await api.orders(session.token)); } catch (reason) { setError(humanError(reason)); }
+    try { const page = await api.orders(session.token); setOrders(page.items); setOrdersNextCursor(page.nextCursor); } catch (reason) { setError(humanError(reason)); }
     finally { setOrdersLoading(false); }
   }
-  function logout() { localStorage.removeItem(SESSION_KEY); setSession(null); setView("discover"); setOrders([]); }
+  async function loadMoreOrders() {
+    if (!session || !ordersNextCursor || ordersLoading) return;
+    setOrdersLoading(true); setError("");
+    try { const page = await api.orders(session.token, ordersNextCursor); setOrders((current) => [...current, ...page.items]); setOrdersNextCursor(page.nextCursor); }
+    catch (reason) { setError(humanError(reason)); }
+    finally { setOrdersLoading(false); }
+  }
+  function logout() { localStorage.removeItem(SESSION_KEY); setSession(null); setView("discover"); setOrders([]); setOrdersNextCursor(null); }
   const featured = movies[0];
 
   return <div className="app-shell">
@@ -394,7 +424,7 @@ export default function App() {
       <section className="promise-strip"><div><span>01</span><b>Chọn chỗ dễ dàng</b><small>Sơ đồ ghế trực quan</small></div><div><span>02</span><b>Thanh toán an tâm</b><small>Giao dịch bảo mật</small></div><div><span>03</span><b>Vé về tay ngay</b><small>QR sẵn sàng vào rạp</small></div></section>
     </main>}
 
-    {view === "tickets" && <main className="content-page"><div className="section-heading"><div><span className="eyebrow">CINEMA CLUB</span><h1>Vé của bạn</h1><p className="muted">Lưu lại những buổi tối đáng nhớ.</p></div><button className="button button-outline" onClick={() => void loadOrders()}>↻ Cập nhật vé</button></div>{error && <p role="alert" className="alert alert-error">{error}</p>}{ordersLoading ? <div className="schedule-loading"><span className="spinner" />Đang tải vé…</div> : orders.length ? <div className="ticket-list">{orders.map((item) => <TicketCard order={item} key={item.id} />)}</div> : <div className="empty-state"><span className="empty-icon">▱</span><h3>Chưa có chiếc vé nào</h3><p>Chọn một bộ phim và giữ chỗ để bắt đầu hành trình.</p><button className="button button-primary" onClick={() => setView("discover")}>Khám phá phim</button></div>}</main>}
+    {view === "tickets" && <main className="content-page"><div className="section-heading"><div><span className="eyebrow">CINEMA CLUB</span><h1>Vé của bạn</h1><p className="muted">Lưu lại những buổi tối đáng nhớ.</p></div><button className="button button-outline" onClick={() => void loadOrders()}>↻ Cập nhật vé</button></div>{error && <p role="alert" className="alert alert-error">{error}</p>}{ordersLoading && !orders.length ? <div className="schedule-loading"><span className="spinner" />Đang tải vé…</div> : orders.length ? <><div className="ticket-list">{orders.map((item) => <TicketCard order={item} key={item.id} />)}</div>{ordersNextCursor && <button className="button button-outline admin-load-more" disabled={ordersLoading} onClick={() => void loadMoreOrders()}>{ordersLoading ? "Đang tải…" : "Tải thêm vé"}</button>}</> : <div className="empty-state"><span className="empty-icon">▱</span><h3>Chưa có chiếc vé nào</h3><p>Chọn một bộ phim và giữ chỗ để bắt đầu hành trình.</p><button className="button button-primary" onClick={() => setView("discover")}>Khám phá phim</button></div>}</main>}
     {view === "scan" && session && <main className="content-page"><ScanPanel session={session} /></main>}
     {view === "admin" && session?.user.role === "ADMIN" && <main className="content-page"><AdminPanel session={session} /></main>}
 

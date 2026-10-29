@@ -25,6 +25,8 @@ export type Order = {
 };
 export type SeatType = "STANDARD" | "PREMIUM" | "ACCESSIBLE";
 export type AdminCinema = { id: string; name: string; city: string; address: string; status: RecordStatus; auditoriums?: Array<{ id: string; name: string; screenType: string; seatCount: number }> };
+export type AdminUser = { id: string; name: string; email: string; role: Role; assignedCinemaId: string | null; assignedCinema: { id: string; name: string } | null; createdAt: string };
+export type CollectionPage<T> = { items: T[]; nextCursor: string | null };
 export type AdminAuditorium = { id: string; name: string; screenType: string; cinemaId: string; cinemaName?: string; seatCount?: number; seats?: Array<Pick<Seat, "id" | "label" | "row" | "column" | "type" | "isAccessible">> };
 export type AdminOccupancy = { showtimeCount: number; soldSeats: number; capacitySeats: number; fillRatePercent: number; definition: string; periodStart?: string; periodEnd?: string | null };
 export type AdminSummary = { movies: number; showtimes: number; orders: number; tickets: number; confirmedRevenueVnd: number; occupancy?: AdminOccupancy };
@@ -69,10 +71,21 @@ export const api = {
   createHold: (token: string, showtimeId: string, seatIds: string[]) => request<Hold>("/holds", post({ showtimeId, seatIds }), token),
   createOrder: (token: string, holdId: string) => request<Order>("/orders", post({ holdId }), token),
   payDemo: (token: string, orderId: string) => request<{ orderId: string; status: string; totalVnd: number; tickets: Ticket[] }>("/payments/mock/complete", post({ orderId }), token),
-  orders: (token: string) => request<Order[]>("/orders/me", {}, token),
+  orders: (token: string, cursor?: string) => {
+    const params = new URLSearchParams({ limit: "20" });
+    if (cursor) params.set("cursor", cursor);
+    return request<CollectionPage<Order>>(`/orders/me?${params}`, {}, token);
+  },
   checkIn: (token: string, ticketId: string) => request<{ ticketId: string; status: string; checkedInAt: string }>(`/tickets/${encodeURIComponent(ticketId)}/check-in`, post({}), token),
   scanQr: (token: string, qrToken: string) => request<{ ticketId: string; checkedInAt: string; seat: string; movieTitle: string; cinemaName: string }>("/tickets/scan", post({ qrToken }), token),
   adminSummary: (token: string) => request<AdminSummary>("/admin/summary", {}, token),
+  adminUsers: (token: string, cursor?: string) => {
+    const params = new URLSearchParams({ limit: "20" });
+    if (cursor) params.set("cursor", cursor);
+    return request<CollectionPage<AdminUser>>(`/admin/users?${params}`, {}, token);
+  },
+  updateUserRole: (token: string, id: string, role: Role) => request<Pick<AdminUser, "id" | "name" | "email" | "role" | "assignedCinemaId">>(`/admin/users/${encodeURIComponent(id)}/role`, patch({ role }), token),
+  assignUserCinema: (token: string, id: string, cinemaId: string | null) => request<AdminUser>(`/admin/users/${encodeURIComponent(id)}/assigned-cinema`, patch({ cinemaId }), token),
   adminMovies: (token: string) => request<Movie[]>("/admin/movies", {}, token),
   createMovie: (token: string, input: Omit<Movie, "id">) => request<Movie>("/admin/movies", post(input), token),
   updateMovie: (token: string, id: string, input: Partial<Pick<Movie, "title" | "slug" | "genre" | "synopsis" | "runtimeMinutes" | "ageRating" | "posterUrl" | "releaseDate" | "status">>) => request<Movie>(`/admin/movies/${encodeURIComponent(id)}`, patch(input), token),

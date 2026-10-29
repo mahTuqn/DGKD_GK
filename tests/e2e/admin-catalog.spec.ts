@@ -201,3 +201,60 @@ test("[TC-E2E-22] Admin nhận lỗi khi thiếu buffer lịch chiếu và tạo
   await expect(page.getByRole("status")).toContainText("Đã tạo suất chiếu.");
   await expect(createdShowtimes).toHaveCount(2);
 });
+
+test("[TC-E2E-28] Admin cập nhật role và rạp Staff bằng bàn phím, sau đó xác minh dữ liệu đã lưu", async ({ page }) => {
+  await signInAsAdmin(page);
+
+  const userRow = page.locator(".admin-user-row").filter({ hasText: "staff@cinema.local" });
+  await expect(userRow).toBeVisible();
+  const assignedCinema = userRow.getByLabel("Rạp phân công cho staff@cinema.local");
+  const assignedCinemaId = await assignedCinema.inputValue();
+  expect(assignedCinemaId).toBeTruthy();
+
+  const roleSelect = userRow.getByLabel("Vai trò của staff@cinema.local");
+  await roleSelect.focus();
+  await page.keyboard.press("Home");
+  await page.keyboard.press("Tab");
+  await expect(userRow.getByRole("button", { name: "Lưu vai trò" })).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("status")).toContainText("Đã cập nhật vai trò người dùng.");
+
+  const customerRow = page.locator(".admin-user-row").filter({ hasText: "staff@cinema.local" });
+  await expect(customerRow.getByLabel("Vai trò của staff@cinema.local")).toHaveValue("CUSTOMER");
+  await expect(customerRow).toContainText("Chưa phân công rạp");
+  const staffRoleSelect = customerRow.getByLabel("Vai trò của staff@cinema.local");
+  await staffRoleSelect.focus();
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("status")).toContainText("Đã cập nhật vai trò người dùng.");
+
+  const restoredStaffRow = page.locator(".admin-user-row").filter({ hasText: "staff@cinema.local" });
+  await expect(restoredStaffRow.getByLabel("Vai trò của staff@cinema.local")).toHaveValue("STAFF");
+  const cinemaSelect = restoredStaffRow.getByLabel("Rạp phân công cho staff@cinema.local");
+  await cinemaSelect.selectOption(assignedCinemaId!);
+  await restoredStaffRow.getByRole("button", { name: "Lưu rạp" }).click();
+  await expect(page.getByRole("status")).toContainText("Đã cập nhật rạp phân công cho Staff.");
+  await expect(restoredStaffRow.getByLabel("Rạp phân công cho staff@cinema.local")).toHaveValue(assignedCinemaId!);
+  await expect(restoredStaffRow).not.toContainText("passwordHash");
+  await expect(restoredStaffRow).not.toContainText("authVersion");
+
+  await page.reload();
+  await page.getByRole("button", { name: "Quản trị" }).click();
+  const persistedStaffRow = page.locator(".admin-user-row").filter({ hasText: "staff@cinema.local" });
+  await expect(persistedStaffRow.getByLabel("Vai trò của staff@cinema.local")).toHaveValue("STAFF");
+  await expect(persistedStaffRow.getByLabel("Rạp phân công cho staff@cinema.local")).toHaveValue(assignedCinemaId!);
+});
+
+test("[TC-E2E-29] Admin user controls reflow without horizontal page overflow at 320 CSS pixels", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 740 });
+  await signInAsAdmin(page);
+
+  const userManagement = page.locator(".admin-users-panel");
+  await expect(userManagement.getByRole("heading", { name: "Quản lý người dùng" })).toBeVisible();
+  await expect(userManagement.locator(".admin-user-row").first()).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+  const staffRow = userManagement.locator(".admin-user-row").filter({ hasText: "staff@cinema.local" });
+  await expect(staffRow.getByLabel("Vai trò của staff@cinema.local")).toBeVisible();
+  expect(await staffRow.evaluate((element) => element.getBoundingClientRect().right <= document.documentElement.clientWidth + 1)).toBe(true);
+});

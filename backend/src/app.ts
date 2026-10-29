@@ -10,6 +10,7 @@ import { createToken, hashPassword, requireAuth, requireRole, verifyPassword } f
 import { prisma } from "./db.js";
 import { calculateFillRatePercent, calendarDateAtTime, computeSeatPrice, DomainError, formatBusinessDate, HOLD_TTL_SECONDS, isHoldActive, uniqueSeatIds } from "./domain/booking-policy.js";
 import { mockPaymentPayloadHash, signMockPaymentEvent, verifyMockPaymentSignature, type MockPaymentEvent } from "./domain/mock-payment-signature.js";
+import { collectionPageQuerySchema, decodeCollectionCursor, encodeCollectionCursor } from "./pagination.js";
 import { enqueueOutboxEvent } from "./worker.js";
 
 const asyncRoute = (handler: express.RequestHandler): express.RequestHandler => (req, res, next) => Promise.resolve(handler(req, res, next)).catch(next);
@@ -472,8 +473,23 @@ export function createApp() {
   }));
 
   app.get("/api/orders/me", requireAuth, requireRole(Role.CUSTOMER), asyncRoute(async (req, res) => {
-    const orders = await prisma.cinemaOrder.findMany({ where: { userId: req.user!.id }, orderBy: { createdAt: "desc" }, select: { id: true } });
-    res.json(await Promise.all(orders.map((order) => getOrderForResponse(prisma, order.id))));
+    const query = collectionPageQuerySchema.parse(req.query);
+    const cursor = decodeCollectionCursor(query.cursor);
+    const rows = await prisma.cinemaOrder.findMany({
+      where: {
+        userId: req.user!.id,
+        ...(cursor ? { OR: [{ createdAt: { lt: cursor.createdAt } }, { createdAt: cursor.createdAt, id: { lt: cursor.id } }] } : {})
+      },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: query.limit + 1,
+      include: { showtime: { include: { movie: true, auditorium: { include: { cinema: true } } } }, claims: { include: { seat: true } }, tickets: true }
+    });
+    const hasMore = rows.length > query.limit;
+    const page = rows.slice(0, query.limit);
+    res.json({
+      items: page.map(toOrder),
+      nextCursor: hasMore && page.length ? encodeCollectionCursor({ createdAt: page.at(-1)!.createdAt, id: page.at(-1)!.id }) : null
+    });
   }));
 
   app.get("/api/orders/:id", requireAuth, requireRole(Role.CUSTOMER), asyncRoute(async (req, res) => {
@@ -789,11 +805,21 @@ export function createApp() {
     res.json(toShowtime(showtime));
   }));
 
-  app.get("/api/admin/users", requireAuth, requireRole(Role.ADMIN), asyncRoute(async (_req, res) => {
-    res.json(await prisma.user.findMany({
+  app.get("/api/admin/users", requireAuth, requireRole(Role.ADMIN), asyncRoute(async (req, res) => {
+    const query = collectionPageQuerySchema.parse(req.query);
+    const cursor = decodeCollectionCursor(query.cursor);
+    const rows = await prisma.user.findMany({
+      where: cursor ? { OR: [{ createdAt: { gt: cursor.createdAt } }, { createdAt: cursor.createdAt, id: { gt: cursor.id } }] } : {},
       select: { id: true, name: true, email: true, role: true, assignedCinemaId: true, assignedCinema: { select: { id: true, name: true } }, createdAt: true },
-      orderBy: { createdAt: "asc" }
-    }));
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+      take: query.limit + 1
+    });
+    const hasMore = rows.length > query.limit;
+    const page = rows.slice(0, query.limit);
+    res.json({
+      items: page,
+      nextCursor: hasMore && page.length ? encodeCollectionCursor({ createdAt: page.at(-1)!.createdAt, id: page.at(-1)!.id }) : null
+    });
   }));
 
   app.patch("/api/admin/users/:id/role", requireAuth, requireRole(Role.ADMIN), asyncRoute(async (req, res) => {

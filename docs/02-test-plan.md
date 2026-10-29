@@ -26,7 +26,7 @@ The Chromium desktop/Pixel 7 browser artifact reports **50 expected, 0 unexpecte
 
 The exact-source DAST job passed all three scopes. Its downloaded artifact SHA-256 matched GitHub metadata and all 3 reports parsed: **0 High, 0 Medium, 1 Low alert record (3 instances), and 5 Informational records (11 instances)**. The Low-confidence `SEC-OBS-01` observation is on JSON fields `/api/admin/cinemas` (`address`, `name`) and `/api/cinemas` (`city`). Source review found React text/form rendering and no raw HTML injection sink; `/api/cinemas` has no direct frontend API consumer. Keep the observation tracked for other/future consumers. Artifact IDs and hashes are in the [1e86106 evidence manifest](evidence/followup/2026-10-29-github-actions-1e86106.json); ZAP payloads were not copied into documentation.
 
-Manual WCAG 2.2 AA keyboard/screen-reader review remains requester-owned; no staging environment is available; production backup/PITR/RPO/RTO and restore, exhaustive ASVS/API Top 10 and adversarial BOLA review, and pagination for unbounded collections (BUG-019) remain open. The SRS uses mock payment; real gateway/refund behavior is outside acceptance scope.
+Manual WCAG 2.2 AA keyboard/screen-reader review remains requester-owned; no staging environment is available; production backup/PITR/RPO/RTO and restore, exhaustive ASVS/API Top 10 and adversarial BOLA review remain open. BUG-019 pagination and Admin user controls are implemented in the current working tree; isolated PostgreSQL API and browser CI retest is pending before closure. The SRS uses mock payment; real gateway/refund behavior is outside acceptance scope.
 
 ## Previous exact-source CI verification — `f0c9c37` — 29/10/2026
 

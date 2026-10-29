@@ -8,7 +8,7 @@ Playwright evidence reports **50/50** Chromium desktop/Pixel 7 tests, **2/2** is
 
 The current DAST artifact SHA-256 matches GitHub's digest; all **3/3** JSON reports parsed. It contains **0 High, 0 Medium, 1 Low alert record with 3 instances, and 5 Informational records with 11 instances**. The Low-confidence `SEC-OBS-01` JSON markup observation is on `/api/admin/cinemas` (`address`, `name`) and `/api/cinemas` (`city`). A current source audit found no raw HTML injection sink; Admin renders these values as React text/form values, and `/api/cinemas` has no direct frontend API consumer. Keep the observation tracked for external or future consumers. Artifact IDs, sizes and digests are in the [1e86106 evidence manifest](evidence/followup/2026-10-29-github-actions-1e86106.json); report payloads were not copied into this document.
 
-The requester will complete manual WCAG review; no staging environment exists. Production backup/PITR/RPO/RTO and restore, exhaustive ASVS/API Top 10 and adversarial BOLA review, and unbounded collection pagination (BUG-019) remain open. Real payment/refund remains outside the SRS.
+The requester will complete manual WCAG review; no staging environment exists. Production backup/PITR/RPO/RTO and restore, exhaustive ASVS/API Top 10 and adversarial BOLA review remain open. The current working tree implements BUG-019 cursor pagination and the Admin user controls; API/browser CI retest on an isolated database is pending. Real payment/refund remains outside the SRS.
 
 ## Previous exact-source CI result — `f0c9c37` — 29/10/2026
 

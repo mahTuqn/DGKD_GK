@@ -112,8 +112,8 @@ authorizationDescribe("REQ-BOOK ownership: order and nested ticket object isolat
 
     const ownerAList = await request(app).get("/api/orders/me").set({ Authorization: `Bearer ${tokenA}` });
     expect(ownerAList.status).toBe(200);
-    expect(ownerAList.body.map((order: { id: string }) => order.id)).toEqual([orderAId]);
-    expect(ownerAList.body[0].tickets.map((ticket: { id: string }) => ticket.id)).toEqual([ticketAId]);
+    expect(ownerAList.body.items.map((order: { id: string }) => order.id)).toEqual([orderAId]);
+    expect(ownerAList.body.items[0].tickets.map((ticket: { id: string }) => ticket.id)).toEqual([ticketAId]);
     expect(JSON.stringify(ownerAList.body)).toContain(qrA);
     expect(JSON.stringify(ownerAList.body)).not.toContain(orderBId);
     expect(JSON.stringify(ownerAList.body)).not.toContain(ticketBId);
@@ -121,8 +121,8 @@ authorizationDescribe("REQ-BOOK ownership: order and nested ticket object isolat
 
     const ownerBList = await request(app).get("/api/orders/me").set({ Authorization: `Bearer ${tokenB}` });
     expect(ownerBList.status).toBe(200);
-    expect(ownerBList.body.map((order: { id: string }) => order.id)).toEqual([orderBId]);
-    expect(ownerBList.body[0].tickets.map((ticket: { id: string }) => ticket.id)).toEqual([ticketBId]);
+    expect(ownerBList.body.items.map((order: { id: string }) => order.id)).toEqual([orderBId]);
+    expect(ownerBList.body.items[0].tickets.map((ticket: { id: string }) => ticket.id)).toEqual([ticketBId]);
     expect(JSON.stringify(ownerBList.body)).toContain(qrB);
     expect(JSON.stringify(ownerBList.body)).not.toContain(orderAId);
     expect(JSON.stringify(ownerBList.body)).not.toContain(ticketAId);

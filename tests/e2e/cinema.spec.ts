@@ -198,6 +198,11 @@ test("[TC-E2E-03][TC-E2E-25] staff soát QR và thông báo thành công/lỗi c
   await page.getByRole("button", { name: "Xác nhận vào rạp" }).click();
   await expect(page.getByRole("alert")).toContainText("đã được sử dụng");
   expect(axeViolations((await wcagAxe(page).include(".scan-panel").analyze()).violations)).toEqual([]);
+
+  await page.getByLabel("Mã QR vé").fill("invalid-qr-token-that-is-not-in-db");
+  await page.getByRole("button", { name: "Xác nhận vào rạp" }).click();
+  await expect(page.getByRole("alert")).toContainText("Mã vé không hợp lệ");
+  expect(axeViolations((await wcagAxe(page).include(".scan-panel").analyze()).violations)).toEqual([]);
 });
 
 test("[TC-E2E-23] hai lượt quét QR đồng thời chỉ ghi nhận một vé", async ({ page }) => {

@@ -603,11 +603,13 @@ regressionDescribe("authorization regression coverage", () => {
   it("[TC-SEC-25] exposes only the allowlisted fields in Admin users and nested cinema responses", async () => {
     const response = await request(app).get("/api/admin/users").set({ Authorization: `Bearer ${adminToken}` });
     expect(response.status).toBe(200);
-    expect(Array.isArray(response.body)).toBe(true);
+    expect(Array.isArray(response.body.items)).toBe(true);
+    expect(response.body.items.length).toBeLessThanOrEqual(20);
+    expect(response.body).toHaveProperty("nextCursor");
     const expectedUserKeys = ["assignedCinema", "assignedCinemaId", "createdAt", "email", "id", "name", "role"].sort();
     const expectedCinemaKeys = ["id", "name"].sort();
 
-    for (const user of response.body as Array<Record<string, unknown>>) {
+    for (const user of response.body.items as Array<Record<string, unknown>>) {
       expect(Object.keys(user).sort()).toEqual(expectedUserKeys);
       if (user.assignedCinema !== null) {
         expect(user.assignedCinema).toEqual(expect.objectContaining({ id: expect.any(String), name: expect.any(String) }));
@@ -615,9 +617,9 @@ regressionDescribe("authorization regression coverage", () => {
       }
     }
 
-    const protectedStaff = (response.body as Array<Record<string, unknown>>).find((user) => user.id === protectedStaffId);
+    const protectedStaff = (response.body.items as Array<Record<string, unknown>>).find((user) => user.id === protectedStaffId);
     expect(protectedStaff?.assignedCinema).toMatchObject({ id: cinemaId, name: `Authorization Regression ${fixture}` });
-    expect((response.body as Array<Record<string, unknown>>).some((user) => user.assignedCinema === null)).toBe(true);
+    expect((response.body.items as Array<Record<string, unknown>>).some((user) => user.assignedCinema === null)).toBe(true);
   }, 30_000);
 
   it("[TC-SEC-26] rejects short and unknown QR scans without tickets, check-in state, or audit writes", async () => {
@@ -914,12 +916,12 @@ regressionDescribe("authorization regression coverage", () => {
 
     const list = await request(app).get("/api/admin/users").set({ Authorization: `Bearer ${adminToken}` });
     expect(list.status).toBe(200);
-    expect(Array.isArray(list.body)).toBe(true);
-    expect(list.body).toEqual(expect.arrayContaining([
+    expect(Array.isArray(list.body.items)).toBe(true);
+    expect(list.body.items).toEqual(expect.arrayContaining([
       expect.objectContaining({ id: staffId, role: Role.STAFF, assignedCinemaId: cinemaId }),
       expect.objectContaining({ id: userBId, role: Role.CUSTOMER, assignedCinemaId: null })
     ]));
-    expect(list.body.every((user: Record<string, unknown>) => !("passwordHash" in user))).toBe(true);
+    expect(list.body.items.every((user: Record<string, unknown>) => !("passwordHash" in user))).toBe(true);
 
     const change = await request(app)
       .patch(`/api/admin/users/${staffId!}/role`)
