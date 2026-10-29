@@ -1,0 +1,137 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "recordedAt": "2026-10-29",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "commit": "a280c1efa353ee70775f939e6de0bfbf30a3738a",
+  "branch": "codex/cross-browser-smoke",
+  "overall": "PASS_AUTOMATED_CI_WITH_DOCUMENTED_LIMITATIONS",
+  "codeDeltaFromPreviousVerifiedSource": "Added strict public catalog query validation, the atomic Staff assignment/demotion guard, Admin report/date and catalog write boundary regressions, and unpaid-order ticket check-in coverage for both ID and QR routes. Updated traceability, test cases, and authorization route matrix.",
+  "traceability": {
+    "result": "PASS",
+    "testCases": 100,
+    "requirements": 26
+  },
+  "runs": {
+    "qualityDastCompose": {
+      "id": 40814342889,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40814342889",
+      "result": "PASS",
+      "headSha": "a280c1efa353ee70775f939e6de0bfbf30a3738a",
+      "verified": [
+        "Gitleaks, dependency audit, migrations, OpenAPI lint, traceability, and strict backend source/test typecheck",
+        "API integration: 53/53 passed, including TC-SEC-29 through TC-SEC-32, TC-CAT-07, and TC-PLAN-09",
+        "TC-PLAN-08: 100 requests across two API processes; one success, 99 conflicts, one persisted HELD claim/hold",
+        "Live five-minute hold expiry and two-worker five-minute soak/restart",
+        "Backend/frontend production build",
+        "Chromium desktop/Pixel 7 Playwright: 50 expected, 0 unexpected, 0 skipped, 0 flaky",
+        "Isolated Compose browser smoke: 2 expected, 0 unexpected, 0 skipped, 0 flaky",
+        "Authenticated API, unauthenticated API, and web preview DAST scans; domain coverage and mutation thresholds"
+      ],
+      "artifacts": [
+        {
+          "id": 12871754517,
+          "name": "cinema-booking-browser-results-a280c1efa353ee70775f939e6de0bfbf30a3738a",
+          "sizeBytes": 342588,
+          "digest": "sha256:4fa516f88c954c6979451f0451314a0755cae88c1ebd713ecbaba125e86ee4d0",
+          "digestVerified": true,
+          "summary": "Playwright 50 expected, 0 unexpected, 0 skipped, 0 flaky."
+        },
+        {
+          "id": 12871229631,
+          "name": "cinema-booking-compose-browser-results-a280c1efa353ee70775f939e6de0bfbf30a3738a",
+          "sizeBytes": 199990,
+          "digest": "sha256:a2968f058f2f4aa8e143831a2b4598da2ef0e5311396aa1de889ffaed209e36e",
+          "digestVerified": true,
+          "summary": "Compose browser smoke 2 expected, 0 unexpected, 0 skipped, 0 flaky."
+        },
+        {
+          "id": 12871219696,
+          "name": "cinema-booking-domain-quality-a280c1efa353ee70775f939e6de0bfbf30a3738a",
+          "sizeBytes": 144477,
+          "digest": "sha256:4fd32fcd326a8df1b7c416cf37c08e7200fc2fa81a560aa6c502098c47874f2a",
+          "digestVerified": true
+        },
+        {
+          "id": 12872046735,
+          "name": "cinema-booking-dast-reports-a280c1efa353ee70775f939e6de0bfbf30a3738a",
+          "sizeBytes": 6466,
+          "digest": "sha256:4aa3c82a82af692ff89f02d60eda11eb04bbafe9d841a8601aafacdca8cdc723",
+          "digestVerified": true
+        }
+      ]
+    },
+    "crossBrowser": {
+      "id": 40814342885,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40814342885",
+      "result": "PASS",
+      "headSha": "a280c1efa353ee70775f939e6de0bfbf30a3738a",
+      "verified": [
+        "Firefox and WebKit desktop smoke: 6 expected, 0 unexpected, 0 skipped, 0 flaky"
+      ],
+      "artifact": {
+        "id": 12871299354,
+        "name": "cinema-booking-cross-browser-results-a280c1efa353ee70775f939e6de0bfbf30a3738a",
+        "sizeBytes": 222909,
+        "digest": "sha256:c5e3ea27912c6f263dd3ada4cf80c89bd5eb126c123c2defee27a387e7750b59",
+        "digestVerified": true
+      }
+    },
+    "workerLongSoak": {
+      "id": 40814342768,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40814342768",
+      "result": "PASS",
+      "headSha": "a280c1efa353ee70775f939e6de0bfbf30a3738a",
+      "verified": [
+        "TC-WORKER-07 two-worker 15-minute soak",
+        "Graceful restart and pending-event catch-up"
+      ]
+    }
+  },
+  "dastReview": {
+    "artifactDigestVerified": true,
+    "artifactDigest": "sha256:4aa3c82a82af692ff89f02d60eda11eb04bbafe9d841a8601aafacdca8cdc723",
+    "reportsParsed": "3/3",
+    "alertRecords": {
+      "High": 0,
+      "Medium": 0,
+      "Low": 1,
+      "Informational": 5,
+      "Unknown": 0
+    },
+    "alertInstances": {
+      "High": 0,
+      "Medium": 0,
+      "Low": 3,
+      "Informational": 11,
+      "Unknown": 0
+    },
+    "triagedObservation": {
+      "id": "SEC-OBS-01",
+      "alert": "Cross Site Scripting Weakness (Persistent in JSON Response)",
+      "risk": "Low",
+      "confidence": "Low",
+      "instances": [
+        { "path": "/api/admin/cinemas", "parameter": "address" },
+        { "path": "/api/admin/cinemas", "parameter": "name" },
+        { "path": "/api/cinemas", "parameter": "city" }
+      ],
+      "disposition": "The current frontend consumer audit found React text/form rendering and no raw HTML injection sink; /api/cinemas has no current frontend consumer. Keep tracked for external or future consumers; no source change warranted from reviewed consumers."
+    }
+  },
+  "remainingGates": [
+    "Requester-owned manual WCAG 2.2 AA review: keyboard-only, screen reader, contrast, zoom/reflow, and orientation",
+    "No staging environment is available; named-staging performance is unmeasured",
+    "Production backup schedule, PITR, RPO/RTO, and production restore are unverified",
+    "Exhaustive ASVS/API Top 10 and adversarial BOLA/IDOR review remain open",
+    "Reliability beyond the tested 15-minute worker soak is unmeasured",
+    "Keep SEC-OBS-01 tracked for other/future consumers",
+    "Real payment gateway/refund is outside the current SRS"
+  ],
+  "limitations": [
+    "Passing CI applies to the exact source commit above, using isolated GitHub Actions databases and runners.",
+    "The DAST scopes are not exhaustive security certification; no High/Medium alert was reported.",
+    "The consumer review covers this repository and current source only, not external or future consumers.",
+    "Automated accessibility checks do not replace the requester-owned manual WCAG review."
+  ]
+}
