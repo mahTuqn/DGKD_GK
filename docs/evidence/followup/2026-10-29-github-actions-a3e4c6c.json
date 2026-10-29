@@ -1,0 +1,121 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "recordedAt": "2026-10-29",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "commit": "a3e4c6c4b38ed911331445796623e97549b03dcc",
+  "branch": "codex/cross-browser-smoke",
+  "applicationTestSource": "9001ed7e74203fd61bbf5f790207339622cb2a84",
+  "sourceDelta": "Workflow-only change: Firefox/WebKit smoke adds TC-E2E-03, TC-E2E-19 and TC-E2E-31. Application and test files are unchanged.",
+  "overall": "PASS_ALL_THREE_GITHUB_ACTIONS_WORKFLOWS_DAST_REPORT_CONTENTS_UNREVIEWED",
+  "runs": {
+    "qualityApiDastDomainCompose": {
+      "id": 40884985524,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40884985524",
+      "event": "push",
+      "result": "PASS",
+      "jobs": {
+        "quality": "success",
+        "dast": "success",
+        "domainCoverageAndMutation": "success",
+        "composeRuntimeAndBrowserSmoke": "success"
+      },
+      "verifiedSteps": [
+        "Dependency and secret checks, migrations/seed, OpenAPI lint, traceability and backend/test type-check passed",
+        "Complete API suite passed",
+        "Live five-minute hold expiry and five-minute worker soak/restart passed",
+        "Backend/frontend production build passed",
+        "Full configured Chromium desktop/Pixel 7 Playwright suite passed",
+        "Configured DAST gate passed; report contents remain unreviewed",
+        "Domain coverage and mutation threshold job passed",
+        "Isolated Compose runtime health checks and Chromium booking flow passed"
+      ],
+      "artifacts": {
+        "browser": {
+          "id": 12903361582,
+          "name": "cinema-booking-browser-results-a3e4c6c4b38ed911331445796623e97549b03dcc",
+          "sizeBytes": 393545,
+          "githubDigest": "sha256:90c5493528b509ac736d2d10c2d8bce2c4862effe18d4275026f13140187de28",
+          "expired": false
+        },
+        "dast": {
+          "id": 12902446720,
+          "name": "cinema-booking-dast-reports-a3e4c6c4b38ed911331445796623e97549b03dcc",
+          "sizeBytes": 6485,
+          "githubDigest": "sha256:1b6fc6f9814794c183522e3f1c503610911d2c226713e7eefd1986560f905583",
+          "expired": false,
+          "artifactContentsRetrieved": false,
+          "reportTotalsReviewed": false,
+          "anonymousDownloadAttempt": "GitHub artifact archive API returned HTTP 401 Requires authentication. No alert totals, names, URLs, payloads or triage are claimed."
+        },
+        "composeBrowser": {
+          "id": 12902181269,
+          "name": "cinema-booking-compose-browser-results-a3e4c6c4b38ed911331445796623e97549b03dcc",
+          "sizeBytes": 200041,
+          "githubDigest": "sha256:d234211f2b0e3ade797d7e8f59cbe06f1cdcb705288d34d22481f7e39a406f6e",
+          "expired": false
+        },
+        "domainQuality": {
+          "id": 12901737630,
+          "name": "cinema-booking-domain-quality-a3e4c6c4b38ed911331445796623e97549b03dcc",
+          "sizeBytes": 144599,
+          "githubDigest": "sha256:d7d01b290df3ce44ed0c1c68bf45ab1499c20941aae1a361bfa98f54723d4342",
+          "expired": false
+        }
+      }
+    },
+    "crossBrowserSmoke": {
+      "id": 40884985434,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40884985434",
+      "event": "push",
+      "result": "PASS",
+      "scope": {
+        "browsers": ["Firefox desktop", "WebKit desktop"],
+        "cases": ["TC-E2E-01", "TC-E2E-02", "TC-E2E-03", "TC-E2E-09", "TC-E2E-19", "TC-E2E-31"],
+        "plannedExecutions": 12,
+        "plannedExecutionBasis": "Playwright --list resolved six cases per engine; CI test step completed successfully.",
+        "coverage": "Targeted smoke subset, not the full Chromium suite."
+      },
+      "artifact": {
+        "id": 12901499023,
+        "name": "cinema-booking-cross-browser-results-a3e4c6c4b38ed911331445796623e97549b03dcc",
+        "sizeBytes": 255523,
+        "githubDigest": "sha256:947bdf16d138471db7324019a4c7df0390e37edb67804492d64a3f6eb958f7cf",
+        "expired": false
+      }
+    },
+    "workerLongSoak": {
+      "id": 40884986015,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40884986015",
+      "event": "push",
+      "result": "PASS",
+      "scope": "Two-worker 15-minute soak, graceful shutdown/restart and pending-event catch-up"
+    }
+  },
+  "localChecks": {
+    "qaTrace": "PASS: 119 test cases / 28 requirements.",
+    "playwrightSelection": "PASS: 12 planned Firefox/WebKit executions from six test cases; `--list` only, no browser launch or database connection.",
+    "gitDiffCheck": "PASS before workflow commit.",
+    "fullLocalBrowserRerun": "Not run; host had 511 MiB free with both local Compose stacks active. Exact-head GitHub Actions ran the browser jobs using isolated resources."
+  },
+  "environment": {
+    "runner": "GitHub Actions clean checkout",
+    "database": "Isolated ephemeral PostgreSQL databases and Compose stack",
+    "staging": "Not available; no staging or production behavior is inferred."
+  },
+  "remainingGates": [
+    "Requester-owned manual WCAG 2.2 AA keyboard, screen-reader, contrast, zoom/reflow and orientation checklist (90 pairs remain Not tested)",
+    "Review current-head DAST artifact contents, alert identities, URLs, payloads and triage",
+    "Named-staging performance and production reliability validation; no staging environment is available",
+    "Production backup schedule, PITR, RPO/RTO and restore verification",
+    "Comprehensive ASVS/API Top 10 and adversarial BOLA/IDOR testing",
+    "Reliability beyond the tested 15-minute worker soak",
+    "Real payment gateway/refund behavior is outside the mock-payment SRS"
+  ],
+  "limitations": [
+    "The browser workflow expansion passed, but Firefox/WebKit coverage remains a subset.",
+    "The current DAST threshold pass does not disclose or prove zero Low/Informational alerts.",
+    "Automated axe/browser checks do not replace manual WCAG/screen-reader review.",
+    "The focused source-only BOLA review found no concrete issue but is not an exhaustive security certification."
+  ]
+}
