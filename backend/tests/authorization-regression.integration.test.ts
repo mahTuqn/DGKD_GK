@@ -23,6 +23,8 @@ regressionDescribe("authorization regression coverage", () => {
   const userIds: string[] = [];
   const roleOrderIds: string[] = [];
   const roleSeatIds: string[] = [];
+  const isolatedCheckInOrderIds: string[] = [];
+  const isolatedCheckInSeatIds: string[] = [];
   const roleQrTokens = new Map<Role, string>();
   const roleOwnedOrderIds = new Map<Role, string>();
   let cinemaId: string | undefined;
@@ -208,7 +210,7 @@ regressionDescribe("authorization regression coverage", () => {
       }
       await prisma.movie.deleteMany({ where: { slug: { in: attemptedMovieSlugs } } });
       await prisma.cinema.deleteMany({ where: { name: { in: attemptedCinemaNames } } });
-      const fixtureOrderIds = [...(orderId ? [orderId] : []), ...roleOrderIds];
+      const fixtureOrderIds = [...(orderId ? [orderId] : []), ...roleOrderIds, ...isolatedCheckInOrderIds];
       if (fixtureOrderIds.length) {
         await prisma.reconciliationCase.deleteMany({ where: { orderId: { in: fixtureOrderIds } } });
         await prisma.outboxEvent.deleteMany({ where: { aggregateId: { in: fixtureOrderIds } } });
@@ -228,6 +230,7 @@ regressionDescribe("authorization regression coverage", () => {
       if (userIds.length) await prisma.auditLog.deleteMany({ where: { actorId: { in: userIds } } });
       if (seatId) await prisma.seat.deleteMany({ where: { id: seatId } });
       if (roleSeatIds.length) await prisma.seat.deleteMany({ where: { id: { in: roleSeatIds } } });
+      if (isolatedCheckInSeatIds.length) await prisma.seat.deleteMany({ where: { id: { in: isolatedCheckInSeatIds } } });
       if (foreignSeatId) await prisma.seat.deleteMany({ where: { id: foreignSeatId } });
       if (movieId) await prisma.movie.deleteMany({ where: { id: movieId } });
       if (foreignAuditoriumId) await prisma.auditorium.deleteMany({ where: { id: foreignAuditoriumId } });
@@ -647,12 +650,24 @@ regressionDescribe("authorization regression coverage", () => {
   }, 30_000);
 
   it("[TC-SEC-32] rejects ID and QR check-in for a ticket whose order is not paid", async () => {
-    const heldClaim = await prisma.seatClaim.findFirstOrThrow({
-      where: { orderId: orderId!, status: ClaimStatus.HELD },
-      select: { id: true }
+    const checkInSeat = await prisma.seat.create({
+      data: { auditoriumId: auditoriumId!, label: `Q${fixture.slice(0, 6)}`, row: "Q", column: 1, type: SeatType.STANDARD }
     });
+    isolatedCheckInSeatIds.push(checkInSeat.id);
+    const expiresAt = new Date(Date.now() + 60 * 60_000);
+    const pendingHold = await prisma.seatHold.create({
+      data: { userId: userAId!, showtimeId: showtimeId!, status: HoldStatus.PAYMENT_PENDING, expiresAt }
+    });
+    const pendingOrder = await prisma.cinemaOrder.create({
+      data: { userId: userAId!, showtimeId: showtimeId!, holdId: pendingHold.id, status: OrderStatus.PAYMENT_PENDING, totalVnd: 100_000 }
+    });
+    isolatedCheckInOrderIds.push(pendingOrder.id);
+    const heldClaim = await prisma.seatClaim.create({
+      data: { showtimeId: showtimeId!, seatId: checkInSeat.id, holdId: pendingHold.id, orderId: pendingOrder.id, status: ClaimStatus.HELD, expiresAt, priceVnd: 100_000 }
+    });
+    await prisma.payment.create({ data: { orderId: pendingOrder.id, status: PaymentStatus.PENDING, amountVnd: 100_000 } });
     const pendingOrderTicket = await prisma.ticket.create({
-      data: { orderId: orderId!, seatClaimId: heldClaim.id, qrToken: randomUUID().replaceAll("-", "") }
+      data: { orderId: pendingOrder.id, seatClaimId: heldClaim.id, qrToken: randomUUID().replaceAll("-", "") }
     });
     const staffAuth = { Authorization: `Bearer ${staffToken}` };
     const snapshot = async () => ({
