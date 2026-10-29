@@ -1,0 +1,22 @@
+{
+  "status": "in progress",
+  "reviewer": "Codex agent operating the browser UI",
+  "baseUrl": "http://127.0.0.1:5173",
+  "environment": "Dedicated disposable PostgreSQL database; backend built from 1e66511; frontend includes uncommitted contrast/legend fixes",
+  "ownership": "Requester delegated all remaining manual review to the agent; no requester review is assumed.",
+  "observations": [
+    {"scope":"sign-in dialog", "action":"Tab from Email", "result":"Password receives focus; visible orange focus outline inspected in screenshot"},
+    {"scope":"sign-in dialog", "action":"Four more Tabs from Password", "result":"Sign in, Create account, Close, Email; focus stays inside dialog"},
+    {"scope":"sign-in error", "action":"Enter known demo email and invalid test password using keyboard, submit with Enter", "result":"Error Email hoặc mật khẩu không chính xác. is visible and exposed through role=alert; focus remains on Password"},
+    {"scope":"sign-in dialog", "action":"Escape", "result":"Dialog closes; focus returns to Mở tài khoản opener"},
+    {"scope":"sign-in computed styles after fix", "result":{"placeholder":"rgb(163,159,152)","inputBorder":"rgb(133,128,120)","inputBackground":"rgb(32,32,30)"}},
+    {"scope":"discovery keyboard", "action":"Tab through brand, navigation, sign-in, hero CTA, three movie cards and their showtime buttons; use arrow keys in date/cinema filters", "result":"Focus follows DOM/task order; a date without showtimes exposes empty-state text; restoring date and choosing a cinema restores showtimes; Enter opens seat dialog with focus on Close"},
+    {"scope":"seat dialog keyboard", "action":"Tab from Close to A1; Space; Shift+Tab twice", "result":"A1 toggles selected, total becomes 125000 VND, focus wraps from Close to enabled Hold button; visible outline inspected"},
+    {"scope":"320x800 CSS-pixel reflow", "action":"Inspect seat and checkout dialogs; measure root width before and after body min-width fix", "result":"Before: clientWidth305/scrollWidth320. After: clientWidth305/scrollWidth305. Seat map retains its own 2D scroll region; close/hold/checkout actions remain available"},
+    {"scope":"guest-to-customer booking", "action":"Activate Hold with Enter, enter seeded demo customer credentials using keyboard and submit", "result":"Sign-in transitions to checkout; countdown and total are visible; focus enters checkout Close button"},
+    {"scope":"checkout focus finding", "action":"Tab to Continue payment, then Enter", "result":"Original implementation replaced the button and left focus on body. Added focus recovery for checkout step transitions; focused-action regression added to TC-E2E-01/26, retest pending when this observation was recorded"}
+  ],
+  "automatedRegression": {"cases":["TC-E2E-16","TC-E2E-27"],"result":"2 passed in 12.6s", "scope":"Contrast, held legend, 320px page overflow and close/hold visibility; separate from manual observations"},
+  "checkoutFocusRetest": {"cases":["TC-E2E-01","TC-E2E-26"],"result":"1 browser test passed in 11.5s", "scope":"Actual disposable API journey: register, hold, create order, payment and ticket display; Enter activates checkout and payment; focus must reach payment and then View my tickets"},
+  "limitations": ["These are specific UI observations, not a completed 90-row checklist.","Actual screen-reader speech, real mobile touch exploration, full workflow keyboard review and real browser zoom remain unverified.","DOM role=alert observation is not evidence that a screen reader announced the error."]
+}

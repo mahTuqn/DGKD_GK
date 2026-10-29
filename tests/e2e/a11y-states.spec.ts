@@ -130,7 +130,42 @@ async function expectNoWcagAxeViolations(page: Page, selector: string) {
   expect(allAxeViolations(result.violations)).toEqual([]);
 }
 
+type CssRgb = { red: number; green: number; blue: number; alpha: number };
+
+function parseCssRgb(value: string): CssRgb {
+  const channels = value.match(/-?(?:\d+\.?\d*|\.\d+)/g)?.map(Number);
+  if (!channels || channels.length < 3) throw new Error(`Unsupported computed CSS color: ${value}`);
+  return { red: channels[0], green: channels[1], blue: channels[2], alpha: channels[3] ?? 1 };
+}
+
+function composite(foreground: CssRgb, background: CssRgb, opacity = 1): CssRgb {
+  const alpha = foreground.alpha * opacity;
+  return {
+    red: foreground.red * alpha + background.red * (1 - alpha),
+    green: foreground.green * alpha + background.green * (1 - alpha),
+    blue: foreground.blue * alpha + background.blue * (1 - alpha),
+    alpha: 1,
+  };
+}
+
+function relativeLuminance(color: CssRgb) {
+  const linearize = (channel: number) => {
+    const normalized = channel / 255;
+    return normalized <= 0.04045 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * linearize(color.red) + 0.7152 * linearize(color.green) + 0.0722 * linearize(color.blue);
+}
+
+function contrastRatioOver(foregroundColor: string, backgroundColor: string, foregroundOpacity = 1) {
+  const background = parseCssRgb(backgroundColor);
+  const foreground = composite(parseCssRgb(foregroundColor), background, foregroundOpacity);
+  const foregroundLuminance = relativeLuminance(foreground);
+  const backgroundLuminance = relativeLuminance(background);
+  return (Math.max(foregroundLuminance, backgroundLuminance) + 0.05) / (Math.min(foregroundLuminance, backgroundLuminance) + 0.05);
+}
+
 test("[TC-E2E-27] nhãn sơ đồ ghế mô tả trạng thái và loại ghế tiếp cận", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 800 });
   await mockApi(page);
   await page.goto("/");
   await expect(page.getByTestId("movie-card").first()).toBeVisible();
@@ -138,10 +173,43 @@ test("[TC-E2E-27] nhãn sơ đồ ghế mô tả trạng thái và loại ghế 
   await page.getByTestId("showtime-option").first().click();
 
   const dialog = page.getByRole("dialog", { name: movie.title });
-  await expect(dialog.getByRole("button", { name: "Ghế A 1 — trống — ghế tiêu chuẩn" })).toBeEnabled();
+  const availableSeat = dialog.getByRole("button", { name: "Ghế A 1 — trống — ghế tiêu chuẩn" });
+  await expect(availableSeat).toBeEnabled();
   await expect(dialog.getByRole("button", { name: "Ghế A 2 — trống — ghế hỗ trợ tiếp cận" })).toBeEnabled();
   await expect(dialog.getByRole("button", { name: "Ghế A 3 — đang giữ — ghế cao cấp" })).toBeDisabled();
   await expect(dialog.getByRole("button", { name: "Ghế A 4 — đã bán — ghế hỗ trợ tiếp cận" })).toBeDisabled();
+  await expect(dialog.locator(".seat-legend").getByText("Đang giữ", { exact: true })).toBeVisible();
+
+  const seatColors = await availableSeat.evaluate((element) => {
+    const style = getComputedStyle(element);
+    const panel = getComputedStyle(element.closest(".seat-dialog")!);
+    return { border: style.borderTopColor, fill: style.backgroundColor, panel: panel.backgroundColor };
+  });
+  expect(contrastRatioOver(seatColors.border, seatColors.fill)).toBeGreaterThanOrEqual(3);
+  expect(contrastRatioOver(seatColors.border, seatColors.panel)).toBeGreaterThanOrEqual(3);
+
+  const rowLabelColors = await dialog.locator(".row-label").evaluateAll((elements) => elements.map((element) => {
+    const labelStyle = getComputedStyle(element);
+    const dialogStyle = getComputedStyle(element.closest(".seat-dialog")!);
+    return { text: labelStyle.color, background: dialogStyle.backgroundColor };
+  }));
+  expect(rowLabelColors.length).toBeGreaterThan(0);
+  for (const colors of rowLabelColors) {
+    expect(contrastRatioOver(colors.text, colors.background)).toBeGreaterThanOrEqual(4.5);
+  }
+
+  const documentWidth = await page.evaluate(() => ({
+    clientWidth: document.documentElement.clientWidth,
+    scrollWidth: document.documentElement.scrollWidth,
+  }));
+  expect(documentWidth.scrollWidth).toBeLessThanOrEqual(documentWidth.clientWidth);
+
+  const closeButton = dialog.getByRole("button", { name: "Đóng" });
+  const holdButton = dialog.getByTestId("hold-submit");
+  await expect(closeButton).toBeVisible();
+  await expect(closeButton).toBeInViewport({ ratio: 1 });
+  await expect(holdButton).toBeVisible();
+  await expect(holdButton).toBeInViewport({ ratio: 1 });
 });
 
 async function openLogin(page: Page) {
@@ -178,6 +246,19 @@ test("[TC-E2E-16] dialog đăng ký có tên trường và trạng thái validat
   await expect(name).toHaveAttribute("required", "");
   await expect(email).toHaveAttribute("required", "");
   await expect(password).toHaveAttribute("required", "");
+  const placeholderColors = await email.evaluate((input) => {
+    const placeholder = getComputedStyle(input, "::placeholder");
+    return { text: placeholder.color, opacity: Number.parseFloat(placeholder.opacity), background: getComputedStyle(input).backgroundColor };
+  });
+  expect(contrastRatioOver(placeholderColors.text, placeholderColors.background, placeholderColors.opacity)).toBeGreaterThanOrEqual(4.5);
+
+  const inputColors = await email.evaluate((input) => {
+    const style = getComputedStyle(input);
+    const panel = getComputedStyle(input.closest(".dialog")!);
+    return { border: style.borderTopColor, fill: style.backgroundColor, panel: panel.backgroundColor };
+  });
+  expect(contrastRatioOver(inputColors.border, inputColors.fill)).toBeGreaterThanOrEqual(3);
+  expect(contrastRatioOver(inputColors.border, inputColors.panel)).toBeGreaterThanOrEqual(3);
   await expectNoWcagAxeViolations(page, ".auth-dialog");
 
   await dialog.getByRole("button", { name: "Tạo tài khoản", exact: true }).click();

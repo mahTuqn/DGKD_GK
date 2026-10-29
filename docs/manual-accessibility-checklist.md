@@ -2,15 +2,15 @@
 
 ## Review status
 
-**Not performed.** This checklist is a prepared test artifact only. No human WCAG 2.2 AA, screen-reader, or full manual keyboard review is recorded in the repository at the time this file was created. Automated Playwright/axe results are separate evidence and do not complete these fields or establish conformance.
+**In progress — agent-operated review.** The requester delegated the remaining manual work to Codex. Initial keyboard/focus and sign-in error observations are recorded in [the agent review evidence](evidence/followup/2026-10-29-agent-a11y-review.json). These observations do not complete the 90 checklist rows. Actual screen-reader speech, real mobile touch exploration and full workflow review remain unverified. Automated Playwright/axe results are separate evidence and do not establish conformance.
 
 | Review field | Value |
 |---|---|
-| Overall status | Not started |
-| Reviewer(s) | — |
+| Overall status | In progress |
+| Reviewer(s) | Codex agent operating the browser UI |
 | Review date and timezone | — |
 | Application commit/build reviewed | — |
-| Environment/base URL | — |
+| Environment/base URL | Dedicated disposable PostgreSQL database; http://127.0.0.1:5173 |
 | Desktop browser / OS | — |
 | Desktop screen reader and version | — |
 | Mobile device / browser / screen reader | — |
@@ -70,7 +70,7 @@ Add one row per issue. Do not rewrite a failed result to pass after a code fix; 
 
 | Decision | Record |
 |---|---|
-| Overall outcome | Not assessed — manual review has not been performed |
+| Overall outcome | Not assessed — initial agent review only; checklist incomplete |
 | Unresolved blocker count | — |
 | Accepted exceptions and WCAG rationale | — |
 | Reviewer sign-off and date | — |

@@ -190,7 +190,7 @@ function SeatDialog({ showtime, session, isTopModal, onClose, onRequireAuth, onH
             return <button key={seat.id} data-testid="seat" aria-label={`Ghế ${seat.row} ${seat.column} — ${statusLabel} — ${typeLabel}`} aria-pressed={pressed} title={`${seat.label} · ${seat.type}`} disabled={seat.status !== "AVAILABLE"} onClick={() => toggle(seat)} className={`seat ${status} ${pressed ? "selected" : ""} ${isAccessible ? "accessible" : ""}`}>{seat.label.replace(row, "")}</button>;
           })}<span className="row-label">{row}</span></div>)}
         </div>
-        <div className="seat-legend"><span><i className="seat-dot available" /> Còn trống</span><span><i className="seat-dot selected" /> Đang chọn</span><span><i className="seat-dot sold" /> Đã bán</span></div>
+        <div className="seat-legend"><span><i className="seat-dot available" /> Còn trống</span><span><i className="seat-dot selected" /> Đang chọn</span><span><i className="seat-dot held" /> Đang giữ</span><span><i className="seat-dot sold" /> Đã bán</span></div>
         {selected.length >= 8 && <p className="muted tiny">Mỗi đơn tối đa 8 ghế.</p>}
         <div className="seat-footer"><div><span className="muted">{selected.length ? `${selected.length} ghế đã chọn` : "Chọn tối đa 8 ghế"}</span><b>{formatVnd(total)}</b></div><button data-testid="hold-submit" className="button button-primary" disabled={!selected.length || busy} onClick={() => void holdSeats()}>{busy ? "Đang giữ ghế…" : "Giữ ghế"}<span aria-hidden="true">→</span></button></div>
       </>}
@@ -339,6 +339,16 @@ export default function App() {
   const cinemas = useMemo(() => [...new Map(showtimes.map((showtime) => [showtime.cinemaId, showtime.cinemaName])).entries()].map(([id, name]) => ({ id, name })), [showtimes]);
   const activeMovie = movies.find((movie) => movie.id === activeMovieId) || movies[0];
   const activeShowtimes = showtimes.filter((item) => item.movieId === activeMovie?.id);
+
+  useEffect(() => {
+    if (!hold || checkoutBusy) return;
+    const dialog = checkoutDialogRef.current;
+    // Replacing the checkout/payment button can leave focus on the body.
+    // Preserve focus already inside the dialog; recover it after a step change.
+    if (dialog && !dialog.contains(document.activeElement)) {
+      dialog.querySelector<HTMLElement>('[data-testid="pay-submit"], [data-testid="checkout-submit"], .success-content button')?.focus();
+    }
+  }, [hold?.id, order?.id, bookingStep, checkoutBusy]);
 
   useEffect(() => { let alive = true; api.movies().then((items) => { if (!alive) return; setMovies(items); setActiveMovieId(items[0]?.id || ""); }).catch((reason) => { if (alive) setError(humanError(reason)); }).finally(() => { if (alive) setLoading(false); }); return () => { alive = false; }; }, []);
   useEffect(() => {
