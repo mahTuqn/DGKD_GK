@@ -6,6 +6,10 @@ All three GitHub Actions workflows passed on commit `c766be3c79266b5a214c680175a
 
 The worker job ran for 950 seconds and verified graceful restart and catch-up of a pending event. The current DAST artifact was downloaded, digest-verified and reviewed: 0 High/Medium, one Low alert record with 3 instances, and 5 Informational records with 12 instances. The Low finding is the triaged `SEC-OBS-01` JSON markup observation; the Admin UI regression passes, but other JSON consumers still need context-appropriate output encoding. Artifact details and digests are in the [c766be3 evidence manifest](evidence/followup/2026-10-29-github-actions-c766be3.json). The requester will complete manual WCAG review; no staging is available.
 
+## Multi-process API race follow-up — CI pending
+
+TC-PLAN-08 adds two independent Node API processes, each listening on a dynamically assigned loopback port and sharing a dedicated PostgreSQL database. The test sends 100 simultaneous Customer hold requests split between the processes and checks for one `201`, 99 `409`s, one persisted `HELD` claim and one `HELD` hold. CI creates and migrates the dedicated database; exact-source execution has not yet completed, so this is implementation status, not a passing result.
+
 ## Previous exact-source CI result — `6581a76` — 29/10/2026
 
 Runs 40793426096, 40793426250 and 40793426201 passed on commit `6581a76`. Its DAST artifact was also reviewed: it had the same alert records and instances documented for `c766be3`. The later `c766be3` source change only corrects DAST summary counting to distinguish alert records from instances; backend, frontend and browser test sources remain unchanged.
@@ -76,7 +80,7 @@ Các phép đo unit/coverage, hiệu năng, ZAP và Gitleaks dùng fixture/histo
 ## Test đã triển khai
 
 - Browser tự động theo push/PR: 24 E2E case trên Chromium desktop và Pixel 7; CI còn chạy 3 luồng trọng yếu trên Firefox và WebKit desktop. Full Compose smoke kiểm tra hành trình đăng ký, hold, order, demo payment và ticket qua Nginx.
-- HTTP/PostgreSQL integration: auth/RBAC/profile, schedule overlap/buffer, hold limit/race/expiry, price snapshot/order retry, payment idempotency/late callback/revenue, Admin/Staff scope; TC-PLAN-01 chạy 100 HTTP request cùng ghế trong một Express process và xác nhận 1 success/99 conflict.
+- HTTP/PostgreSQL integration: auth/RBAC/profile, schedule overlap/buffer, hold limit/race/expiry, price snapshot/order retry, payment idempotency/late callback/revenue, Admin/Staff scope; TC-PLAN-01 chạy 100 HTTP request cùng ghế trong một Express process và xác nhận 1 success/99 conflict. TC-PLAN-08 bổ sung race qua hai process; CI đang chờ chạy.
 - Domain: 13 test; timezone, deadline, pricing, unique seat IDs, occupancy/input boundaries và bốn fixed-seed property tests; mutation threshold 70% đạt trong CI.
 - Reliability: live 5-minute hold expiry, two-worker five-minute soak/restart và two-worker 15-minute soak/graceful restart/catch-up đều pass trong CI.
 - Performance: k6 50 virtual users trong năm phút đạt trên Docker local; đây không phải staging/production benchmark.
@@ -93,7 +97,7 @@ Các phép đo unit/coverage, hiệu năng, ZAP và Gitleaks dùng fixture/histo
 ## Còn thiếu so với kế hoạch
 
 - Người yêu cầu chưa hoàn tất manual WCAG 2.2 AA/screen-reader/contrast/zoom/reflow/orientation/keyboard checklist.
-- Chưa có staging; k6 local không chứng minh performance staging/production. TC-PLAN-01 chạy race trong một Express process; API contention giữa nhiều process/replica chưa được đo.
+- Chưa có staging; k6 local không chứng minh performance staging/production. TC-PLAN-08 đã được triển khai cho API contention giữa hai process/replica, nhưng chưa có kết quả CI; không thay thế load test trên staging.
 - DAST đã được xác minh và triaged, nhưng exhaustive ASVS/API Top 10 và adversarial BOLA/IDOR review rộng hơn route matrix còn mở.
 - Restore rehearsal không đánh giá lịch backup, PITR, RPO/RTO hay production restore. Worker reliability dài hơn 15 phút và gateway timeout chưa được đo.
 - Không có hazard analysis; safety chưa đánh giá. Payment vẫn là mock, không phải cổng thanh toán thật.

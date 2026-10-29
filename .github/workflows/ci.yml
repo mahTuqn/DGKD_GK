@@ -29,6 +29,7 @@ jobs:
       DATABASE_URL: postgresql://cinema:cinema_dev@localhost:5432/cinema?schema=public
       DATABASE_URL_TEST: postgresql://cinema:cinema_dev@localhost:5432/cinema?schema=public
       DATABASE_URL_WORKER_PROCESS_TEST: postgresql://cinema:cinema_dev@localhost:5432/cinema_worker_process_test?schema=public
+      DATABASE_URL_API_PROCESS_TEST: postgresql://cinema:cinema_dev@localhost:5432/cinema_api_process_race_test?schema=public
       VITE_API_URL: http://127.0.0.1:4000/api
       CI: true
     steps:
@@ -55,6 +56,12 @@ jobs:
         run: npm run db:deploy --workspace backend
         env:
           DATABASE_URL: postgresql://cinema:cinema_dev@localhost:5432/cinema_worker_process_test?schema=public
+      - name: Create isolated API process race database
+        run: node --input-type=module -e 'import { PrismaClient } from "@prisma/client"; const client = new PrismaClient(); try { await client.$executeRawUnsafe("CREATE DATABASE cinema_api_process_race_test"); } finally { await client.$disconnect(); }'
+      - name: Apply migrations to API process race database
+        run: npm run db:deploy --workspace backend
+        env:
+          DATABASE_URL: postgresql://cinema:cinema_dev@localhost:5432/cinema_api_process_race_test?schema=public
       - run: npm run db:seed
       - run: npm run lint:openapi
       - run: npm run qa:trace
