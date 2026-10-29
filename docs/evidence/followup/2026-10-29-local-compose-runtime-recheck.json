@@ -2,12 +2,13 @@
   "manifestVersion": "1.0",
   "project": "CinemaBooking QA",
   "recordedAt": "2026-10-29",
+  "capturedAtLocal": "2026-10-29 07:45:21 +07:00",
   "timezone": "Asia/Ho_Chi_Minh",
-  "sourceHead": "aa7cda5c069e72860d05cfb4b53c25e4a93d4263",
+  "sourceHead": "1ae1ad69491c2e312c188ad63e8d42105efebbcb",
   "scope": "Read-only Docker runtime snapshot; no stack/container/image/volume mutation and no test browser journey",
   "host": {
     "dockerEngine": "29.7.2",
-    "memoryFreeGiB": 0.71,
+    "memoryFreeGiB": 0.50,
     "memoryTotalGiB": 7.19
   },
   "stacks": [
@@ -45,7 +46,7 @@
     }
   ],
   "limitations": [
-    "Free memory is below the 1.5 GiB safety threshold used for local Docker-heavy checks; no local rebuild, prune, DAST, load test, or browser flow was started.",
+    "Free memory was 0.50 GiB, below the 1.5 GiB safety threshold used for local Docker-heavy checks; no local rebuild, prune, DAST, load test, or browser flow was started.",
     "Current source/image parity is unverified: local application images predate source commit aa7cda5 and have no verified source revision label.",
     "Health checks establish current local liveness only, not staging/production or data recovery readiness.",
     "No test browser journey was run because both stacks use persistent demo databases and would mutate user data.",
