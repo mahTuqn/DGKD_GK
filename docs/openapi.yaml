@@ -131,8 +131,8 @@ paths:
       parameters:
         - name: q
           in: query
-          description: Tìm không phân biệt hoa thường trong tên phim và thể loại; khoảng trắng đầu/cuối được bỏ qua. Chỉ chấp nhận một giá trị q; tham số lặp hoặc tham số không hỗ trợ trả 422.
-          schema: { type: string }
+          description: Tìm không phân biệt hoa thường trong tên phim và thể loại; tối đa 120 ký tự; khoảng trắng đầu/cuối được bỏ qua. Chỉ chấp nhận một giá trị q; tham số lặp, quá dài hoặc tham số không hỗ trợ trả 422.
+          schema: { type: string, maxLength: 120 }
       responses:
         '200':
           description: Danh sách phim, sắp xếp theo ngày phát hành mới rồi tên

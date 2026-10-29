@@ -138,6 +138,12 @@ availabilityDescribe("TC-CAT-05 inactive catalog availability gate", () => {
     expect(noMatch.status).toBe(200);
     expect(noMatch.body).toEqual([]);
 
+    const maxLengthSearch = await request(app).get("/api/movies").query({ q: "x".repeat(120) });
+    expect(maxLengthSearch.status).toBe(200);
+    const overlongSearch = await request(app).get("/api/movies").query({ q: "x".repeat(121) });
+    expect(overlongSearch.status).toBe(422);
+    expect(overlongSearch.body.error).toBe("VALIDATION_ERROR");
+
     const repeatedSearch = await request(app).get("/api/movies?q=first&q=second");
     expect(repeatedSearch.status).toBe(422);
     expect(repeatedSearch.body.error).toBe("VALIDATION_ERROR");

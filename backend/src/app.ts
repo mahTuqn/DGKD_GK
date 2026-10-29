@@ -19,7 +19,7 @@ const requestCorrelation = new AsyncLocalStorage<string>();
 const businessDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
   try { calendarDateAtTime(value, 0); return true; } catch { return false; }
 }, "Ngày lịch không tồn tại.");
-const publicMovieQuerySchema = z.object({ q: z.string().optional() }).strict();
+const publicMovieQuerySchema = z.object({ q: z.string().max(120).optional() }).strict();
 const publicCinemaQuerySchema = z.object({}).strict();
 const publicShowtimeQuerySchema = z.object({
   date: businessDateSchema.optional(),
