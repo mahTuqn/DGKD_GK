@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { HoldStatus, OrderStatus, RecordStatus, Role, SeatType } from "@prisma/client";
+import { ClaimStatus, HoldStatus, OrderStatus, RecordStatus, Role, SeatType } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 import request from "supertest";
 import { createApp } from "../src/app.js";
@@ -227,13 +227,24 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
       }
     });
     occupancyCrossCinemaShowtimeId = crossCinemaBoundaryShowtime.id;
-    const occupancy = await request(app).get(`/api/admin/reports/occupancy?from=${fixtureDate}&to=${fixtureDate}`).set(adminAuth);
-    expect(occupancy.status).toBe(200);
-    expect(occupancy.body.showtimeCount).toBe(2);
-    expect(occupancy.body.soldSeats).toBe(1);
-    expect(occupancy.body.capacitySeats).toBe(10);
-    expect(occupancy.body.fillRatePercent).toBe(10);
-    expect(occupancy.body.definition).toContain("SeatClaim SOLD");
+    const heldOccupancyHold = await prisma.seatHold.create({
+      data: { userId: customerAId, showtimeId: showtimeId!, expiresAt: new Date(Date.now() + 10 * 60_000) }
+    });
+    try {
+      await prisma.seatClaim.create({
+        data: { showtimeId: showtimeId!, seatId: seatIds[1]!, holdId: heldOccupancyHold.id, status: ClaimStatus.HELD, expiresAt: heldOccupancyHold.expiresAt, priceVnd: 90_000 }
+      });
+      const occupancyWithHeldClaim = await request(app).get(`/api/admin/reports/occupancy?from=${fixtureDate}&to=${fixtureDate}`).set(adminAuth);
+      expect(occupancyWithHeldClaim.status).toBe(200);
+      expect(occupancyWithHeldClaim.body.showtimeCount).toBe(2);
+      expect(occupancyWithHeldClaim.body.soldSeats).toBe(1);
+      expect(occupancyWithHeldClaim.body.capacitySeats).toBe(10);
+      expect(occupancyWithHeldClaim.body.fillRatePercent).toBe(10);
+      expect(occupancyWithHeldClaim.body.definition).toContain("SeatClaim SOLD");
+    } finally {
+      await prisma.seatClaim.deleteMany({ where: { holdId: heldOccupancyHold.id } });
+      await prisma.seatHold.delete({ where: { id: heldOccupancyHold.id } });
+    }
 
     const incompleteRange = await request(app).get("/api/admin/reports/occupancy").query({ from: fixtureDate }).set(adminAuth);
     expect(incompleteRange.status).toBe(422);
@@ -256,6 +267,19 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
       .query({ from: nextFixtureDate, to: nextFixtureDate }).set(adminAuth);
     expect(nextDateOnlyRange.status).toBe(200);
     expect(nextDateOnlyRange.body).toMatchObject({ showtimeCount: 1, soldSeats: 0, capacitySeats: 1, fillRatePercent: 0 });
+
+    const emptyDate = "2099-12-30";
+    const emptyRangeStart = calendarDateAtTime(emptyDate, 0);
+    const emptyRangeEnd = calendarDateAtTime(emptyDate, 0);
+    emptyRangeEnd.setUTCDate(emptyRangeEnd.getUTCDate() + 1);
+    const activeShowtimesOnEmptyDate = await prisma.showtime.count({
+      where: { status: RecordStatus.ACTIVE, startAt: { gte: emptyRangeStart, lt: emptyRangeEnd } }
+    });
+    expect(activeShowtimesOnEmptyDate).toBe(0);
+    const emptyRange = await request(app).get("/api/admin/reports/occupancy")
+      .query({ from: emptyDate, to: emptyDate }).set(adminAuth);
+    expect(emptyRange.status).toBe(200);
+    expect(emptyRange.body).toMatchObject({ showtimeCount: 0, soldSeats: 0, capacitySeats: 0, fillRatePercent: 0 });
     expect((await request(app).get("/api/admin/summary").set(adminAuth)).body.occupancy.capacitySeats).toBeGreaterThanOrEqual(9);
 
     const staffLogin = await request(app).post("/api/auth/login").send({ email: `staff-${fixture}@test.local`, password: "StaffIntegration123!" });

@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { RecordStatus, Role, SeatType } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 import request from "supertest";
@@ -129,7 +129,7 @@ availabilityDescribe("TC-CAT-05 inactive catalog availability gate", () => {
     }
   }, 30_000);
 
-  it("[TC-CAT-07] validates scalar public-catalog filters and exercises movie search", async () => {
+  it("[TC-CAT-07] validates public catalog filters, default date, and missing filter targets", async () => {
     const titleSearch = await request(app).get("/api/movies").query({ q: `  INACTIVE GATE A ${fixture}  ` });
     expect(titleSearch.status).toBe(200);
     expect(titleSearch.body.map((movie: { id: string }) => movie.id)).toEqual([movieAId]);
@@ -186,6 +186,26 @@ availabilityDescribe("TC-CAT-05 inactive catalog availability gate", () => {
     const unsupportedShowtimeQuery = await request(app).get(`/api/showtimes?date=${formatBusinessDate(showtimeStart)}&unexpected=value`);
     expect(unsupportedShowtimeQuery.status).toBe(422);
     expect(unsupportedShowtimeQuery.body.error).toBe("VALIDATION_ERROR");
+
+    const fixtureDate = formatBusinessDate(showtimeStart);
+    vi.setSystemTime(new Date(`${fixtureDate}T12:00:00+07:00`));
+    try {
+      const defaultDateShowtimes = await request(app).get("/api/showtimes");
+      expect(defaultDateShowtimes.status).toBe(200);
+      expect(defaultDateShowtimes.body.map((showtime: { id: string }) => showtime.id)).toContain(showtimeAId);
+      expect(defaultDateShowtimes.body.map((showtime: { id: string }) => showtime.id)).toContain(showtimeBId);
+      expect(defaultDateShowtimes.body.every((showtime: { date: string }) => showtime.date === fixtureDate)).toBe(true);
+
+      const unknownMovie = await request(app).get("/api/showtimes").query({ date: fixtureDate, movieId: randomUUID() });
+      expect(unknownMovie.status).toBe(200);
+      expect(unknownMovie.body).toEqual([]);
+
+      const unknownCinema = await request(app).get("/api/showtimes").query({ date: fixtureDate, cinemaId: randomUUID() });
+      expect(unknownCinema.status).toBe(200);
+      expect(unknownCinema.body).toEqual([]);
+    } finally {
+      vi.useRealTimers();
+    }
   }, 30_000);
 
   it("hides a deactivated cinema's showtime and rejects direct seat, hold, create, and patch attempts without side effects", async () => {

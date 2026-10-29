@@ -1,0 +1,42 @@
+{
+  "sourceCommit": "04027e63ffd10d302e52fd6249e8fb13b3962ae4",
+  "runUrl": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40907644527",
+  "jobId": 123566674793,
+  "jobConclusion": "success",
+  "observedAt": "2026-10-29T23:11:58+07:00",
+  "artifact": {
+    "id": 12912662766,
+    "sizeBytes": 6484,
+    "digest": "sha256:e14468e85a0280e0cc27a3980c04bc03eb877b55e8650c9335509c9116d9c768"
+  },
+  "evidenceMethod": "Authenticated GitHub Actions rendered job summary, read through the browser DOM on 2026-10-29",
+  "parsedReports": 3,
+  "subsequentWorkflowVerification": {
+    "observedAt": "2026-10-29T23:18:31+07:00",
+    "quality": { "runId": 40907644527, "conclusion": "success", "duration": "15m34s" },
+    "crossBrowserSmoke": { "runId": 40907644567, "conclusion": "success" },
+    "worker15MinuteSoak": { "runId": 40907644526, "conclusion": "success", "duration": "15m57s" },
+    "scope": "Commit 04027e6 only; subsequent working-tree test additions are not covered by these runs."
+  },
+  "alertRecords": { "High": 0, "Medium": 0, "Low": 1, "Informational": 5, "Unknown": 0 },
+  "alertInstances": { "High": 0, "Medium": 0, "Low": 3, "Informational": 11, "Unknown": 0 },
+  "rules": [
+    { "scan": "unauthenticated-api", "pluginId": 10104, "severity": "Informational", "records": 1, "instances": 3 },
+    { "scan": "unauthenticated-api", "pluginId": 10111, "severity": "Informational", "records": 1, "instances": 1 },
+    { "scan": "authenticated-api", "pluginId": 10104, "severity": "Informational", "records": 1, "instances": 3 },
+    { "scan": "authenticated-api", "pluginId": 10111, "severity": "Informational", "records": 1, "instances": 1 },
+    { "scan": "authenticated-api", "pluginId": 40014, "severity": "Low", "records": 1, "instances": 3 },
+    { "scan": "preview", "pluginId": 10109, "severity": "Informational", "records": 1, "instances": 3 }
+  ],
+  "ruleReferences": {
+    "40014": "https://www.zaproxy.org/docs/alerts/40014/",
+    "10104": "https://www.zaproxy.org/docs/alerts/10104/",
+    "10111": "https://www.zaproxy.org/docs/alerts/10111/",
+    "10109": "https://www.zaproxy.org/docs/alerts/10109/"
+  },
+  "limitations": [
+    "Plugin ID 40014 identifies the persistent-XSS scan-rule family; its alert variant, affected routes, parameters, evidence and exploitability have not been reviewed for this run.",
+    "ZIP contents remain unreviewed; this summary is not a finding disposition or security sign-off.",
+    "The overall quality workflow and worker soak were still running when the DAST result was recorded; this file only establishes the DAST job result."
+  ]
+}
