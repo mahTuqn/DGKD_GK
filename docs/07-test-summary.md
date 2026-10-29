@@ -1,12 +1,18 @@
 # Báo cáo tổng hợp kiểm thử
 
-## Latest exact-source CI result — `e28360f` — 29/10/2026
+## Latest exact-source CI result — `6581a76` — 29/10/2026
+
+All three GitHub Actions workflows passed on commit `6581a76adbbb736d917ad61b60e983792345e368`: [quality, DAST, mutation and Compose run 40793426096](https://github.com/mahTuqn/DGKD_GK/actions/runs/40793426096), [Firefox/WebKit smoke 40793426250](https://github.com/mahTuqn/DGKD_GK/actions/runs/40793426250), and [15-minute worker soak 40793426201](https://github.com/mahTuqn/DGKD_GK/actions/runs/40793426201). Application and test sources are unchanged from `e28360f`; this follow-up only updates documentation/evidence. Traceability passed at **92 cases / 26 requirements**. Quality/API, live hold expiry, five-minute worker soak/restart, build, Chromium desktop/Pixel 7, Compose runtime/browser, domain coverage/mutation, configured DAST High-alert gate, Firefox/WebKit desktop and the 15-minute two-worker soak/restart/catch-up all passed.
+
+The 15-minute job ran for 949 seconds and verified graceful worker restart and catch-up of a pending event. Detailed DAST alerts and severity counts were not independently reviewed; no zero-finding claim is made. Artifact names, sizes and SHA-256 digests are in the [6581a76 evidence manifest](evidence/followup/2026-10-29-github-actions-6581a76.json). The requester will complete manual WCAG review; no staging is available.
+
+## Previous exact-source CI result — `e28360f` — 29/10/2026
 
 Commit `e28360f2396eeaf07b282d68bdf7ac1d29924745` passed every job in [quality + DAST + Compose run 40790766510](https://github.com/mahTuqn/DGKD_GK/actions/runs/40790766510). Traceability passed at **92 cases / 26 requirements**; API integration, live HTTP expiry, two-worker five-minute soak/restart, build, Chromium desktop/Pixel 7, Compose full-stack/browser smoke, domain coverage/mutation and the configured DAST High-alert gate all passed. TC-SEC-27 and TC-SEC-28 verify the login rate limit counts direct and proxied API requests despite changing forged `X-Forwarded-For` headers. Mutation score was **82.89% (155 killed/32 survived)** against the 70% gate.
 
 The workflow generated current-run artifacts; names, sizes, digests and non-measured scope are in the [e28360f evidence manifest](evidence/followup/2026-10-29-github-actions-e28360f.json). Detailed DAST alerts and severity counts were not independently reviewed, so no zero-finding claim is made. The Firefox/WebKit smoke from run 40784545596 remains relevant because these follow-up commits only change tests and documentation, not application implementation.
 
-TC-SEC-28 passed 11 requests through the built web Nginx image to the API, proving caller-supplied forwarded addresses do not bypass the limiter in the configured one-hop Compose path. Manual WCAG review remains with the requester; no staging environment is available.
+TC-SEC-28 passed 11 requests through the built web Nginx image to the API, proving caller-supplied forwarded addresses do not bypass the limiter in the configured one-hop Compose path. The separate 15-minute worker soak on this exact source also passed as run 40790766454. Manual WCAG review remains with the requester; no staging environment is available.
 
 ## Previous exact-source CI result — `b84ba70` — 29/10/2026
 

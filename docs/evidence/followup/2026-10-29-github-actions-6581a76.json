@@ -1,0 +1,114 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "recordedAt": "2026-10-29",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "commit": "6581a76adbbb736d917ad61b60e983792345e368",
+  "branch": "codex/cross-browser-smoke",
+  "overall": "PASS_AUTOMATED_CI_WITH_DOCUMENTED_LIMITATIONS",
+  "codeDeltaFromPreviousVerifiedSource": "Documentation/evidence only; application and test sources match e28360f2396eeaf07b282d68bdf7ac1d29924745.",
+  "traceability": {
+    "result": "PASS",
+    "testCases": 92,
+    "requirements": 26
+  },
+  "runs": {
+    "qualityDastCompose": {
+      "id": 40793426096,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40793426096",
+      "result": "PASS",
+      "jobs": {
+        "quality": {
+          "result": "PASS",
+          "durationSeconds": 864,
+          "verified": [
+            "Gitleaks and dependency audit",
+            "Database generation, migrations, seed, OpenAPI lint and traceability",
+            "PostgreSQL API integration, including TC-SEC-27 direct-listener forwarded-IP spoof resistance",
+            "Live five-minute hold expiry and two-worker five-minute soak/restart",
+            "Production build and Chromium desktop/Pixel 7 browser suite"
+          ],
+          "artifact": {
+            "name": "cinema-booking-browser-results-6581a76adbbb736d917ad61b60e983792345e368",
+            "sizeBytes": 338189,
+            "digest": "sha256:63071a1685745a53caadde48783939e36d0c6b55ab4f1ba5ba29e804c722796c"
+          }
+        },
+        "dast": {
+          "result": "PASS_WITHIN_CONFIGURED_HIGH_ALERT_GATE",
+          "durationSeconds": 417,
+          "findingDetailsReviewed": false,
+          "severityCounts": "Not independently reviewed; no zero-finding claim made.",
+          "artifact": {
+            "name": "cinema-booking-dast-reports-6581a76adbbb736d917ad61b60e983792345e368",
+            "sizeBytes": 6484,
+            "digest": "sha256:febde9513caae6f10b24e6412e71b46759d6d609fca12f1d88de5092b422c624"
+          }
+        },
+        "domainCoverageMutation": {
+          "result": "PASS",
+          "durationSeconds": 177,
+          "mutationThreshold": "70%; scope limited to tests/domain.test.ts",
+          "previousExactCodeSourceScore": "82.89% (155 killed / 32 survived) on e28360f; this commit changes documentation only.",
+          "artifact": {
+            "name": "cinema-booking-domain-quality-6581a76adbbb736d917ad61b60e983792345e368",
+            "sizeBytes": 144454,
+            "digest": "sha256:59daed31ac73e41522953b8364cd6adc157b915f053231733234f170f0ccbba7"
+          }
+        },
+        "composeRuntimeBrowserSmoke": {
+          "result": "PASS",
+          "durationSeconds": 91,
+          "testCases": [
+            "TC-OPS-01",
+            "TC-SEC-28"
+          ],
+          "scope": "Built and seeded isolated PostgreSQL/migration/API/worker/web Compose services, passed health checks, and completed the Chromium booking-to-ticket journey through Nginx.",
+          "artifact": {
+            "name": "cinema-booking-compose-browser-results-6581a76adbbb736d917ad61b60e983792345e368",
+            "sizeBytes": 199962,
+            "digest": "sha256:297a3e1182b43230111f88658f7eb1326dfc5cca0fd775e65f89a0a9a8bc7409"
+          }
+        }
+      }
+    },
+    "crossBrowser": {
+      "id": 40793426250,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40793426250",
+      "result": "PASS",
+      "durationSeconds": 116,
+      "scope": "TC-E2E-01, TC-E2E-02 and TC-E2E-09 in Firefox and WebKit desktop (six configured executions).",
+      "artifact": {
+        "name": "cinema-booking-cross-browser-results-6581a76adbbb736d917ad61b60e983792345e368",
+        "sizeBytes": 223195,
+        "digest": "sha256:49528348fdd194721ecb00f2a360c26bf4c0803ef85d7c4f23169956a06a37bd"
+      }
+    },
+    "worker15MinuteSoak": {
+      "id": 40793426201,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40793426201",
+      "result": "PASS",
+      "durationSeconds": 949,
+      "testCase": "TC-WORKER-07",
+      "verified": [
+        "Two worker processes completed the 15-minute soak",
+        "Graceful worker shutdown/restart succeeded",
+        "Replacement worker processed the pending event after restart"
+      ]
+    }
+  },
+  "environment": {
+    "runner": "GitHub Actions clean checkouts with ephemeral PostgreSQL",
+    "localDocker": "No local rebuild, browser journey, load test or DAST was run; the local demo databases were left unchanged.",
+    "staging": "Not available; no staging or production claim is made."
+  },
+  "notMeasured": [
+    "Requester-owned manual WCAG 2.2 AA, screen-reader, contrast, zoom/reflow, orientation and full keyboard review",
+    "Performance on named staging or production",
+    "Detailed DAST alerts and severity counts, exhaustive ASVS/API Top 10 and BOLA review",
+    "Production backup schedule, PITR, RPO/RTO and production restore",
+    "Reliability longer than 15 minutes on this source",
+    "Real payment gateway/refund, outside the SRS"
+  ],
+  "scopeNote": "All three workflow runs passed on commit 6581a76. Application and test source are unchanged from e28360f. The DAST job passed only its configured High-alert gate; report details were not independently reviewed. These results do not establish manual WCAG conformance, staging performance, exhaustive security compliance, or production readiness."
+}
