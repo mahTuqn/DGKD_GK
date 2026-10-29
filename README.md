@@ -100,6 +100,14 @@ npm run build
 
 Test browser chạy qua Playwright trên Chromium và tự khởi động web/API development server theo cấu hình E2E. Chạy `npm run test:browser:ui` để mở Playwright UI. Các test PostgreSQL trong API suite chỉ chạy khi đặt `DATABASE_URL_TEST` tới một database test đã migrate; nếu bỏ trống, Vitest sẽ skip các ca cần DB.
 
+Để tự chạy Playwright trên một PostgreSQL test hoàn toàn riêng biệt mà không dùng volume của `dgkd_gk`/`cinema-qa`, chạy:
+
+```powershell
+npm run test:browser:isolated
+```
+
+Lệnh này tạo một container PostgreSQL tạm, dùng tên database `cinema_e2e_test_*`, migrate/seed/build, chạy browser suite tuần tự trên Chromium desktop và Pixel 7, rồi xóa đúng container cùng volume ẩn của nó. Có thể chọn project/test bằng tham số Playwright, ví dụ `npm run test:browser:isolated -- --project=chromium-desktop`. Các biến URL E2E trỏ ra ngoài bị bỏ qua để runner luôn khởi động API và frontend local riêng.
+
 `npm test` bao gồm API, worker process soak/restart và browser desktop/mobile. Bài live hold-expiry 5 phút được tách riêng để suite nhanh không phải chờ; chạy `npm run test:worker-live` với `DATABASE_URL_TEST` và `DATABASE_URL_WORKER_PROCESS_TEST` cùng trỏ tới một PostgreSQL database rehearsal đã migrate riêng, và `HOLD_TTL_SECONDS=300`.
 
 ```powershell

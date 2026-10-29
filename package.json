@@ -24,6 +24,7 @@
     "test:worker-live": "npm run test:worker-live --workspace backend",
     "test:worker-soak": "npm run test:worker-soak --workspace backend",
     "test:browser": "playwright test",
+    "test:browser:isolated": "node scripts/run-isolated-browser-tests.mjs",
     "test:browser:ui": "playwright test --ui",
     "build": "npm run build --workspace backend && npm run build --workspace frontend",
     "typecheck:tests": "npm run typecheck:tests --workspace backend",
