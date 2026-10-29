@@ -30,7 +30,7 @@ CinemaBooking là ứng dụng web responsive đặt vé cho một cụm rạp, 
 | ID | Yêu cầu | Tiêu chí chấp nhận |
 |---|---|---|
 | REQ-AUTH-01 | Đăng ký/đăng nhập | Dữ liệu sai bị từ chối; mật khẩu không trả về API; phiên cần xác thực cho thao tác đặt vé |
-| REQ-AUTH-02 | Phân quyền | Guest bị từ chối thao tác cần đăng nhập; Customer bị từ chối admin/soát vé; Staff/Admin bị từ chối hold/order/user-initiated mock payment; mỗi role chỉ dùng đúng chức năng |
+| REQ-AUTH-02 | Phân quyền | Guest bị từ chối thao tác cần đăng nhập; Customer bị từ chối admin/soát vé; Staff/Admin bị từ chối hold/order/user-initiated mock payment và đọc order/ticket; mỗi role chỉ dùng đúng chức năng |
 | REQ-AUTH-03 | Đọc và cập nhật hồ sơ | `GET /api/auth/me` trả thông tin tài khoản đã xác thực nhưng không lộ mật khẩu; `PATCH /api/auth/me` chỉ cập nhật name/email, cần ít nhất một trường, không cho tự sửa role hoặc rạp được phân công |
 | REQ-CAT-01 | Xem phim | Danh sách phim có tiêu đề, thông tin và CTA đến suất chiếu |
 | REQ-CAT-02 | Tìm suất chiếu | Lọc theo phim, ngày và rạp; chỉ hiển thị suất còn hiệu lực |

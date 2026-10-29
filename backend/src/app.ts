@@ -457,12 +457,12 @@ export function createApp() {
     res.json({ orderId: order.id, status: order.status, totalVnd: order.totalVnd, tickets: order.tickets });
   }));
 
-  app.get("/api/orders/me", requireAuth, asyncRoute(async (req, res) => {
+  app.get("/api/orders/me", requireAuth, requireRole(Role.CUSTOMER), asyncRoute(async (req, res) => {
     const orders = await prisma.cinemaOrder.findMany({ where: { userId: req.user!.id }, orderBy: { createdAt: "desc" }, select: { id: true } });
     res.json(await Promise.all(orders.map((order) => getOrderForResponse(prisma, order.id))));
   }));
 
-  app.get("/api/orders/:id", requireAuth, asyncRoute(async (req, res) => {
+  app.get("/api/orders/:id", requireAuth, requireRole(Role.CUSTOMER), asyncRoute(async (req, res) => {
     const order = await prisma.cinemaOrder.findFirst({ where: { id: String(req.params.id), userId: req.user!.id }, select: { id: true } });
     if (!order) throw new DomainError("ORDER_NOT_FOUND", "Không tìm thấy đơn đặt vé.", 404);
     res.json(await getOrderForResponse(prisma, order.id));

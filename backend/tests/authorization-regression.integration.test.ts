@@ -21,6 +21,10 @@ regressionDescribe("authorization regression coverage", () => {
   const app = createApp();
   const fixture = randomUUID();
   const userIds: string[] = [];
+  const roleOrderIds: string[] = [];
+  const roleSeatIds: string[] = [];
+  const roleQrTokens = new Map<Role, string>();
+  const roleOwnedOrderIds = new Map<Role, string>();
   let cinemaId: string | undefined;
   let foreignCinemaId: string | undefined;
   let inactiveCinemaId: string | undefined;
@@ -75,6 +79,11 @@ regressionDescribe("authorization regression coverage", () => {
       data: { auditoriumId: auditorium.id, label: "R1", row: "R", column: 1, type: SeatType.STANDARD }
     });
     seatId = seat.id;
+    const roleSeats = await Promise.all([
+      prisma.seat.create({ data: { auditoriumId: auditorium.id, label: "R2", row: "R", column: 2, type: SeatType.STANDARD } }),
+      prisma.seat.create({ data: { auditoriumId: auditorium.id, label: "R3", row: "R", column: 3, type: SeatType.STANDARD } })
+    ]);
+    roleSeatIds.push(...roleSeats.map((roleSeat) => roleSeat.id));
 
     const movie = await prisma.movie.create({
       data: {
@@ -147,6 +156,34 @@ regressionDescribe("authorization regression coverage", () => {
       data: { showtimeId: showtime.id, seatId: seat.id, holdId: hold.id, orderId: order.id, status: ClaimStatus.HELD, expiresAt, priceVnd: 100_000 }
     });
     await prisma.payment.create({ data: { orderId: order.id, status: PaymentStatus.PENDING, amountVnd: 100_000 } });
+
+    for (const [index, actor] of [
+      { role: Role.STAFF, userId: staff.id },
+      { role: Role.ADMIN, userId: admin.id }
+    ].entries()) {
+      const roleHold = await prisma.seatHold.create({
+        data: { userId: actor.userId, showtimeId: showtime.id, status: HoldStatus.CONFIRMED, expiresAt }
+      });
+      const roleOrder = await prisma.cinemaOrder.create({
+        data: { userId: actor.userId, showtimeId: showtime.id, holdId: roleHold.id, status: OrderStatus.CONFIRMED, totalVnd: 100_000 }
+      });
+      roleOrderIds.push(roleOrder.id);
+      roleOwnedOrderIds.set(actor.role, roleOrder.id);
+      const roleClaim = await prisma.seatClaim.create({
+        data: {
+          showtimeId: showtime.id,
+          seatId: roleSeats[index]!.id,
+          holdId: roleHold.id,
+          orderId: roleOrder.id,
+          status: ClaimStatus.SOLD,
+          priceVnd: 100_000
+        }
+      });
+      const qrToken = `role-order-qr-${fixture}-${actor.role.toLowerCase()}`;
+      await prisma.payment.create({ data: { orderId: roleOrder.id, status: PaymentStatus.SUCCEEDED, amountVnd: 100_000 } });
+      await prisma.ticket.create({ data: { orderId: roleOrder.id, seatClaimId: roleClaim.id, qrToken } });
+      roleQrTokens.set(actor.role, qrToken);
+    }
   }, 30_000);
 
   afterAll(async () => {
@@ -171,14 +208,15 @@ regressionDescribe("authorization regression coverage", () => {
       }
       await prisma.movie.deleteMany({ where: { slug: { in: attemptedMovieSlugs } } });
       await prisma.cinema.deleteMany({ where: { name: { in: attemptedCinemaNames } } });
-      if (orderId) {
-        await prisma.reconciliationCase.deleteMany({ where: { orderId } });
-        await prisma.outboxEvent.deleteMany({ where: { aggregateId: orderId } });
-        await prisma.ticket.deleteMany({ where: { orderId } });
-        await prisma.paymentEvent.deleteMany({ where: { orderId } });
-        await prisma.payment.deleteMany({ where: { orderId } });
-        await prisma.seatClaim.deleteMany({ where: { orderId } });
-        await prisma.cinemaOrder.deleteMany({ where: { id: orderId } });
+      const fixtureOrderIds = [...(orderId ? [orderId] : []), ...roleOrderIds];
+      if (fixtureOrderIds.length) {
+        await prisma.reconciliationCase.deleteMany({ where: { orderId: { in: fixtureOrderIds } } });
+        await prisma.outboxEvent.deleteMany({ where: { aggregateId: { in: fixtureOrderIds } } });
+        await prisma.ticket.deleteMany({ where: { orderId: { in: fixtureOrderIds } } });
+        await prisma.paymentEvent.deleteMany({ where: { orderId: { in: fixtureOrderIds } } });
+        await prisma.payment.deleteMany({ where: { orderId: { in: fixtureOrderIds } } });
+        await prisma.seatClaim.deleteMany({ where: { orderId: { in: fixtureOrderIds } } });
+        await prisma.cinemaOrder.deleteMany({ where: { id: { in: fixtureOrderIds } } });
       }
       if (showtimeId) {
         await prisma.seatClaim.deleteMany({ where: { showtimeId } });
@@ -189,6 +227,7 @@ regressionDescribe("authorization regression coverage", () => {
       }
       if (userIds.length) await prisma.auditLog.deleteMany({ where: { actorId: { in: userIds } } });
       if (seatId) await prisma.seat.deleteMany({ where: { id: seatId } });
+      if (roleSeatIds.length) await prisma.seat.deleteMany({ where: { id: { in: roleSeatIds } } });
       if (foreignSeatId) await prisma.seat.deleteMany({ where: { id: foreignSeatId } });
       if (movieId) await prisma.movie.deleteMany({ where: { id: movieId } });
       if (foreignAuditoriumId) await prisma.auditorium.deleteMany({ where: { id: foreignAuditoriumId } });
@@ -565,19 +604,42 @@ regressionDescribe("authorization regression coverage", () => {
     const claimCountBefore = await prisma.seatClaim.count({ where: { showtimeId } });
     const staffAuditsBefore = await prisma.auditLog.findMany({ where: { actorId: staffId! }, orderBy: { id: "asc" } });
     const adminAuditsBefore = await prisma.auditLog.findMany({ where: { actorId: adminId! }, orderBy: { id: "asc" } });
+    const ownedBookingsBefore = {
+      orders: await prisma.cinemaOrder.findMany({ where: { id: { in: roleOrderIds } }, orderBy: { id: "asc" } }),
+      holds: await prisma.seatHold.findMany({ where: { showtimeId, userId: { in: [staffId!, adminId!] } }, orderBy: { id: "asc" } }),
+      claims: await prisma.seatClaim.findMany({ where: { orderId: { in: roleOrderIds } }, orderBy: { id: "asc" } }),
+      payments: await prisma.payment.findMany({ where: { orderId: { in: roleOrderIds } }, orderBy: { orderId: "asc" } }),
+      tickets: await prisma.ticket.findMany({ where: { orderId: { in: roleOrderIds } }, orderBy: { orderId: "asc" } })
+    };
 
     for (const actor of [
-      { role: "Staff", token: staffToken },
-      { role: "Admin", token: adminToken }
+      { role: "Staff", roleKey: Role.STAFF, token: staffToken },
+      { role: "Admin", roleKey: Role.ADMIN, token: adminToken }
     ]) {
+      const ownOrderId = roleOwnedOrderIds.get(actor.roleKey)!;
+      const ownQrToken = roleQrTokens.get(actor.roleKey)!;
+      expect(ownedBookingsBefore.orders).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          id: ownOrderId,
+          userId: actor.roleKey === Role.STAFF ? staffId : adminId,
+          status: OrderStatus.CONFIRMED
+        })
+      ]));
+      expect(ownedBookingsBefore.tickets).toEqual(expect.arrayContaining([
+        expect.objectContaining({ orderId: ownOrderId, qrToken: ownQrToken })
+      ]));
       for (const route of [
         { method: "POST" as const, path: "/api/holds", body: { showtimeId, seatIds: [seatId] } },
         { method: "POST" as const, path: "/api/orders", body: { holdId } },
-        { method: "POST" as const, path: "/api/payments/mock/complete", body: { orderId } }
+        { method: "POST" as const, path: "/api/payments/mock/complete", body: { orderId } },
+        { method: "GET" as const, path: "/api/orders/me" },
+        { method: "GET" as const, path: `/api/orders/${ownOrderId}` }
       ]) {
         const response = await sendAs(app, actor.token, route);
         expect(response.status, `${actor.role}: ${route.path}`).toBe(403);
         expect(response.body.error, `${actor.role}: ${route.path}`).toBe("ROLE_FORBIDDEN");
+        expect(JSON.stringify(response.body)).not.toContain(ownOrderId);
+        expect(JSON.stringify(response.body)).not.toContain(ownQrToken);
       }
     }
 
@@ -586,6 +648,13 @@ regressionDescribe("authorization regression coverage", () => {
     expect(await prisma.seatClaim.count({ where: { showtimeId } })).toBe(claimCountBefore);
     expect(await prisma.auditLog.findMany({ where: { actorId: staffId! }, orderBy: { id: "asc" } })).toEqual(staffAuditsBefore);
     expect(await prisma.auditLog.findMany({ where: { actorId: adminId! }, orderBy: { id: "asc" } })).toEqual(adminAuditsBefore);
+    expect({
+      orders: await prisma.cinemaOrder.findMany({ where: { id: { in: roleOrderIds } }, orderBy: { id: "asc" } }),
+      holds: await prisma.seatHold.findMany({ where: { showtimeId, userId: { in: [staffId!, adminId!] } }, orderBy: { id: "asc" } }),
+      claims: await prisma.seatClaim.findMany({ where: { orderId: { in: roleOrderIds } }, orderBy: { id: "asc" } }),
+      payments: await prisma.payment.findMany({ where: { orderId: { in: roleOrderIds } }, orderBy: { orderId: "asc" } }),
+      tickets: await prisma.ticket.findMany({ where: { orderId: { in: roleOrderIds } }, orderBy: { orderId: "asc" } })
+    }).toEqual(ownedBookingsBefore);
   }, 30_000);
 
   it("[TC-API-01][TC-SEC-12] lets Admin inspect users and change a Staff role with audit and immediate permission update", async () => {
