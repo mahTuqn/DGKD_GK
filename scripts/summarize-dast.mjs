@@ -31,6 +31,7 @@ const reports = reportKinds.map((kind) => ({
   kind,
   alertCounts: emptyCounts(),
   instanceCounts: emptyCounts(),
+  rules: new Map(),
   status: "missing",
 }));
 const errors = [];
@@ -53,6 +54,15 @@ for (const file of files) {
       const severity = classify(alert);
       report.alertCounts[severity] += 1;
       report.instanceCounts[severity] += Array.isArray(alert.instances) ? alert.instances.length : 0;
+      // Only allow a numeric rule identifier into the public summary. Alert
+      // names and other free-form report fields can contain request data.
+      const candidate = String(alert.pluginid ?? "");
+      const pluginId = /^\d{1,10}$/.test(candidate) ? candidate : "Unknown";
+      const key = `${pluginId}:${severity}`;
+      const rule = report.rules.get(key) || { pluginId, severity, records: 0, instances: 0 };
+      rule.records += 1;
+      rule.instances += Array.isArray(alert.instances) ? alert.instances.length : 0;
+      report.rules.set(key, rule);
     }
     report.status = "parsed";
   } catch {
@@ -79,6 +89,9 @@ function rowsFor(countsKey, totals, unit) {
   return rows;
 }
 const incomplete = reports.some((report) => report.status !== "parsed");
+const ruleRows = reports.flatMap((report) => [...report.rules.values()]
+  .sort((a, b) => a.pluginId.localeCompare(b.pluginId, "en", { numeric: true }) || a.severity.localeCompare(b.severity))
+  .map((rule) => `| ${report.kind} | ${rule.pluginId} | ${rule.severity} | ${rule.records} | ${rule.instances} |`));
 const note = incomplete
   ? "At least one current-run report is missing or invalid; missing/invalid reports are not counted as zero findings. Review the scan and artifact before interpreting the totals."
   : "Alert counts are ZAP alert records; instance counts are the entries attached to those alerts. Both cover parsed reports from the current run only. Alert names, request URLs, and payloads are intentionally omitted from this summary.";
@@ -96,6 +109,14 @@ const markdown = [
   header,
   separator,
   ...rowsFor("instanceCounts", instanceTotals, "instances"),
+  "",
+  "#### Rule identifiers for triage",
+  "",
+  "| Scan | ZAP plugin ID | Severity | Alert records | Instances |",
+  "|---|---:|---|---:|---:|",
+  ...ruleRows,
+  "",
+  "Only numeric plugin IDs are exposed. Rule IDs identify scan rules; they do not establish exploitability or replace reviewing the report instances. Unknown IDs require artifact review.",
   "",
   note,
 ].join("\n");
