@@ -1,0 +1,45 @@
+{
+  "reviewId": "2026-10-29-read-only-bola-review",
+  "reviewedAt": "2026-10-29",
+  "sourceCommit": "bf39b2a6e698cd40b94e2f8f386124f11d730aa5",
+  "reviewType": "Read-only source and existing-test review; no tests or runtime probes were run",
+  "scope": [
+    "35 Express route declarations in backend/src/app.ts",
+    "backend/src/auth.ts authentication and role gates",
+    "docs/security/authorization-route-matrix.csv",
+    "Existing object authorization, authorization regression, Staff scope, and pagination tests"
+  ],
+  "result": {
+    "confirmedP0": 0,
+    "confirmedP1": 0,
+    "summary": "No P0/P1 BOLA or IDOR issue was identified in the reviewed role, owner, and cinema boundaries. This is a focused source review, not exhaustive ASVS/API Top 10 certification or adversarial testing."
+  },
+  "coveredBoundaries": [
+    "Customer-scoped holds, orders, mock payment completion, and order/ticket reads are bound to the authenticated Customer; the webhook uses separate signature and payload/order binding.",
+    "Staff check-in checks assigned cinema and ticket order/payment state before mutation; denied operations have state/audit assertions in existing tests.",
+    "Admin routes require the Admin role and use route-specific schemas, state guards, and audit writes where applicable.",
+    "Authentication reloads current role, cinema assignment, and authVersion for each request; stale tokens are rejected on subsequent requests after a permission change."
+  ],
+  "observations": [
+    {
+      "priority": "P2 conditional",
+      "item": "A request that already passed requireAuth can continue in its handler if role or cinema assignment is revoked while that same request is running.",
+      "status": "No in-flight revocation test found; relevance depends on whether the product requires revocation to cancel already-authorized requests."
+    },
+    {
+      "priority": "P2 review",
+      "item": "The in-memory rate limiter protects login and registration; equivalent limits were not identified on booking and check-in actions.",
+      "status": "Potential API resource-consumption concern, not a confirmed authorization bypass or explicit current acceptance requirement."
+    },
+    {
+      "priority": "P3 informational",
+      "item": "Staff receives different status codes for a valid QR outside the assigned cinema (403) and an unknown QR (404).",
+      "status": "Could provide an existence signal; QR entropy and the absence of ticket details in the denial reduce exposure. Consider uniform responses if the product requires reducing this oracle."
+    }
+  ],
+  "limitations": [
+    "No tests, DAST, database access, Docker actions, or runtime requests were performed as part of this review.",
+    "The existing route matrix maps only ASVS v5.0.0 8.2.1-8.2.3 and is not a complete ASVS or OWASP API Top 10 assessment.",
+    "Review findings do not establish behavior for unlisted consumers, every object/state/field combination, or production configuration."
+  ]
+}

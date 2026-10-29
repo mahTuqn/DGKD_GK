@@ -34,6 +34,8 @@ Giả định gốc của kế hoạch là nhóm 2 người, 10 tuần, khoảng
 
 Tạo `docs/01-srs.md` với actor, precondition, main/alternate/exception flow, dữ liệu đầu vào, HTTP contract và acceptance criteria. Mỗi yêu cầu có ID ổn định:
 
+> **Lưu ý về mã yêu cầu:** Bảng dưới đây là taxonomy khởi đầu của bản kế hoạch, không phải bộ ID chuẩn hiện hành. Dùng [`docs/01-srs.md`](docs/01-srs.md) làm nguồn ID chuẩn và [`docs/03-rtm.csv`](docs/03-rtm.csv) để truy vết. SRS đã rút gọn `REQ-CATALOG-*` thành `REQ-CAT-*`, chốt P0 ở `REQ-BOOK-01..04` và `REQ-PAY-01..02`, đồng thời bổ sung `REQ-OPS`, `REQ-PERF`, `REQ-CONTRACT`, `REQ-SEC` và `REQ-A11Y`. Bảng này được giữ lại để ghi nhận phạm vi ban đầu.
+
 | Nhóm ID | Nội dung cần đặc tả | Oracle quan trọng |
 |---|---|---|
 | `REQ-AUTH-01..04` | Đăng ký, đăng nhập/đăng xuất, hồ sơ, quyền và thu hồi quyền | 401/403; role hiện tại lấy từ nguồn đáng tin cậy sau khi đổi quyền |

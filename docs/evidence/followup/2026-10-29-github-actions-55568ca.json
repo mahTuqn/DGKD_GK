@@ -138,7 +138,7 @@
             "name": "cinema-booking-dast-reports-55568ca63a39cced56537331625b03b8028eec2c",
             "sizeDisplay": "6.31 KB",
             "githubDigest": "sha256:f26448b4aec9d0301747028c360377cbf47b412548081c69de9841e90a30c1b1",
-            "note": "The Actions summary exposes severity counts but not alert names, paths or payloads. The artifact download timed out during this review, so this run's Low alert is not attributed to any prior finding."
+            "note": "The authenticated Actions page exposes artifact metadata and the severity summary, but the in-app browser blocks opening the artifact download. Report contents remain unavailable, so this run's Low alert is not attributed to any prior finding."
           }
         }
       }
@@ -168,7 +168,7 @@
     "Requester-owned manual WCAG 2.2 AA keyboard, screen-reader, contrast, zoom/reflow and orientation checklist",
     "Named staging performance validation; no staging environment is available",
     "Production backup schedule, PITR, RPO/RTO and restore verification",
-    "Exhaustive ASVS/API Top 10 and adversarial BOLA/IDOR review",
+    "Comprehensive ASVS/API Top 10 and adversarial BOLA/IDOR testing (a focused read-only review of 35 routes found no P0/P1 issue; see 2026-10-29-read-only-bola-review.json)",
     "Reliability beyond the tested 15-minute worker soak",
     "Real payment gateway/refund behavior is outside the current SRS, which specifies mock payment"
   ],

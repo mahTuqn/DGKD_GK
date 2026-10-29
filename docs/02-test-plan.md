@@ -26,9 +26,9 @@ The Chromium desktop/Pixel 7 browser job passed **58 configured executions acros
 
 The local isolated browser runner `npm run test:browser:isolated` was then executed on commit `d3c8df36a4ced2b88cd8f27c1357742c34d4df97`: **58/58 passed**, with 0 skipped/flaky tests in **4m 7s**. It created a fresh PostgreSQL 17 test container, applied all migrations and seed data, then removed that container and its anonymous volume. The existing `dgkd_gk` and `cinema-qa` stacks remained healthy and were not used. See the [local browser evidence manifest](evidence/followup/2026-10-29-local-playwright-isolated.json).
 
-The DAST summary parsed **3/3** reports: **0 High, 0 Medium, 1 Low alert record (3 instances), and 5 Informational records (11 instances)**. The summary omits alert names, paths and payloads; the current artifact download timed out, so this Low finding is unidentified. Details and artifact digests are in the [55568ca evidence manifest](evidence/followup/2026-10-29-github-actions-55568ca.json).
+The DAST summary parsed **3/3** reports: **0 High, 0 Medium, 1 Low alert record (3 instances), and 5 Informational records (11 instances)**. The authenticated Actions page confirms the current artifact metadata, but the in-app browser blocks opening its download; report contents remain unavailable. Do not attribute this Low finding to a previous observation until its alert name and instances are reviewed. Details and artifact digests are in the [55568ca evidence manifest](evidence/followup/2026-10-29-github-actions-55568ca.json).
 
-Manual WCAG 2.2 AA review remains requester-owned; no staging environment is available, so named-staging performance is unmeasured. Production backup/PITR/RPO/RTO/restore and exhaustive ASVS/BOLA review remain open. Real gateway/refund testing is outside the SRS.
+Manual WCAG 2.2 AA review remains requester-owned; no staging environment is available, so named-staging performance is unmeasured. A focused read-only BOLA/IDOR source review of 35 routes found no P0/P1 issue, but comprehensive ASVS/API Top 10 and adversarial testing remain open. Production backup/PITR/RPO/RTO/restore also remain open. Real gateway/refund testing is outside the SRS.
 
 ## Previous exact-source CI verification — `56c4c8a` — 29/10/2026
 
