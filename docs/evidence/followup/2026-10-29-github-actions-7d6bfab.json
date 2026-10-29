@@ -1,0 +1,124 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "recordedAt": "2026-10-29",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "commit": "7d6bfab14fe27d5160489967fb22eedf5284dd90",
+  "branch": "codex/cross-browser-smoke",
+  "overall": "PASS_EXACT_SOURCE_CI_WITH_DOCUMENTED_LIMITATIONS",
+  "sourceDelta": "Add per-client-IP rate limits to sensitive hold/order/payment/webhook/check-in routes; constrain test overrides to development/test; correlate worker expiry audit rows within one worker cycle; add route/configuration/worker regressions and update SRS, RTM, test catalog and OpenAPI 429 responses.",
+  "runs": {
+    "qualityDastDomainCompose": {
+      "id": 40840707655,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40840707655",
+      "result": "PASS",
+      "duration": "15m 51s",
+      "jobs": {
+        "quality": {
+          "result": "PASS",
+          "duration": "15m 47s",
+          "gates": [
+            "Gitleaks secret scan and dependency audit",
+            "Prisma generation, isolated database migrations and seed",
+            "OpenAPI lint",
+            "Traceability validation: 109 test cases / 28 requirements",
+            "Strict backend source and test typecheck",
+            "Complete root npm run test:api pipeline, including Vitest, worker-process and API-process suites",
+            "TC-SEC-37 rate limits on six sensitive routes, including authenticated PostgreSQL no-extra-hold/audit assertion",
+            "TC-WORKER-01 shared correlation ID on hold/order expiry audit rows",
+            "Live five-minute hold expiry and two-worker five-minute soak/restart/catch-up",
+            "Backend/frontend production build and Chromium browser suite"
+          ]
+        },
+        "dast": {
+          "result": "PASS_CONFIGURED_GATE",
+          "duration": "7m 58s",
+          "summaryTotalsReviewed": false,
+          "artifact": {
+            "id": 12882738441,
+            "name": "cinema-booking-dast-reports-7d6bfab14fe27d5160489967fb22eedf5284dd90",
+            "sizeDisplay": "6.34 KB",
+            "githubDigest": "sha256:56ccdcfd6fdcefe28e6a551ae04012f9f7bc410ef1facb6c128c447c3870056a",
+            "metadataSource": "GitHub Actions run page",
+            "digestIndependentlyVerified": false,
+            "note": "Report files and current alert totals were not reviewed because the GitHub browser session was signed out. Do not infer this run's alerts from older DAST runs."
+          }
+        },
+        "domainCoverageAndMutation": {
+          "result": "PASS",
+          "duration": "2m 55s",
+          "artifact": {
+            "id": 12882438312,
+            "name": "cinema-booking-domain-quality-7d6bfab14fe27d5160489967fb22eedf5284dd90",
+            "sizeDisplay": "141 KB",
+            "githubDigest": "sha256:a0b47c9e69e8f9cb62f5d37d5e0ee2017c43045fe7b2583a6e9f3fb9f42c7990"
+          }
+        },
+        "composeRuntimeBrowserSmoke": {
+          "result": "PASS",
+          "duration": "1m 39s",
+          "scope": "Built an isolated PostgreSQL/API/worker/web stack, migrated and seeded it, passed health checks, and completed the Chromium booking/payment/ticket journey.",
+          "artifact": {
+            "id": 12882103672,
+            "name": "cinema-booking-compose-browser-results-7d6bfab14fe27d5160489967fb22eedf5284dd90",
+            "sizeDisplay": "195 KB",
+            "githubDigest": "sha256:8dfde69ade8fb1082970c0a679dcc2324ff13e762ec0804aab47bc37275cf157"
+          }
+        },
+        "browserResults": {
+          "result": "PASS",
+          "artifact": {
+            "id": 12882973331,
+            "name": "cinema-booking-browser-results-7d6bfab14fe27d5160489967fb22eedf5284dd90",
+            "sizeDisplay": "384 KB",
+            "githubDigest": "sha256:fc53be3e745c90a21a36ed9b7161c2b2da5ce70036b4587f0df0d49fe09438f3"
+          }
+        }
+      }
+    },
+    "crossBrowserSmoke": {
+      "id": 40840707622,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40840707622",
+      "result": "PASS",
+      "duration": "2m 09s",
+      "scope": "Firefox and WebKit desktop smoke"
+    },
+    "workerLongSoak": {
+      "id": 40840707617,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40840707617",
+      "result": "PASS",
+      "duration": "15m 54s",
+      "scope": "Two-worker 15-minute soak, graceful restart and pending-event catch-up"
+    }
+  },
+  "localChecks": {
+    "selectedConfigurationAndRateLimitTests": "PASS: 2 selected tests; 7 other tests skipped by the local test-name filter",
+    "backendTestTypecheck": "PASS",
+    "backendProductionBuild": "PASS",
+    "traceability": "PASS: 109 test cases / 28 requirements",
+    "openApiLint": "PASS",
+    "gitDiffCheck": "PASS after documentation-only follow-up"
+  },
+  "environment": {
+    "runner": "GitHub Actions clean checkout",
+    "database": "Isolated ephemeral PostgreSQL databases and Compose stack",
+    "localDocker": "No heavy local test/DAST/browser/soak run was attempted: two existing demo stacks were active and the observed free host memory was about 297 MiB.",
+    "staging": "Not available; CI results apply to isolated hosted runners, not staging or production."
+  },
+  "remainingGates": [
+    "Requester-owned manual WCAG 2.2 AA keyboard, screen-reader, contrast, zoom/reflow and orientation checklist",
+    "Review current-run DAST report contents and alert totals; the configured gate passed, but the alert set is not independently known",
+    "Named staging performance and production reliability validation; no staging environment is available",
+    "Production backup schedule, PITR, RPO/RTO and restore verification",
+    "Comprehensive ASVS/API Top 10 and adversarial BOLA/IDOR testing",
+    "Reliability beyond the tested 15-minute worker soak",
+    "Shared rate-limit store before horizontal API scaling; current store is in-memory",
+    "Real payment gateway/refund behavior is outside the current SRS, which specifies mock payment"
+  ],
+  "limitations": [
+    "Passing CI applies to this exact source commit and isolated GitHub Actions databases/runners.",
+    "The CI DAST job passed its configured threshold, but its current alert totals and report contents were not reviewed.",
+    "Automated axe/browser checks do not replace the requester's manual accessibility review.",
+    "No staging or production behavior is inferred from local or CI results."
+  ]
+}
