@@ -20,7 +20,7 @@ Current source `54096734b8e99249cfb01a2b1aeacac6a584e27c` has passing [cross-bro
 
 An independent API security audit identified BUG-022: request-time authorization alone did not serialize hold/order/payment and Admin mutations against role/authVersion revocation. The working tree now rechecks the actor under a User row lock in authenticated mutation transactions; Admin role/assignment updates acquire actor and target locks in stable ID order. TC-SEC-39 covers deterministic hold, mock-payment, and Admin movie-edit revocation races. TC-SEC-40 covers the Staff cinema-only reassignment/check-in race. TC-SEC-39 passed on a disposable QA PostgreSQL database (1/1); the full authorization regression file passed 16/16; targeted TC-SEC-40 passed 1/1 on a fresh disposable PostgreSQL 17 container with tmpfs storage (2 unrelated tests skipped). Backend test typecheck and traceability (111 cases / 28 requirements) passed. Exact-source CI for these working-tree changes remains pending. At 10:04 UTC the previous-source quality and worker-soak pages still displayed *In progress* (triggered 09:14; workflow job timeout is 25 minutes); public logs remain sign-in-gated and anonymous REST calls are rate-limited. Host RAM was ~590 MiB before the DB regression run; the full current-source browser suite remains unrun locally. See the [local authorization revocation evidence](evidence/followup/2026-10-29-local-auth-revocation.json).
 
-## Latest completed exact-source CI result — `7d6bfab` — 29/10/2026
+## Previous exact-source CI result — `7d6bfab` — 29/10/2026
 
 All three workflows passed on source commit `7d6bfab14fe27d5160489967fb22eedf5284dd90`: [quality/API/DAST/domain/Compose run 40840707655](https://github.com/mahTuqn/DGKD_GK/actions/runs/40840707655), [Firefox/WebKit smoke 40840707622](https://github.com/mahTuqn/DGKD_GK/actions/runs/40840707622), and [15-minute worker soak 40840707617](https://github.com/mahTuqn/DGKD_GK/actions/runs/40840707617). Traceability passed at **109 test cases / 28 requirements**. The full root `npm run test:api` pipeline, strict backend/test typecheck, OpenAPI lint, secret/dependency scans, production build, and configured DAST gate passed on an isolated GitHub runner.
 
@@ -161,8 +161,8 @@ Các phép đo unit/coverage, hiệu năng, ZAP và Gitleaks dùng fixture/histo
 ## Còn thiếu so với kế hoạch
 
 - Người yêu cầu chưa hoàn tất manual WCAG 2.2 AA/screen-reader/contrast/zoom/reflow/orientation/keyboard checklist.
-- Chưa có staging; k6 local không chứng minh performance staging/production. TC-PLAN-08 đã pass trên hai API process độc lập trong exact-source CI run 40808427061 (1 request thành công, 99 conflict); kết quả contention này không thay thế load test trên staging.
-- DAST đã được xác minh và triaged, nhưng exhaustive ASVS/API Top 10 và adversarial BOLA/IDOR review rộng hơn route matrix còn mở.
+- Chưa có staging; k6 local không chứng minh performance staging/production. TC-PLAN-08 đã pass trên hai API process độc lập trong exact-source CI run 40870861147 (1 request thành công, 99 conflict); kết quả contention này không thay thế load test trên staging.
+- DAST gate đã pass trong run 40870861147, nhưng artifact hiện tại chưa tải được (API trả HTTP 401), nên nội dung và triage findings vẫn chưa được review. Exhaustive ASVS/API Top 10 và adversarial BOLA/IDOR review rộng hơn route matrix còn mở.
 - Restore rehearsal không đánh giá lịch backup, PITR, RPO/RTO hay production restore. Worker reliability dài hơn 15 phút và gateway timeout chưa được đo.
 - Không có hazard analysis; safety chưa đánh giá. Payment vẫn là mock, không phải cổng thanh toán thật.
 
