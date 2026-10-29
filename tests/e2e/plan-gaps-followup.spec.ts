@@ -114,7 +114,7 @@ test("[TC-E2E-19] thanh toán đã ghi nhận nhưng mất phản hồi có th�
         tickets: [ticket],
       });
     } else if (request.method() === "GET" && pathname === "/api/orders/me") {
-      await fulfillJson(route, 200, [{ ...orderBase, status: paymentCommitted ? "CONFIRMED" : "PAYMENT_PENDING", tickets: paymentCommitted ? [ticket] : [] }]);
+      await fulfillJson(route, 200, { items: [{ ...orderBase, status: paymentCommitted ? "CONFIRMED" : "PAYMENT_PENDING", tickets: paymentCommitted ? [ticket] : [] }], nextCursor: null });
     } else {
       await fulfillJson(route, 404, { error: "NOT_FOUND", message: `Unexpected mock request: ${request.method()} ${pathname}` });
     }

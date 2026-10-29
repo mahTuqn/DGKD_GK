@@ -103,6 +103,8 @@ async function mockApi(page: Page, options: MockOptions = {}) {
         confirmedRevenueVnd: 0,
         occupancy: { showtimeCount: 1, soldSeats: 0, capacitySeats: 2, fillRatePercent: 0, definition: "Fixture occupancy." },
       });
+    } else if (request.method() === "GET" && pathname === "/api/admin/users") {
+      await fulfillJson(route, 200, { items: [], nextCursor: null });
     } else if (request.method() === "GET" && pathname === "/api/admin/movies") {
       await fulfillJson(route, 200, [movie]);
     } else if (request.method() === "GET" && pathname === "/api/admin/cinemas") {

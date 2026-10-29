@@ -69,9 +69,9 @@ test("[TC-E2E-12] thanh toán thất bại không phát vé và ghế được m
   const session = await page.evaluate(() => JSON.parse(localStorage.getItem("cinemabooking.session") || "null") as { token: string });
   const ordersResponse = await page.request.get(`${API_URL}/orders/me`, { headers: { authorization: `Bearer ${session.token}` } });
   expect(ordersResponse.ok()).toBeTruthy();
-  const orders = await ordersResponse.json() as Array<{ status: string; tickets: unknown[] }>;
-  expect(orders).toHaveLength(1);
-  expect(orders[0]).toMatchObject({ status: "PAYMENT_FAILED", tickets: [] });
+  const orders = await ordersResponse.json() as { items: Array<{ status: string; tickets: unknown[] }>; nextCursor: string | null };
+  expect(orders.items).toHaveLength(1);
+  expect(orders.items[0]).toMatchObject({ status: "PAYMENT_FAILED", tickets: [] });
 
   await page.getByRole("dialog").getByRole("button", { name: "Đóng" }).click();
   await page.getByTestId("showtime-option").first().click();

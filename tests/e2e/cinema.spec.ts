@@ -115,8 +115,8 @@ async function getNewestTicketQrToken(page: Page) {
   expect(token, "Customer session token should exist after registration").toBeTruthy();
   const response = await page.context().request.get(`${API_URL}/orders/me`, { headers: { authorization: `Bearer ${token}` } });
   expect(response.ok()).toBeTruthy();
-  const orders = await response.json() as Array<{ tickets: Array<{ qrToken: string }> }>;
-  const qrToken = orders.flatMap((order) => order.tickets).at(0)?.qrToken;
+  const orders = await response.json() as { items: Array<{ tickets: Array<{ qrToken: string }> }>; nextCursor: string | null };
+  const qrToken = orders.items.flatMap((order) => order.tickets).at(0)?.qrToken;
   expect(qrToken, "The confirmed order should contain a QR token").toBeTruthy();
   return qrToken as string;
 }
