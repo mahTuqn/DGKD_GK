@@ -1,0 +1,111 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "recordedAt": "2026-10-29",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "commit": "047fffb4e4d2dcc4cad1886e2b15499d5c872851",
+  "branch": "codex/cross-browser-smoke",
+  "parentApplicationTestSource": "9001ed7e74203fd61bbf5f790207339622cb2a84",
+  "sourceDelta": "Documentation-only commit; application and test source unchanged from 9001ed7.",
+  "overall": "PASS_ALL_THREE_GITHUB_ACTIONS_WORKFLOWS_DAST_REPORT_CONTENTS_UNREVIEWED",
+  "runs": {
+    "qualityApiDastDomainCompose": {
+      "id": 40879013618,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40879013618",
+      "event": "push",
+      "result": "PASS",
+      "jobs": {
+        "quality": "success",
+        "dast": "success",
+        "domainCoverageAndMutation": "success",
+        "composeRuntimeAndBrowserSmoke": "success"
+      },
+      "verifiedSteps": [
+        "npm audit, database migrations/seed, OpenAPI lint, traceability and backend/test type-check passed",
+        "Complete API suite passed",
+        "Live five-minute hold expiry and five-minute worker soak/restart passed",
+        "Backend/frontend production build passed",
+        "Configured Playwright Chromium desktop/Pixel 7 browser suite passed",
+        "Configured DAST gate passed; report contents are not reviewed",
+        "Domain coverage and mutation threshold job passed",
+        "Isolated Compose services became healthy and the Chromium booking flow passed"
+      ],
+      "artifacts": {
+        "browser": {
+          "id": 12901241004,
+          "name": "cinema-booking-browser-results-047fffb4e4d2dcc4cad1886e2b15499d5c872851",
+          "sizeBytes": 391759,
+          "githubDigest": "sha256:4beb2eee5c49779296333f4f9f676fd813cd68d06de63453dee4e896dede0e0d",
+          "expired": false
+        },
+        "composeBrowser": {
+          "id": 12899592029,
+          "name": "cinema-booking-compose-browser-results-047fffb4e4d2dcc4cad1886e2b15499d5c872851",
+          "sizeBytes": 200065,
+          "githubDigest": "sha256:43e063528b0f6c122d83250f76a218b62a33a55642e6c9f4fff3eb47d1ed7abd",
+          "expired": false
+        },
+        "domainQuality": {
+          "id": 12898848716,
+          "name": "cinema-booking-domain-quality-047fffb4e4d2dcc4cad1886e2b15499d5c872851",
+          "sizeBytes": 144478,
+          "githubDigest": "sha256:c9b7d31f64196a12729b3cf05d9b16d3d9c7769725e4a1f2b8621e2ce05ef339",
+          "expired": false
+        },
+        "dast": {
+          "id": 12900411247,
+          "name": "cinema-booking-dast-reports-047fffb4e4d2dcc4cad1886e2b15499d5c872851",
+          "sizeBytes": 6480,
+          "githubDigest": "sha256:9607f934991863fe3da0e612dd2c1628ffee1621cf876932c1f2672529306483",
+          "expired": false,
+          "artifactContentsRetrieved": false,
+          "reportTotalsReviewed": false,
+          "anonymousDownloadAttempt": "GitHub artifact archive API returned HTTP 401 Requires authentication. No alert totals, names, URLs, payloads or triage are claimed."
+        }
+      }
+    },
+    "crossBrowserSmoke": {
+      "id": 40879013563,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40879013563",
+      "event": "push",
+      "result": "PASS",
+      "scope": "Configured critical booking, discovery and keyboard flows in desktop Firefox and WebKit; this is a smoke subset, not the full Chromium suite.",
+      "artifact": {
+        "id": 12898883490,
+        "name": "cinema-booking-cross-browser-results-047fffb4e4d2dcc4cad1886e2b15499d5c872851",
+        "sizeBytes": 222954,
+        "githubDigest": "sha256:0f5a81e8ce07b15ab957d045d1bed2477fa29b0e1f0458b8c4c16a72f4d3d105",
+        "expired": false
+      }
+    },
+    "workerLongSoak": {
+      "id": 40879014191,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40879014191",
+      "event": "push",
+      "result": "PASS",
+      "scope": "Two-worker 15-minute soak, graceful shutdown/restart and pending-event catch-up"
+    }
+  },
+  "localEnvironmentObservation": {
+    "docker": "Both dgkd_gk and cinema-qa stacks were running; PostgreSQL/API/web were healthy and workers were up.",
+    "availableHostMemoryMiB": 511,
+    "localPlaywrightRerun": "Not run in this turn; the exact repository HEAD already passed the full configured browser jobs in isolated GitHub Actions, while local free memory was limited with both Docker stacks active."
+  },
+  "remainingGates": [
+    "Requester-owned manual WCAG 2.2 AA keyboard, screen-reader, contrast, zoom/reflow, orientation and keyboard checklist (90 pairs remain Not tested)",
+    "Review current-head DAST artifact contents, alert identities, URLs, payloads and triage",
+    "Named-staging performance and production reliability validation; no staging environment is available",
+    "Production backup schedule, PITR, RPO/RTO and restore verification",
+    "Comprehensive ASVS/API Top 10 and adversarial BOLA/IDOR testing",
+    "Reliability beyond the tested 15-minute worker soak",
+    "Real payment gateway/refund behavior is outside the mock-payment SRS"
+  ],
+  "limitations": [
+    "The source-code/test implementation is unchanged from 9001ed7; 047fffb changes documentation only.",
+    "GitHub Actions status and artifact metadata were queried through public REST endpoints; artifact ZIP contents require authentication and were not retrieved.",
+    "The DAST threshold pass does not disclose or prove zero Low/Informational alerts.",
+    "Cross-browser CI covers its configured Firefox/WebKit desktop smoke subset; full browser regression runs on Chromium desktop and Pixel 7 mobile.",
+    "Automated axe/browser checks do not replace manual WCAG/screen-reader review.",
+    "No staging or production behavior is inferred from Docker or CI results."
+  ]
+}

@@ -1,6 +1,12 @@
 # Báo cáo tổng hợp kiểm thử
 
-## Latest exact-source CI result — `9001ed7` — 29/10/2026
+## Latest repository-head CI result — `047fffb` — 29/10/2026
+
+Commit `047fffb4e4d2dcc4cad1886e2b15499d5c872851` chỉ thay đổi tài liệu trên application/test source `9001ed7e74203fd61bbf5f790207339622cb2a84`. Cả ba workflow chạy theo push của HEAD này đều hoàn tất `success`: [quality/API/DAST/domain/Compose 40879013618](https://github.com/mahTuqn/DGKD_GK/actions/runs/40879013618), [Firefox/WebKit smoke 40879013563](https://github.com/mahTuqn/DGKD_GK/actions/runs/40879013563), và [15-minute worker soak 40879014191](https://github.com/mahTuqn/DGKD_GK/actions/runs/40879014191). Quality job xác nhận các bước API, traceability, build và `npm run test:browser` đều pass; Compose chạy booking flow trên Chromium; workflow riêng chạy smoke Firefox/WebKit và soak worker 15 phút. Đây là bằng chứng tự động trên GitHub Actions; nó không thay thế kiểm thử staging hay manual WCAG.
+
+Artifact DAST hiện tại là ID `12900411247`, 6,480 bytes, digest `sha256:9607f934991863fe3da0e612dd2c1628ffee1621cf876932c1f2672529306483`. Metadata API đọc được nhưng tải ZIP trả HTTP 401 `Requires authentication`; vì vậy nội dung, số lượng, danh tính và triage finding vẫn chưa được review. Không suy ra severity totals từ việc gate pass. Artifact và run metadata được lưu trong [manifest 047fffb](evidence/followup/2026-10-29-github-actions-047fffb.json).
+
+## Latest application/test-source CI result — `9001ed7` — 29/10/2026
 
 All three workflows passed on source commit `9001ed7e74203fd61bbf5f790207339622cb2a84`: [quality/API/DAST/domain/Compose 40870861147](https://github.com/mahTuqn/DGKD_GK/actions/runs/40870861147), [Firefox/WebKit smoke 40870861454](https://github.com/mahTuqn/DGKD_GK/actions/runs/40870861454), and [15-minute worker soak 40870861369](https://github.com/mahTuqn/DGKD_GK/actions/runs/40870861369). The quality workflow passed the complete API suite, including TC-SEC-47; strict backend/test type-check; OpenAPI and traceability (**119 test cases / 28 requirements**); live five-minute hold expiry; five-minute worker soak/restart; production build; configured Chromium desktop/Pixel 7 Playwright suite; domain/mutation gate; configured DAST gate; and isolated Compose/browser smoke. The Firefox/WebKit desktop smoke and separate 15-minute worker soak/restart/catch-up also passed.
 
@@ -161,8 +167,8 @@ Các phép đo unit/coverage, hiệu năng, ZAP và Gitleaks dùng fixture/histo
 ## Còn thiếu so với kế hoạch
 
 - Người yêu cầu chưa hoàn tất manual WCAG 2.2 AA/screen-reader/contrast/zoom/reflow/orientation/keyboard checklist.
-- Chưa có staging; k6 local không chứng minh performance staging/production. TC-PLAN-08 đã pass trên hai API process độc lập trong exact-source CI run 40870861147 (1 request thành công, 99 conflict); kết quả contention này không thay thế load test trên staging.
-- DAST gate đã pass trong run 40870861147, nhưng artifact hiện tại chưa tải được (API trả HTTP 401), nên nội dung và triage findings vẫn chưa được review. Exhaustive ASVS/API Top 10 và adversarial BOLA/IDOR review rộng hơn route matrix còn mở.
+- Chưa có staging; k6 local không chứng minh performance staging/production. TC-PLAN-08 đã pass trên hai API process độc lập trong exact-head CI run 40879013618 (1 request thành công, 99 conflict); kết quả contention này không thay thế load test trên staging.
+- DAST gate đã pass trong run 40879013618, nhưng artifact hiện tại chưa tải được (API trả HTTP 401), nên nội dung và triage findings vẫn chưa được review. Exhaustive ASVS/API Top 10 và adversarial BOLA/IDOR review rộng hơn route matrix còn mở.
 - Restore rehearsal không đánh giá lịch backup, PITR, RPO/RTO hay production restore. Worker reliability dài hơn 15 phút và gateway timeout chưa được đo.
 - Không có hazard analysis; safety chưa đánh giá. Payment vẫn là mock, không phải cổng thanh toán thật.
 
