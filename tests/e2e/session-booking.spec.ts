@@ -32,7 +32,7 @@ test("[TC-E2E-20][TC-E2E-24] dialog đăng nhập lồng trên sơ đồ ghế g
   const availableSeat = seatDialog.locator('[data-testid="seat"][aria-label*="trống"]:not([disabled])').first();
   await expect(availableSeat).toBeVisible();
   const seatAccessibilityName = await availableSeat.getAttribute("aria-label");
-  const seatMatch = seatAccessibilityName?.match(/^Ghế ([A-Z]+) (\d+) — trống$/);
+  const seatMatch = seatAccessibilityName?.match(/^Ghế ([A-Z]+) (\d+) — trống — .+$/);
   expect(seatMatch, "The selected available seat should expose its row and number").not.toBeNull();
   const seatLabel = `${seatMatch![1]}${seatMatch![2]}`;
   const [cinema, auditorium, date, time] = (await seatDialog.locator(".dialog-top p").innerText()).split(" · ");
