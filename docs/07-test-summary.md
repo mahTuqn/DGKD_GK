@@ -1,6 +1,16 @@
 # Báo cáo tổng hợp kiểm thử
 
-## Latest exact-source CI result — `56c4c8a` — 29/10/2026
+## Latest exact-source CI result — `55568ca` — 29/10/2026
+
+All three CI workflows passed on source commit `55568ca63a39cced56537331625b03b8028eec2c`: [quality/API/DAST/domain/Compose run #48](https://github.com/mahTuqn/DGKD_GK/actions/runs/40827784591), [Firefox/WebKit smoke #27](https://github.com/mahTuqn/DGKD_GK/actions/runs/40827784592), and [15-minute worker soak #25](https://github.com/mahTuqn/DGKD_GK/actions/runs/40827784618). Traceability passed at **108 test cases / 27 requirements**; API integration passed **57/57 across 14 files**. Strict backend/test typecheck, OpenAPI lint, secret/dependency scans and production build passed. Live hold expiry and the two-worker five-minute soak/restart/catch-up passed.
+
+The Chromium desktop/Pixel 7 Playwright step passed **58 configured executions** (29 cases on two browser projects), including TC-E2E-28 (keyboard role/cinema assignment and multi-page Admin users), TC-E2E-30 (ticket-history cursor pagination), and TC-E2E-31 (wrong-cinema Staff scan denial/no side effect). The isolated Compose browser smoke passed. Domain checks passed **13/13**, with mutation score **82.89% (155 killed/32 survived)** against the 70% threshold. Firefox/WebKit desktop smoke passed; the separate two-worker soak passed in **15m 50s**.
+
+The DAST job passed all three configured scopes and parsed **3/3 reports**. The CI summary reports **0 High, 0 Medium, 1 Low alert record (3 instances), and 5 Informational records (11 instances)**. It omits alert names, paths and payloads; downloading the current report artifact timed out, so the Low alert is not attributed to any previously triaged finding. Artifact identifiers, names and digests are in the [55568ca exact-source evidence manifest](evidence/followup/2026-10-29-github-actions-55568ca.json). This records the configured DAST gate, not a full security certification.
+
+The requester will complete the manual WCAG 2.2 AA keyboard/screen-reader checklist. No staging environment is available, so named-staging performance is not measured; production backup/PITR/RPO/RTO/restore and exhaustive ASVS/BOLA review remain open. Local browser tests were not run because `DATABASE_URL_TEST` is not configured and existing QA/demo databases were left untouched. The SRS specifies mock payment, so real gateway/refund behavior is outside acceptance scope.
+
+## Previous exact-source CI result — `56c4c8a` — 29/10/2026
 
 All CI workflows passed on source commit `56c4c8a9e09da166f94821f3053113524516a03c`: [quality/API/DAST/domain/Compose run 40823705208](https://github.com/mahTuqn/DGKD_GK/actions/runs/40823705208), [Firefox/WebKit smoke 40823705157](https://github.com/mahTuqn/DGKD_GK/actions/runs/40823705157), and [15-minute worker soak 40823705169](https://github.com/mahTuqn/DGKD_GK/actions/runs/40823705169). This commit aligns browser fixtures with the paginated order and Admin-user API envelopes. Traceability passed at **106 test cases / 27 requirements**; API integration passed **57/57 across 14 files**. OpenAPI lint, strict backend source/test typecheck, secret/dependency scans, and production build passed. TC-WORKER-03 live expiry passed, as did TC-WORKER-06's two-worker five-minute soak and graceful restart/catch-up.
 
@@ -8,7 +18,7 @@ The Chromium desktop/Pixel 7 Playwright step passed with **27 cases / 54 configu
 
 The DAST job passed all three scopes and its CI summary parsed **3/3 reports**: **0 High, 0 Medium, 1 Low alert record (3 instances), and 5 Informational records (11 instances)**. The summary does not expose alert names, URLs or payloads; the report artifact is linked in the [exact-source evidence manifest](evidence/followup/2026-10-29-github-actions-56c4c8a.json). This records the configured DAST gate, not a full security certification.
 
-The requester will complete the manual WCAG 2.2 AA keyboard/screen-reader checklist. No staging environment is available, so named-staging performance is not measured; production backup/PITR/RPO/RTO/restore and exhaustive ASVS/BOLA review remain open. BUG-019's paginated API passed CI on 56c4c8a. The current working-tree traceability inventory is 108 cases / 27 requirements, and both `npm run qa:trace` and `npm run typecheck:tests` pass. Candidate TC-E2E-28/30/31 exercise paginated user/ticket lists, actual Staff cinema reassignment and wrong-cinema scan denial; the updated browser source awaits CI. The SRS specifies mock payment, so real gateway/refund behavior is outside acceptance scope.
+At the time of the 56c4c8a run, the updated TC-E2E-28/30/31 browser cases were still awaiting CI; they subsequently passed on 55568ca as reported above. The requester will complete manual WCAG 2.2 AA review. No staging environment is available, so named-staging performance is not measured; production backup/PITR/RPO/RTO/restore and exhaustive ASVS/BOLA review remain open. BUG-019 pagination passed API CI. The SRS specifies mock payment, so real gateway/refund behavior is outside acceptance scope.
 
 ## Previous exact-source CI result — `1e86106` — 29/10/2026
 

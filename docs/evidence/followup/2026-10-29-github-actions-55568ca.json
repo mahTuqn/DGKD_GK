@@ -1,0 +1,181 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "recordedAt": "2026-10-29",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "commit": "55568ca63a39cced56537331625b03b8028eec2c",
+  "branch": "codex/cross-browser-smoke",
+  "overall": "PASS_EXACT_SOURCE_CI_WITH_DOCUMENTED_LIMITATIONS",
+  "sourceDelta": "Added cursor-pagination browser coverage for Admin users and Customer ticket history, strengthened keyboard-based Staff role/cinema assignment changes with restoration, and covered wrong-cinema Staff scan denial and no-side-effect behavior.",
+  "runs": {
+    "qualityDastDomainCompose": {
+      "id": 40827784591,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40827784591",
+      "result": "PASS",
+      "duration": "15m 56s",
+      "jobs": {
+        "quality": {
+          "result": "PASS",
+          "duration": "15m 52s",
+          "traceability": {
+            "result": "PASS",
+            "testCases": 108,
+            "requirements": 27
+          },
+          "apiIntegration": {
+            "result": "PASS",
+            "testsPassed": 57,
+            "testFilesPassed": 14
+          },
+          "liveHoldExpiry": {
+            "testId": "TC-WORKER-03",
+            "result": "PASS",
+            "duration": "5m 2s"
+          },
+          "workerFiveMinuteSoak": {
+            "testId": "TC-WORKER-06",
+            "result": "PASS",
+            "duration": "5m 6s",
+            "gracefulRestartAndCatchUp": "PASS"
+          },
+          "playwright": {
+            "result": "PASS",
+            "testsSelected": 58,
+            "cases": 29,
+            "projects": [
+              "chromium-desktop",
+              "chromium-mobile (Pixel 7)"
+            ],
+            "duration": "3m 0s",
+            "passingCasesOfInterest": [
+              "TC-E2E-28",
+              "TC-E2E-30",
+              "TC-E2E-31"
+            ],
+            "artifact": {
+              "id": 12878100845,
+              "name": "cinema-booking-browser-results-55568ca63a39cced56537331625b03b8028eec2c",
+              "sizeDisplay": "384 KB",
+              "githubDigest": "sha256:0d7754e3e9e0d40523f9e6f777a75bfa6731d191463ef63447e6047758db7464"
+            }
+          },
+          "otherPassingGates": [
+            "Gitleaks secret scan",
+            "npm audit --audit-level=moderate",
+            "Prisma generation and database migrations/seed",
+            "OpenAPI lint",
+            "Strict backend source and test typecheck",
+            "Backend and frontend production build"
+          ]
+        },
+        "composeRuntimeBrowserSmoke": {
+          "result": "PASS",
+          "duration": "1m 45s",
+          "artifact": {
+            "id": 12876588897,
+            "name": "cinema-booking-compose-browser-results-55568ca63a39cced56537331625b03b8028eec2c",
+            "sizeDisplay": "195 KB",
+            "githubDigest": "sha256:162d71362319d88cdeff46a6a470de23f1e17e6b62b243807fe7d5bfdaf40001"
+          }
+        },
+        "domainCoverageAndMutation": {
+          "result": "PASS",
+          "duration": "2m 59s",
+          "domainTestsPassed": 13,
+          "mutationScorePercent": 82.89,
+          "mutationThresholdPercent": 70,
+          "mutantsKilled": 155,
+          "mutantsSurvived": 32,
+          "artifact": {
+            "id": 12877456465,
+            "name": "cinema-booking-domain-quality-55568ca63a39cced56537331625b03b8028eec2c",
+            "sizeDisplay": "141 KB",
+            "githubDigest": "sha256:5d10ef243688f33a16acd9e78e8b4d7710de827e841e12a44bd73cb9d7000d23"
+          }
+        },
+        "dast": {
+          "result": "PASS",
+          "duration": "7m 18s",
+          "scopes": [
+            "unauthenticated API",
+            "authenticated API",
+            "production web preview"
+          ],
+          "reportsParsedByCi": "3/3",
+          "perScopeSummary": {
+            "unauthenticatedApi": {
+              "highMediumLowRecords": 0,
+              "informationalRecords": 2
+            },
+            "authenticatedApi": {
+              "highMediumRecords": 0,
+              "lowRecords": 1,
+              "informationalRecords": 2
+            },
+            "preview": {
+              "highMediumLowRecords": 0,
+              "informationalRecords": 1
+            }
+          },
+          "alertRecords": {
+            "critical": 0,
+            "high": 0,
+            "medium": 0,
+            "low": 1,
+            "informational": 5,
+            "unknown": 0
+          },
+          "alertInstances": {
+            "critical": 0,
+            "high": 0,
+            "medium": 0,
+            "low": 3,
+            "informational": 11,
+            "unknown": 0
+          },
+          "artifact": {
+            "id": 12877209345,
+            "name": "cinema-booking-dast-reports-55568ca63a39cced56537331625b03b8028eec2c",
+            "sizeDisplay": "6.31 KB",
+            "githubDigest": "sha256:f26448b4aec9d0301747028c360377cbf47b412548081c69de9841e90a30c1b1",
+            "note": "The Actions summary exposes severity counts but not alert names, paths or payloads. The artifact download timed out during this review, so this run's Low alert is not attributed to any prior finding."
+          }
+        }
+      }
+    },
+    "crossBrowserSmoke": {
+      "id": 40827784592,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40827784592",
+      "result": "PASS",
+      "duration": "3m 15s",
+      "scope": "Firefox and WebKit desktop smoke"
+    },
+    "workerLongSoak": {
+      "id": 40827784618,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40827784618",
+      "result": "PASS",
+      "duration": "15m 50s",
+      "scope": "Two-worker 15-minute soak, graceful restart and pending-event catch-up"
+    }
+  },
+  "environment": {
+    "runner": "GitHub Actions clean checkout",
+    "database": "Isolated ephemeral PostgreSQL databases",
+    "staging": "Not available; only local Docker was identified as available environment. CI runs used isolated hosted runners.",
+    "localBrowserSuite": "Not run from this desktop because DATABASE_URL_TEST is not configured; existing local QA/demo databases were not mutated."
+  },
+  "remainingGates": [
+    "Requester-owned manual WCAG 2.2 AA keyboard, screen-reader, contrast, zoom/reflow and orientation checklist",
+    "Named staging performance validation; no staging environment is available",
+    "Production backup schedule, PITR, RPO/RTO and restore verification",
+    "Exhaustive ASVS/API Top 10 and adversarial BOLA/IDOR review",
+    "Reliability beyond the tested 15-minute worker soak",
+    "Real payment gateway/refund behavior is outside the current SRS, which specifies mock payment"
+  ],
+  "limitations": [
+    "Passing CI applies to the exact source commit and isolated GitHub Actions databases/runners.",
+    "DAST had no High/Medium alert records in its configured scopes; this is not exhaustive security certification. The single Low record is not identified because the current artifact could not be downloaded for review.",
+    "Automated axe/browser checks do not replace the requester's manual accessibility review.",
+    "No staging or production behavior is inferred from local or CI results."
+  ]
+}
