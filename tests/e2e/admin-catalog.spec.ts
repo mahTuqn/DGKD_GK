@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
+const API_URL = process.env.E2E_API_URL || "http://127.0.0.1:4000/api";
+
 async function signInAsAdmin(page: Page) {
   await page.goto("/");
   await expect(page.getByTestId("movie-card").first()).toBeVisible();
@@ -202,7 +204,7 @@ test("[TC-E2E-22] Admin nhận lỗi khi thiếu buffer lịch chiếu và tạo
   await expect(createdShowtimes).toHaveCount(2);
 });
 
-test("[TC-E2E-28] Admin cập nhật role và rạp Staff bằng bàn phím, sau đó xác minh dữ liệu đã lưu", async ({ page }) => {
+test("[TC-E2E-28] Admin cập nhật role, rạp Staff và phân trang danh sách người dùng bằng bàn phím", async ({ page, request }) => {
   await signInAsAdmin(page);
 
   const userRow = page.locator(".admin-user-row").filter({ hasText: "staff@cinema.local" });
@@ -210,40 +212,152 @@ test("[TC-E2E-28] Admin cập nhật role và rạp Staff bằng bàn phím, sau
   const assignedCinema = userRow.getByLabel("Rạp phân công cho staff@cinema.local");
   const assignedCinemaId = await assignedCinema.inputValue();
   expect(assignedCinemaId).toBeTruthy();
+  const adminToken = await page.evaluate(() => (JSON.parse(localStorage.getItem("cinemabooking.session") || "null") as { token?: string } | null)?.token);
+  expect(adminToken).toBeTruthy();
+  const staffId = await userRow.locator("form.admin-user-role-form").getAttribute("data-user-id");
+  expect(staffId).toBeTruthy();
 
-  const roleSelect = userRow.getByLabel("Vai trò của staff@cinema.local");
-  await roleSelect.focus();
-  await page.keyboard.press("Home");
-  await page.keyboard.press("Tab");
-  await expect(userRow.getByRole("button", { name: "Lưu vai trò" })).toBeFocused();
-  await page.keyboard.press("Enter");
-  await expect(page.getByRole("status")).toContainText("Đã cập nhật vai trò người dùng.");
+  let cinemaName: string | undefined;
+  let testCinemaId: string | undefined;
+  let testFailed = false;
+  let testFailure: unknown;
+  const cleanupFailures: string[] = [];
 
-  const customerRow = page.locator(".admin-user-row").filter({ hasText: "staff@cinema.local" });
-  await expect(customerRow.getByLabel("Vai trò của staff@cinema.local")).toHaveValue("CUSTOMER");
-  await expect(customerRow).toContainText("Chưa phân công rạp");
-  const staffRoleSelect = customerRow.getByLabel("Vai trò của staff@cinema.local");
-  await staffRoleSelect.focus();
-  await page.keyboard.press("ArrowDown");
-  await page.keyboard.press("Tab");
-  await page.keyboard.press("Enter");
-  await expect(page.getByRole("status")).toContainText("Đã cập nhật vai trò người dùng.");
+  try {
 
-  const restoredStaffRow = page.locator(".admin-user-row").filter({ hasText: "staff@cinema.local" });
-  await expect(restoredStaffRow.getByLabel("Vai trò của staff@cinema.local")).toHaveValue("STAFF");
-  const cinemaSelect = restoredStaffRow.getByLabel("Rạp phân công cho staff@cinema.local");
-  await cinemaSelect.selectOption(assignedCinemaId!);
-  await restoredStaffRow.getByRole("button", { name: "Lưu rạp" }).click();
-  await expect(page.getByRole("status")).toContainText("Đã cập nhật rạp phân công cho Staff.");
-  await expect(restoredStaffRow.getByLabel("Rạp phân công cho staff@cinema.local")).toHaveValue(assignedCinemaId!);
-  await expect(restoredStaffRow).not.toContainText("passwordHash");
-  await expect(restoredStaffRow).not.toContainText("authVersion");
+    const roleSelect = userRow.getByLabel("Vai trò của staff@cinema.local");
+    await roleSelect.focus();
+    await page.keyboard.press("Home");
+    await page.keyboard.press("Tab");
+    await expect(userRow.getByRole("button", { name: "Lưu vai trò" })).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("status")).toContainText("Đã cập nhật vai trò người dùng.");
 
-  await page.reload();
-  await page.getByRole("button", { name: "Quản trị" }).click();
-  const persistedStaffRow = page.locator(".admin-user-row").filter({ hasText: "staff@cinema.local" });
-  await expect(persistedStaffRow.getByLabel("Vai trò của staff@cinema.local")).toHaveValue("STAFF");
-  await expect(persistedStaffRow.getByLabel("Rạp phân công cho staff@cinema.local")).toHaveValue(assignedCinemaId!);
+    const customerRow = page.locator(".admin-user-row").filter({ hasText: "staff@cinema.local" });
+    await expect(customerRow.getByLabel("Vai trò của staff@cinema.local")).toHaveValue("CUSTOMER");
+    await expect(customerRow).toContainText("Chưa phân công rạp");
+    const staffRoleSelect = customerRow.getByLabel("Vai trò của staff@cinema.local");
+    await staffRoleSelect.focus();
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("status")).toContainText("Đã cập nhật vai trò người dùng.");
+
+    const restoredStaffRow = page.locator(".admin-user-row").filter({ hasText: "staff@cinema.local" });
+    await expect(restoredStaffRow.getByLabel("Vai trò của staff@cinema.local")).toHaveValue("STAFF");
+    const cinemaSelect = restoredStaffRow.getByLabel("Rạp phân công cho staff@cinema.local");
+    cinemaName = `QA Keyboard Cinema ${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+    const cinemaPanel = page.locator(".panel").filter({ has: page.getByRole("heading", { name: "Quản lý rạp" }) });
+    await cinemaPanel.getByLabel("Tên rạp").fill(cinemaName);
+    await cinemaPanel.getByLabel("Thành phố").fill("Hồ Chí Minh");
+    await cinemaPanel.getByLabel("Địa chỉ").fill(`Địa chỉ kiểm thử ${Date.now()}`);
+    await cinemaPanel.getByRole("button", { name: "Thêm rạp" }).click();
+    await expect(page.getByRole("status")).toContainText("Đã thêm rạp mới.");
+
+    const newCinemaId = await cinemaSelect.locator("option").filter({ hasText: cinemaName }).getAttribute("value");
+    testCinemaId = newCinemaId ?? undefined;
+    expect(newCinemaId).toBeTruthy();
+    const cinemaOptionValues = await cinemaSelect.locator("option").evaluateAll((options) => options.map((option) => (option as HTMLOptionElement).value));
+    const newCinemaOptionIndex = cinemaOptionValues.indexOf(newCinemaId!);
+    expect(newCinemaOptionIndex).toBeGreaterThan(0);
+    await cinemaSelect.focus();
+    await page.keyboard.press("Home");
+    for (let index = 0; index < newCinemaOptionIndex; index += 1) await page.keyboard.press("ArrowDown");
+    await expect(cinemaSelect).toHaveValue(newCinemaId!);
+    await page.keyboard.press("Tab");
+    await expect(restoredStaffRow.getByRole("button", { name: "Lưu rạp" })).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("status")).toContainText("Đã cập nhật rạp phân công cho Staff.");
+    await expect(restoredStaffRow.getByLabel("Rạp phân công cho staff@cinema.local")).toHaveValue(newCinemaId!);
+    await expect(restoredStaffRow).not.toContainText("passwordHash");
+    await expect(restoredStaffRow).not.toContainText("authVersion");
+
+    await page.reload();
+    await page.getByRole("button", { name: "Quản trị" }).click();
+    const persistedStaffRow = page.locator(".admin-user-row").filter({ hasText: "staff@cinema.local" });
+    await expect(persistedStaffRow.getByLabel("Vai trò của staff@cinema.local")).toHaveValue("STAFF");
+    const persistedCinemaSelect = persistedStaffRow.getByLabel("Rạp phân công cho staff@cinema.local");
+    await expect(persistedCinemaSelect).toHaveValue(newCinemaId!);
+
+    // Restore the seeded Staff assignment so later browser cases keep using the expected cinema.
+    const originalCinemaOptionIndex = (await persistedCinemaSelect.locator("option").evaluateAll((options) => options.map((option) => (option as HTMLOptionElement).value))).indexOf(assignedCinemaId!);
+    expect(originalCinemaOptionIndex).toBeGreaterThan(0);
+    await persistedCinemaSelect.focus();
+    await page.keyboard.press("Home");
+    for (let index = 0; index < originalCinemaOptionIndex; index += 1) await page.keyboard.press("ArrowDown");
+    await expect(persistedCinemaSelect).toHaveValue(assignedCinemaId!);
+    await page.keyboard.press("Tab");
+    await expect(persistedStaffRow.getByRole("button", { name: "Lưu rạp" })).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("status")).toContainText("Đã cập nhật rạp phân công cho Staff.");
+    await expect(persistedCinemaSelect).toHaveValue(assignedCinemaId!);
+
+    const newCinemaRow = cinemaPanel.locator(".admin-record-row").filter({ hasText: cinemaName });
+    await newCinemaRow.getByRole("button", { name: "Đang hoạt động · Tạm dừng" }).click();
+    await expect(page.getByRole("status")).toContainText("Đã cập nhật trạng thái rạp.");
+
+    const paginatedEmails = Array.from({ length: 21 }, (_, index) => `qa-pagination-${Date.now()}-${index}@example.test`);
+    for (const email of paginatedEmails) {
+      const response = await request.post(`${process.env.E2E_API_URL || "http://127.0.0.1:4000/api"}/auth/register`, {
+        data: { name: "QA Pagination Customer", email, password: "CinemaQa123!" }
+      });
+      expect(response.status(), `Register ${email} for the paginated Admin user list`).toBe(201);
+    }
+
+    await page.reload();
+    await page.getByRole("button", { name: "Quản trị" }).click();
+    const userRows = page.locator(".admin-users-panel .admin-user-row");
+    await expect(userRows).toHaveCount(20);
+    const loadMore = page.getByRole("button", { name: "Tải thêm người dùng" });
+    let pageCount = 0;
+    while (await loadMore.isVisible()) {
+      await loadMore.click();
+      pageCount += 1;
+      if (pageCount > 5) throw new Error("Admin user pagination exceeded the expected fixture pages.");
+    }
+    expect(pageCount).toBeGreaterThan(0);
+    const renderedEmails = await userRows.locator(".admin-user-identity span").allTextContents();
+    expect(new Set(renderedEmails).size).toBe(renderedEmails.length);
+    expect(paginatedEmails.every((email) => renderedEmails.includes(email))).toBe(true);
+  } catch (error) {
+    testFailed = true;
+    testFailure = error;
+  } finally {
+    const authorization = { authorization: `Bearer ${adminToken}` };
+    const attemptCleanup = async (label: string, action: () => Promise<{ ok(): boolean; status(): number }>) => {
+      try {
+        const response = await action();
+        if (!response.ok()) cleanupFailures.push(`${label} returned HTTP ${response.status()}`);
+      } catch (error) {
+        cleanupFailures.push(`${label} failed: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    };
+
+    await attemptCleanup("Restore Staff role", () => request.patch(`${API_URL}/admin/users/${encodeURIComponent(staffId!)}/role`, { headers: authorization, data: { role: "STAFF" } }));
+    await attemptCleanup("Restore Staff cinema assignment", () => request.patch(`${API_URL}/admin/users/${encodeURIComponent(staffId!)}/assigned-cinema`, { headers: authorization, data: { cinemaId: assignedCinemaId } }));
+
+    if (cinemaName) {
+      let cinemaId = testCinemaId;
+      if (!cinemaId) {
+        try {
+          const response = await request.get(`${API_URL}/admin/cinemas`, { headers: authorization });
+          if (!response.ok()) cleanupFailures.push(`Find temporary cinema returned HTTP ${response.status()}`);
+          else {
+            const cinemas = await response.json() as Array<{ id: string; name: string }>;
+            cinemaId = cinemas.find((cinema) => cinema.name === cinemaName)?.id;
+          }
+        } catch (error) {
+          cleanupFailures.push(`Find temporary cinema failed: ${error instanceof Error ? error.message : String(error)}`);
+        }
+      }
+      if (cinemaId) {
+        await attemptCleanup("Deactivate temporary cinema", () => request.patch(`${API_URL}/admin/cinemas/${encodeURIComponent(cinemaId!)}`, { headers: authorization, data: { status: "INACTIVE" } }));
+      }
+    }
+  }
+
+  if (testFailed) throw testFailure;
+  expect(cleanupFailures, "Test cleanup must restore seeded Staff and deactivate temporary cinema").toEqual([]);
 });
 
 test("[TC-E2E-29] Admin user controls reflow without horizontal page overflow at 320 CSS pixels", async ({ page }) => {

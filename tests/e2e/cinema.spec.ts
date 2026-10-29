@@ -1,4 +1,4 @@
-import { expect, test, type Locator, type Page } from "@playwright/test";
+import { expect, test, type APIRequestContext, type Locator, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
 const API_URL = process.env.E2E_API_URL || "http://127.0.0.1:4000/api";
@@ -121,6 +121,58 @@ async function getNewestTicketQrToken(page: Page) {
   return qrToken as string;
 }
 
+function businessDateOffset(days: number) {
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());
+  const value = (type: string) => Number(parts.find((part) => part.type === type)?.value);
+  return new Date(Date.UTC(value("year"), value("month") - 1, value("day") + days)).toISOString().slice(0, 10);
+}
+
+async function createPaidOrders(request: APIRequestContext, page: Page, count: number) {
+  const token = await page.evaluate(() => (JSON.parse(localStorage.getItem("cinemabooking.session") || "null") as { token?: string } | null)?.token);
+  expect(token, "Customer session token should exist before creating pagination fixtures").toBeTruthy();
+  const headers = { authorization: `Bearer ${token}` };
+  const showtimesResponse = await request.get(`${API_URL}/showtimes?date=${businessDateOffset(1)}`);
+  expect(showtimesResponse.ok()).toBeTruthy();
+  const showtimes = await showtimesResponse.json() as Array<{ id: string }>;
+  expect(showtimes.length, "The seeded test database should contain showtimes for the next business day").toBeGreaterThan(0);
+
+  const seatGroups = await Promise.all(showtimes.map(async (showtime) => {
+    const seatsResponse = await request.get(`${API_URL}/showtimes/${encodeURIComponent(showtime.id)}/seats`);
+    expect(seatsResponse.ok(), `Load seat map for showtime ${showtime.id}`).toBeTruthy();
+    const seatMap = await seatsResponse.json() as { seats: Array<{ id: string; status: string }> };
+    return { showtimeId: showtime.id, seats: seatMap.seats.filter((seat) => seat.status === "AVAILABLE") };
+  }));
+
+  // Spread purchased fixtures round-robin so both browser projects can run against the same DB
+  // without exhausting one seeded showtime's auditorium.
+  const availableSeats: Array<{ showtimeId: string; id: string }> = [];
+  for (let seatIndex = 0; availableSeats.length < count; seatIndex += 1) {
+    for (const group of seatGroups) {
+      const seat = group.seats[seatIndex];
+      if (seat && availableSeats.length < count) availableSeats.push({ showtimeId: group.showtimeId, id: seat.id });
+    }
+    if (seatGroups.every((group) => seatIndex >= group.seats.length)) break;
+  }
+  expect(availableSeats, "The available seeded showtimes should have enough free seats for the isolated history fixture").toHaveLength(count);
+
+  for (const seat of availableSeats) {
+    const holdResponse = await request.post(`${API_URL}/holds`, { headers, data: { showtimeId: seat.showtimeId, seatIds: [seat.id] } });
+    expect(holdResponse.status(), `Hold seat ${seat.id}`).toBe(201);
+    const hold = await holdResponse.json() as { id: string };
+    const orderResponse = await request.post(`${API_URL}/orders`, { headers, data: { holdId: hold.id } });
+    expect(orderResponse.status(), `Create order for seat ${seat.id}`).toBe(201);
+    const order = await orderResponse.json() as { id: string };
+    const paymentResponse = await request.post(`${API_URL}/payments/mock/complete`, { headers, data: { orderId: order.id } });
+    expect(paymentResponse.ok(), `Complete demo payment for seat ${seat.id}`).toBeTruthy();
+  }
+}
+
+async function loginApi(request: APIRequestContext, email: string, password: string) {
+  const response = await request.post(`${API_URL}/auth/login`, { data: { email, password } });
+  expect(response.ok(), `API login for ${email}`).toBeTruthy();
+  return await response.json() as { token: string; user: { id: string; assignedCinemaId: string | null } };
+}
+
 test("[TC-E2E-00] API health trả trạng thái sẵn sàng", async ({ request }) => {
   const response = await request.get(`${API_URL}/health`);
   expect(response.ok()).toBeTruthy();
@@ -142,6 +194,115 @@ test("[TC-E2E-01][TC-E2E-26] customer đăng ký, đặt vé, quét axe màn hì
   await registerCustomer(page);
   await buyOneTicket(page);
   expect(axeViolations((await wcagAxe(page).include(".content-page").analyze()).violations)).toEqual([]);
+});
+
+test("[TC-E2E-30] customer tải tiếp lịch sử vé qua cursor và không trùng đơn", async ({ page, request }) => {
+  test.setTimeout(60_000);
+  await registerCustomer(page);
+  await buyOneTicket(page);
+  await createPaidOrders(request, page, 20);
+
+  await page.getByRole("button", { name: /Cập nhật vé/ }).click();
+  const ticketCards = page.getByTestId("ticket-card");
+  await expect(ticketCards).toHaveCount(20);
+  const loadMore = page.getByRole("button", { name: "Tải thêm vé" });
+  await expect(loadMore).toBeVisible();
+  await loadMore.click();
+  await expect(ticketCards).toHaveCount(21);
+  await expect(loadMore).toHaveCount(0);
+
+  const orderLabels = await ticketCards.locator(".ticket-meta .muted").allTextContents();
+  expect(new Set(orderLabels).size).toBe(21);
+});
+
+test("[TC-E2E-31] Staff nhận cảnh báo khi quét vé ngoài rạp được phân công", async ({ page, request }) => {
+  await registerCustomer(page);
+  await buyOneTicket(page);
+  const qrToken = await getNewestTicketQrToken(page);
+
+  const adminSession = await loginApi(request, "admin@cinema.local", "CinemaAdmin123!");
+  const staffSession = await loginApi(request, "staff@cinema.local", "CinemaStaff123!");
+  const originalStaffCinemaId = staffSession.user.assignedCinemaId;
+  expect(originalStaffCinemaId, "Seeded Staff account should have an assigned cinema").toBeTruthy();
+  const cinemaName = `QA Wrong-Cinema ${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+  let cinemaId: string | undefined;
+  let testFailed = false;
+  let testFailure: unknown;
+  const cleanupFailures: string[] = [];
+
+  try {
+    const newCinemaResponse = await request.post(`${API_URL}/admin/cinemas`, {
+      headers: { authorization: `Bearer ${adminSession.token}` },
+      data: { name: cinemaName, city: "Hồ Chí Minh", address: "Địa chỉ kiểm thử soát vé sai rạp" }
+    });
+    expect(newCinemaResponse.status()).toBe(201);
+    const cinema = await newCinemaResponse.json() as { id: string };
+    cinemaId = cinema.id;
+    const reassignment = await request.patch(`${API_URL}/admin/users/${encodeURIComponent(staffSession.user.id)}/assigned-cinema`, {
+      headers: { authorization: `Bearer ${adminSession.token}` },
+      data: { cinemaId }
+    });
+    expect(reassignment.ok()).toBeTruthy();
+
+    await page.evaluate(() => localStorage.removeItem("cinemabooking.session"));
+    await page.reload();
+    await openLogin(page);
+    await page.getByLabel("Email").fill("staff@cinema.local");
+    await page.getByLabel("Mật khẩu").fill("CinemaStaff123!");
+    await page.getByRole("dialog").getByRole("button", { name: "Đăng nhập", exact: true }).click();
+    await page.getByRole("button", { name: "Soát vé" }).click();
+
+    await page.getByLabel("Mã QR vé").fill(qrToken);
+    await page.getByRole("button", { name: "Xác nhận vào rạp" }).click();
+    await expect(page.getByRole("alert")).toContainText("Nhân viên chỉ được soát vé tại rạp được phân công.");
+    await expect(page.getByRole("status")).toHaveCount(0);
+
+    // The Admin can still scan the ticket, proving the rejected Staff attempt did not consume it.
+    const adminScan = await request.post(`${API_URL}/tickets/scan`, {
+      headers: { authorization: `Bearer ${adminSession.token}` },
+      data: { qrToken }
+    });
+    expect(adminScan.status()).toBe(200);
+  } catch (error) {
+    testFailed = true;
+    testFailure = error;
+  } finally {
+    const authorization = { authorization: `Bearer ${adminSession.token}` };
+    const attemptCleanup = async (label: string, action: () => Promise<{ ok(): boolean; status(): number }>) => {
+      try {
+        const response = await action();
+        if (!response.ok()) cleanupFailures.push(`${label} returned HTTP ${response.status()}`);
+      } catch (error) {
+        cleanupFailures.push(`${label} failed: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    };
+
+    await attemptCleanup("Restore seeded Staff cinema assignment", () => request.patch(`${API_URL}/admin/users/${encodeURIComponent(staffSession.user.id)}/assigned-cinema`, {
+      headers: authorization,
+      data: { cinemaId: originalStaffCinemaId }
+    }));
+    if (!cinemaId) {
+      try {
+        const response = await request.get(`${API_URL}/admin/cinemas`, { headers: authorization });
+        if (!response.ok()) cleanupFailures.push(`Find temporary wrong-cinema fixture returned HTTP ${response.status()}`);
+        else {
+          const cinemas = await response.json() as Array<{ id: string; name: string }>;
+          cinemaId = cinemas.find((cinema) => cinema.name === cinemaName)?.id;
+        }
+      } catch (error) {
+        cleanupFailures.push(`Find temporary wrong-cinema fixture failed: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+    if (cinemaId) {
+      await attemptCleanup("Deactivate temporary wrong-cinema fixture", () => request.patch(`${API_URL}/admin/cinemas/${encodeURIComponent(cinemaId!)}`, {
+        headers: authorization,
+        data: { status: "INACTIVE" }
+      }));
+    }
+  }
+
+  if (testFailed) throw testFailure;
+  expect(cleanupFailures, "Test cleanup must restore Staff and deactivate the temporary cinema").toEqual([]);
 });
 
 test("[TC-E2E-02] trang khám phá và dialog đăng nhập không có lỗi axe nghiêm trọng", async ({ page }) => {
