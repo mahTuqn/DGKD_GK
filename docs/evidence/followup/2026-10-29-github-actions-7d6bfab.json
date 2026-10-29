@@ -33,7 +33,19 @@
         "dast": {
           "result": "PASS_CONFIGURED_GATE",
           "duration": "7m 58s",
-          "summaryTotalsReviewed": false,
+          "summaryTotalsReviewed": true,
+          "summary": {
+            "reportsParsed": "3/3",
+            "alertRecords": { "high": 0, "medium": 0, "low": 1, "informational": 5, "unknown": 0 },
+            "instances": { "high": 0, "medium": 0, "low": 3, "informational": 11, "unknown": 0 },
+            "byScope": [
+              { "scan": "unauthenticated-api", "alertRecords": { "high": 0, "medium": 0, "low": 0, "informational": 2, "unknown": 0 }, "instances": { "high": 0, "medium": 0, "low": 0, "informational": 4, "unknown": 0 }, "status": "parsed" },
+              { "scan": "authenticated-api", "alertRecords": { "high": 0, "medium": 0, "low": 1, "informational": 2, "unknown": 0 }, "instances": { "high": 0, "medium": 0, "low": 3, "informational": 4, "unknown": 0 }, "status": "parsed" },
+              { "scan": "preview", "alertRecords": { "high": 0, "medium": 0, "low": 0, "informational": 1, "unknown": 0 }, "instances": { "high": 0, "medium": 0, "low": 0, "informational": 3, "unknown": 0 }, "status": "parsed" }
+            ],
+            "source": "Authenticated GitHub Actions run summary for 40840707655"
+          },
+          "artifactContentsRetrieved": false,
           "artifact": {
             "id": 12882738441,
             "name": "cinema-booking-dast-reports-7d6bfab14fe27d5160489967fb22eedf5284dd90",
@@ -41,7 +53,7 @@
             "githubDigest": "sha256:56ccdcfd6fdcefe28e6a551ae04012f9f7bc410ef1facb6c128c447c3870056a",
             "metadataSource": "GitHub Actions run page",
             "digestIndependentlyVerified": false,
-            "note": "Report files and current alert totals were not reviewed because the GitHub browser session was signed out. Do not infer this run's alerts from older DAST runs."
+            "note": "The authenticated run summary exposed current-run severity totals but intentionally omitted alert names, request URLs, and payloads. The artifact download timed out in the browser automation session, so alert identity and payload were not reviewed. Do not infer this run's Low alert from older DAST runs."
           }
         },
         "domainCoverageAndMutation": {
@@ -107,7 +119,7 @@
   },
   "remainingGates": [
     "Requester-owned manual WCAG 2.2 AA keyboard, screen-reader, contrast, zoom/reflow and orientation checklist",
-    "Review current-run DAST report contents and alert totals; the configured gate passed, but the alert set is not independently known",
+    "Review the current-run DAST Low alert identity, affected URLs, payloads, and triage; the summary totals are reviewed but the artifact contents are not",
     "Named staging performance and production reliability validation; no staging environment is available",
     "Production backup schedule, PITR, RPO/RTO and restore verification",
     "Comprehensive ASVS/API Top 10 and adversarial BOLA/IDOR testing",
@@ -117,7 +129,7 @@
   ],
   "limitations": [
     "Passing CI applies to this exact source commit and isolated GitHub Actions databases/runners.",
-    "The CI DAST job passed its configured threshold, but its current alert totals and report contents were not reviewed.",
+    "The CI DAST job passed its configured threshold. The authenticated run summary was reviewed and showed 0 High, 0 Medium, 1 Low alert record (3 instances), and 5 Informational records (11 instances) across 3/3 reports; alert names, request URLs, and payloads remain unreviewed because the artifact download timed out.",
     "Automated axe/browser checks do not replace the requester's manual accessibility review.",
     "No staging or production behavior is inferred from local or CI results."
   ]
