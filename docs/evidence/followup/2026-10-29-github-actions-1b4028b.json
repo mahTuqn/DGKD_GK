@@ -1,0 +1,128 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "recordedAt": "2026-10-29",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "commit": "1b4028b2a81e460490ba3350a92f34652d9e0e86",
+  "branch": "codex/cross-browser-smoke",
+  "overall": "PASS_EXACT_SOURCE_CI_WITH_DOCUMENTED_LIMITATIONS",
+  "sourceDelta": "Fail-closed customer-triggered mock payment to explicit development/test modes; replace raw application and worker errors with safe structured logs; add HTTP correlation IDs to responses, access logs and audit metadata; assert empty profile PATCH has no side effects; validate SRS/RTM requirement parity.",
+  "runs": {
+    "qualityDastDomainCompose": {
+      "id": 40835806225,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40835806225",
+      "result": "PASS",
+      "startedAt": "2026-10-29T07:29:56Z",
+      "completedAt": "2026-10-29T07:45:39Z",
+      "jobs": {
+        "quality": {
+          "result": "PASS",
+          "gates": [
+            "Gitleaks secret scan",
+            "npm audit --audit-level=moderate",
+            "Prisma generation, isolated database migrations and seed",
+            "OpenAPI lint",
+            "Traceability validation: 108 test cases / 27 requirements",
+            "Backend source and test typecheck",
+            "Root npm run test:api (backend Vitest, worker-process and API-process suites)",
+            "Live five-minute hold expiry over HTTP",
+            "Two-worker five-minute soak and graceful restart",
+            "Backend/frontend production build",
+            "Playwright browser suite"
+          ],
+          "regressions": [
+            "TC-AUTH-03 empty profile PATCH and audit correlation",
+            "TC-PLAN-05 safe application error logging",
+            "TC-SEC-18 fail-closed mock-payment deployment-mode gate"
+          ]
+        },
+        "domainCoverageAndMutation": {
+          "result": "PASS",
+          "gates": [
+            "Domain line and branch coverage thresholds",
+            "Hold/payment mutation threshold"
+          ],
+          "artifact": {
+            "id": 12881145090,
+            "name": "cinema-booking-domain-quality-1b4028b2a81e460490ba3350a92f34652d9e0e86",
+            "sizeBytes": 144519,
+            "githubDigest": "sha256:d2e8013c732cbf45e2343b9f274ad658d83c5234f68b68f7ab425143a232643c"
+          }
+        },
+        "dast": {
+          "result": "PASS",
+          "scanCommand": "npm run scan:dast:api",
+          "summaryStep": "completed successfully",
+          "summaryTotalsReviewed": false,
+          "artifact": {
+            "id": 12880454258,
+            "name": "cinema-booking-dast-reports-1b4028b2a81e460490ba3350a92f34652d9e0e86",
+            "sizeBytes": 6461,
+            "githubDigest": "sha256:d6c396f167a76b0c4c0bee17afcbaf78096f85ae40053d62d5930c16c2e7ea7a",
+            "note": "Metadata came from the GitHub Actions artifacts API. Report bytes and current-run alert totals were not available in the inspected browser session; the supplied digest was not independently verified."
+          }
+        },
+        "composeRuntimeBrowserSmoke": {
+          "result": "PASS",
+          "scope": "Built isolated PostgreSQL/API/worker/web images, applied migrations and seed, passed health checks, completed Chromium booking/payment/ticket journey.",
+          "artifact": {
+            "id": 12880372891,
+            "name": "cinema-booking-compose-browser-results-1b4028b2a81e460490ba3350a92f34652d9e0e86",
+            "sizeBytes": 200012,
+            "githubDigest": "sha256:5342aacda4a90000f0b7010171dff97177264bf315074debf5c81859ebbcfd63"
+          }
+        },
+        "browserResults": {
+          "result": "PASS",
+          "artifact": {
+            "id": 12880923155,
+            "name": "cinema-booking-browser-results-1b4028b2a81e460490ba3350a92f34652d9e0e86",
+            "sizeBytes": 393230,
+            "githubDigest": "sha256:8516f332415f2979e0da56282d87e75ade3388c72c2610a476bb8b625437e2cf"
+          }
+        }
+      }
+    },
+    "crossBrowserSmoke": {
+      "id": 40835806226,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40835806226",
+      "result": "PASS",
+      "scope": "Firefox and WebKit desktop smoke"
+    },
+    "workerLongSoak": {
+      "id": 40835806261,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40835806261",
+      "result": "PASS",
+      "duration": "15m 44s",
+      "scope": "Two-worker 15-minute soak, graceful restart and pending-event catch-up"
+    }
+  },
+  "localChecks": {
+    "unitTests": "PASS: 7/7 tests across configuration and safe-logger suites",
+    "backendTestTypecheck": "PASS",
+    "backendProductionBuild": "PASS",
+    "traceability": "PASS: 108 test cases / 27 requirements",
+    "gitDiffCheck": "PASS"
+  },
+  "environment": {
+    "runner": "GitHub Actions clean checkout",
+    "database": "Isolated ephemeral PostgreSQL databases",
+    "staging": "Not available; CI results apply to isolated hosted runners, not a staging or production deployment.",
+    "localDocker": "No heavy local Docker/browser/soak jobs were run because available RAM was below the project's safety headroom."
+  },
+  "remainingGates": [
+    "Requester-owned manual WCAG 2.2 AA keyboard, screen-reader, contrast, zoom/reflow and orientation checklist",
+    "Named staging performance validation; no staging environment is available",
+    "Production backup schedule, PITR, RPO/RTO and restore verification",
+    "Comprehensive ASVS/API Top 10 and adversarial BOLA/IDOR testing",
+    "Reliability beyond the tested 15-minute worker soak",
+    "Review current-run DAST artifact contents and alert totals; the previous inspected run's Low observation must not be assumed to match this one",
+    "Real payment gateway/refund behavior is outside the current SRS, which specifies mock payment"
+  ],
+  "limitations": [
+    "Passing CI applies to this exact source commit and isolated GitHub Actions databases/runners.",
+    "The current DAST job and summary step succeeded, but its current alert totals and report contents were not independently inspected.",
+    "Automated axe/browser checks do not replace the requester's manual accessibility review.",
+    "No staging or production behavior is inferred from local or CI results."
+  ]
+}
