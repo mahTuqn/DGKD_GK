@@ -1,12 +1,12 @@
 # Báo cáo tổng hợp kiểm thử
 
-## Latest exact-source CI result — `3357978` — 29/10/2026
+## Latest exact-source CI result — `e28360f` — 29/10/2026
 
-Commit `3357978eb2a0aa48bcc3fc39b225bf72c2244235` passed every job in [quality + DAST + Compose run 40788685167](https://github.com/mahTuqn/DGKD_GK/actions/runs/40788685167). Traceability passed at **91 cases / 26 requirements**; API integration, live HTTP expiry, two-worker five-minute soak/restart, build, Chromium desktop/Pixel 7, Compose full-stack/browser smoke, domain coverage/mutation and the configured DAST High-alert gate all passed. TC-SEC-27 verifies the login rate limit counts direct API requests despite changing forged `X-Forwarded-For` headers. Mutation score was **82.89% (155 killed/32 survived)** against the 70% gate.
+Commit `e28360f2396eeaf07b282d68bdf7ac1d29924745` passed every job in [quality + DAST + Compose run 40790766510](https://github.com/mahTuqn/DGKD_GK/actions/runs/40790766510). Traceability passed at **92 cases / 26 requirements**; API integration, live HTTP expiry, two-worker five-minute soak/restart, build, Chromium desktop/Pixel 7, Compose full-stack/browser smoke, domain coverage/mutation and the configured DAST High-alert gate all passed. TC-SEC-27 and TC-SEC-28 verify the login rate limit counts direct and proxied API requests despite changing forged `X-Forwarded-For` headers. Mutation score was **82.89% (155 killed/32 survived)** against the 70% gate.
 
-The workflow generated current-run artifacts; names, sizes, digests and non-measured scope are in the [3357978 evidence manifest](evidence/followup/2026-10-29-github-actions-3357978.json). Detailed DAST alerts and severity counts were not independently reviewed, so no zero-finding claim is made. The Firefox/WebKit smoke from run 40784545596 remains relevant because commit 3357978 only changes tests and documentation, not application implementation.
+The workflow generated current-run artifacts; names, sizes, digests and non-measured scope are in the [e28360f evidence manifest](evidence/followup/2026-10-29-github-actions-e28360f.json). Detailed DAST alerts and severity counts were not independently reviewed, so no zero-finding claim is made. The Firefox/WebKit smoke from run 40784545596 remains relevant because these follow-up commits only change tests and documentation, not application implementation.
 
-The current workspace adds TC-SEC-28, a request path through the real Compose Nginx/API hop, and its test/evidence status is pending the next exact-source CI run. Manual WCAG review remains with the requester; no staging environment is available.
+TC-SEC-28 passed 11 requests through the built web Nginx image to the API, proving caller-supplied forwarded addresses do not bypass the limiter in the configured one-hop Compose path. Manual WCAG review remains with the requester; no staging environment is available.
 
 ## Previous exact-source CI result — `b84ba70` — 29/10/2026
 
