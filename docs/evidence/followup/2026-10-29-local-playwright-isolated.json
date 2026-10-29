@@ -1,0 +1,74 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "recordedAt": "2026-10-29T13:50:10.017+07:00",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "sourceCommit": "d3c8df36a4ced2b88cd8f27c1357742c34d4df97",
+  "branch": "codex/cross-browser-smoke",
+  "command": "npm run test:browser:isolated",
+  "result": "PASS",
+  "browserTests": {
+    "expected": 58,
+    "passed": 58,
+    "unexpected": 0,
+    "skipped": 0,
+    "flaky": 0,
+    "durationMs": 247363,
+    "projects": [
+      "chromium-desktop",
+      "chromium-mobile (Pixel 7)"
+    ],
+    "workers": 1,
+    "includedCases": [
+      "TC-E2E-28",
+      "TC-E2E-30",
+      "TC-E2E-31"
+    ]
+  },
+  "environment": {
+    "os": "Windows local workstation",
+    "node": "26.7.0",
+    "playwright": "1.64.1",
+    "database": {
+      "engine": "PostgreSQL 17 Alpine",
+      "container": "cinema-browser-e2e-f4351523b9ed",
+      "databaseName": "cinema_e2e_test_f4351523b9ed",
+      "hostBinding": "127.0.0.1:50877",
+      "initialization": "4 Prisma migrations and demo seed applied to this new database only",
+      "cleanup": "Temporary container and anonymous database volume removed after the run"
+    },
+    "appServers": [
+      "API on 127.0.0.1:4000",
+      "Vite development server on 127.0.0.1:5173",
+      "production preview on 127.0.0.1:5174"
+    ],
+    "preExistingDockerStacks": "dgkd_gk and cinema-qa remained healthy and unchanged; their databases were not used"
+  },
+  "safetyGuardCheck": {
+    "command": "npm run test:browser:isolated -- --workers=4",
+    "result": "PASS",
+    "exitCode": 2,
+    "detail": "The isolated runner rejected the worker override before starting any container; only Chromium desktop/mobile project selection is accepted."
+  },
+  "build": {
+    "result": "PASS",
+    "note": "Vite emitted a non-failing chunk-size advisory for the 559.19 KB minified main JavaScript bundle (154.40 KB gzip)."
+  },
+  "checks": {
+    "traceability": "PASS: 108 test cases / 27 requirements",
+    "typecheckTests": "PASS",
+    "runnerSyntax": "PASS"
+  },
+  "artifacts": {
+    "playwrightJson": {
+      "path": "reports/generated/playwright-results.json",
+      "committed": false,
+      "sizeBytes": 70339,
+      "sha256": "0acf7aecffd366100df8c66285bd7f4154ab7ef70413f0bba4c1181e5b123894"
+    }
+  },
+  "limitations": [
+    "This is local browser evidence on an isolated disposable database, not staging or production validation.",
+    "The requester-owned manual WCAG screen-reader/zoom/reflow checklist remains open."
+  ]
+}
