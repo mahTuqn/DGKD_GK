@@ -1,0 +1,80 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "recordedAtUtc": "2026-10-29T10:04:37Z",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "branch": "codex/cross-browser-smoke",
+  "baseCommit": "02c503f099f77f9796d7eab54ff4d950eabef3a8",
+  "state": "LOCAL_SECURITY_REGRESSION_PASS_REMOTE_CI_PENDING",
+  "sourceFiles": [
+    {
+      "sha256": "b05108807dee51bd78b1593c14be45afcfc49a5c46edbc1191065b2215daffef",
+      "path": "backend/src/app.ts"
+    },
+    {
+      "sha256": "aec022559446be17e0766c2e05453571003d30bcb1bda2a480eebef1d21aac04",
+      "path": "backend/tests/authorization-regression.integration.test.ts"
+    }
+  ],
+  "change": "Revalidate current authVersion and role under transaction-held User locks for profile, Customer booking/payment, Staff check-in, and Admin writes; lock actor/target users in stable ID order for Admin role and assignment mutations.",
+  "tests": [
+    {
+      "result": "PASS",
+      "command": "npm run test --workspace backend -- tests/authorization-regression.integration.test.ts -t TC-SEC-39",
+      "skipped": 15,
+      "passed": 1
+    },
+    {
+      "database": "Fresh cinema-qa PostgreSQL test database on host port 5435; migrations applied; database dropped after run.",
+      "result": "PASS",
+      "command": "npm run test --workspace backend -- tests/authorization-regression.integration.test.ts",
+      "failed": 0,
+      "passed": 16
+    },
+    {
+      "result": "PASS",
+      "command": "npm run typecheck:tests --workspace backend"
+    },
+    {
+      "requirements": 28,
+      "result": "PASS",
+      "command": "npm run qa:trace",
+      "testCases": 111
+    },
+    {
+      "result": "PASS",
+      "command": "git diff --check"
+    }
+  ],
+  "localBrowser": {
+    "exactCurrentSourceRun": "NOT RUN",
+    "reason": "Only about 590 MiB host RAM was free before the full authorization regression; existing Docker demo/QA stacks remain active.",
+    "previousBaseSourceCrossBrowserRun": {
+      "result": "PASS",
+      "id": 40848131301,
+      "notEvidenceForThisWorkingTree": true,
+      "sourceCommit": "54096734b8e99249cfb01a2b1aeacac6a584e27c"
+    }
+  },
+  "priorRemoteCi": {
+    "qualityRun": {
+      "observedAtUtc": "2026-10-29T10:04:10Z",
+      "id": 40848131505,
+      "lastObservedStatus": "IN_PROGRESS"
+    },
+    "workerSoakRun": {
+      "observedAtUtc": "2026-10-29T10:04:10Z",
+      "id": 40848131396,
+      "lastObservedStatus": "IN_PROGRESS"
+    },
+    "logs": "Sign-in-gated in public page; anonymous API request returned rate-limit HTTP 403."
+  },
+  "remainingGates": [
+    "Exact-source GitHub quality/browser and worker-soak results for this change",
+    "Current DAST artifact report contents and alert identities",
+    "Manual WCAG 2.2 AA review owned by requester",
+    "No staging: named-staging performance/deployment validation unavailable",
+    "Production backup/PITR/RPO/RTO/restore unverified",
+    "Comprehensive ASVS/API Top 10 and adversarial BOLA review remain open"
+  ]
+}

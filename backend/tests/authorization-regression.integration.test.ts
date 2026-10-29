@@ -43,6 +43,7 @@ regressionDescribe("authorization regression coverage", () => {
   let adminId: string | undefined;
   let holdId: string | undefined;
   let orderId: string | undefined;
+  let tokenA: string;
   let tokenB: string;
   let staffToken: string;
   let protectedStaffToken: string;
@@ -118,6 +119,7 @@ regressionDescribe("authorization regression coverage", () => {
     });
     userAId = userA.id;
     userIds.push(userA.id);
+    tokenA = createToken({ id: userA.id, authVersion: userA.authVersion });
     const userB = await prisma.user.create({
       data: { name: "Authorization Regression Customer", email: `regression-customer-${fixture}@test.local`, passwordHash: "unused-test-only", role: Role.CUSTOMER }
     });
@@ -570,8 +572,9 @@ regressionDescribe("authorization regression coverage", () => {
           WHERE datname = current_database()
             AND state = 'active'
             AND wait_event_type = 'Lock'
-            AND query ILIKE 'UPDATE%'
-            AND query ILIKE '%assignedCinemaId%'
+              AND query ILIKE 'SELECT%'
+              AND query ILIKE '%FROM "User"%'
+              AND query ILIKE '%FOR UPDATE%'
             AND ${demotionBackendPid} = ANY(pg_blocking_pids(pid))
         `;
         updateIsBlockedOnTheLockedStaffRow = blockedUpdates.length > 0;
@@ -945,4 +948,123 @@ regressionDescribe("authorization regression coverage", () => {
     expect(revokedAdminAccess.status).toBe(403);
     expect(revokedAdminAccess.body.error).toBe("ROLE_FORBIDDEN");
   }, 30_000);
+
+  it("[TC-SEC-39] rejects Customer and Admin mutations waiting on a revoked actor", async () => {
+    async function runBehindRevocation(
+      actorId: string,
+      roleAfterRevocation: Role,
+      lockMode: "FOR SHARE" | "FOR UPDATE",
+      sendRequest: () => Promise<{ status: number; body: Record<string, unknown> }>
+    ) {
+      let signalRowLocked!: (pid: number) => void;
+      let releaseRevocation!: () => void;
+      const rowLocked = new Promise<number>((resolve) => { signalRowLocked = resolve; });
+      const waitForRevocation = new Promise<void>((resolve) => { releaseRevocation = resolve; });
+      const revocationTransaction = prisma.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${actorId} FOR UPDATE`;
+        const [connection] = await tx.$queryRaw<Array<{ pid: number }>>`SELECT pg_backend_pid()::int AS pid`;
+        signalRowLocked(connection!.pid);
+        await waitForRevocation;
+        await tx.user.update({
+          where: { id: actorId },
+          data: {
+            role: roleAfterRevocation,
+            assignedCinemaId: roleAfterRevocation === Role.STAFF ? cinemaId : null,
+            authVersion: { increment: 1 }
+          }
+        });
+      }, { timeout: 15_000 });
+
+      let mutationPromise: Promise<{ status: number; body: Record<string, unknown> }> | undefined;
+      try {
+        const revocationBackendPid = await rowLocked;
+        mutationPromise = sendRequest();
+        let mutationIsBlockedOnActor = false;
+        const deadline = Date.now() + 8_000;
+        while (!mutationIsBlockedOnActor && Date.now() < deadline) {
+          const blockedQueries = await prisma.$queryRaw<Array<{ pid: number }>>`
+            SELECT pid::int AS pid
+            FROM pg_stat_activity
+            WHERE datname = current_database()
+              AND state = 'active'
+              AND wait_event_type = 'Lock'
+              AND query ILIKE 'SELECT%'
+              AND query ILIKE '%FROM "User"%'
+              AND query ILIKE ${`%${lockMode}%`}
+              AND ${revocationBackendPid} = ANY(pg_blocking_pids(pid))
+          `;
+          mutationIsBlockedOnActor = blockedQueries.length > 0;
+          if (!mutationIsBlockedOnActor) await new Promise((resolve) => setTimeout(resolve, 25));
+        }
+        expect(mutationIsBlockedOnActor).toBe(true);
+
+        releaseRevocation();
+        await revocationTransaction;
+        return await mutationPromise;
+      } finally {
+        releaseRevocation();
+        await revocationTransaction.catch(() => undefined);
+        await mutationPromise?.catch(() => undefined);
+      }
+    }
+
+    const customerSeat = await prisma.seat.create({
+      data: { auditoriumId: auditoriumId!, label: `R4-${fixture.slice(0, 4)}`, row: "R", column: 4, type: SeatType.STANDARD }
+    });
+    roleSeatIds.push(customerSeat.id);
+    const customerBefore = {
+      holds: await prisma.seatHold.count({ where: { userId: userBId! } }),
+      claims: await prisma.seatClaim.count({ where: { seatId: customerSeat.id } }),
+      holdAudits: await prisma.auditLog.count({ where: { actorId: userBId!, action: "SEATS_HELD" } })
+    };
+    const staleCustomerMutation = await runBehindRevocation(userBId!, Role.STAFF, "FOR UPDATE", () =>
+      request(app).post("/api/holds").set({ Authorization: `Bearer ${tokenB}` })
+        .send({ showtimeId, seatIds: [customerSeat.id] })
+        .then((response) => ({ status: response.status, body: response.body as Record<string, unknown> }))
+    );
+    expect(staleCustomerMutation.status).toBe(401);
+    expect(staleCustomerMutation.body.error).toBe("INVALID_TOKEN");
+    expect({
+      holds: await prisma.seatHold.count({ where: { userId: userBId! } }),
+      claims: await prisma.seatClaim.count({ where: { seatId: customerSeat.id } }),
+      holdAudits: await prisma.auditLog.count({ where: { actorId: userBId!, action: "SEATS_HELD" } })
+    }).toEqual(customerBefore);
+
+    const paymentState = async () => ({
+      order: await prisma.cinemaOrder.findUniqueOrThrow({ where: { id: orderId! } }),
+      hold: await prisma.seatHold.findUniqueOrThrow({ where: { id: holdId! } }),
+      claims: await prisma.seatClaim.findMany({ where: { orderId: orderId! }, orderBy: { id: "asc" } }),
+      payment: await prisma.payment.findUniqueOrThrow({ where: { orderId: orderId! } }),
+      paymentEvents: await prisma.paymentEvent.count({ where: { orderId: orderId! } }),
+      tickets: await prisma.ticket.count({ where: { orderId: orderId! } }),
+      paymentAudits: await prisma.auditLog.count({ where: { actorId: userAId!, action: { in: ["PAYMENT_CONFIRMED", "PAYMENT_FAILED", "PAYMENT_EVENT_EXPIRED"] }, entityId: orderId! } })
+    });
+    const paymentBefore = await paymentState();
+    const stalePaymentMutation = await runBehindRevocation(userAId!, Role.STAFF, "FOR SHARE", () =>
+      request(app).post("/api/payments/mock/complete").set({ Authorization: `Bearer ${tokenA}` })
+        .send({ orderId })
+        .then((response) => ({ status: response.status, body: response.body as Record<string, unknown> }))
+    );
+    expect(stalePaymentMutation.status).toBe(401);
+    expect(stalePaymentMutation.body.error).toBe("INVALID_TOKEN");
+    expect(await paymentState()).toEqual(paymentBefore);
+
+    const movieBefore = await prisma.movie.findUniqueOrThrow({
+      where: { id: movieId! },
+      select: { id: true, title: true, slug: true, genre: true, status: true }
+    });
+    const movieAuditsBefore = await prisma.auditLog.count({ where: { actorId: adminId!, action: "MOVIE_UPDATED", entityId: movieId! } });
+    const staleAdminMutation = await runBehindRevocation(adminId!, Role.CUSTOMER, "FOR SHARE", () =>
+      request(app).patch(`/api/admin/movies/${movieId!}`).set({ Authorization: `Bearer ${adminToken}` })
+        .send({ genre: "Revoked" })
+        .then((response) => ({ status: response.status, body: response.body as Record<string, unknown> }))
+    );
+    expect(staleAdminMutation.status).toBe(401);
+    expect(staleAdminMutation.body.error).toBe("INVALID_TOKEN");
+    expect(await prisma.movie.findUniqueOrThrow({
+      where: { id: movieId! },
+      select: { id: true, title: true, slug: true, genre: true, status: true }
+    })).toEqual(movieBefore);
+    expect(await prisma.auditLog.count({ where: { actorId: adminId!, action: "MOVIE_UPDATED", entityId: movieId! } })).toBe(movieAuditsBefore);
+  }, 60_000);
 });

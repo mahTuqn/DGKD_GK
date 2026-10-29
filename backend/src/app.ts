@@ -99,9 +99,50 @@ export function getMutationRateLimit(environment: { NODE_ENV?: string; E2E_MUTAT
   return limit;
 }
 
-export async function applyMockPaymentEvent(event: MockPaymentEvent, actorId?: string, client: typeof prisma = prisma) {
+type RequestActor = { id: string; authVersion?: number };
+
+async function readCurrentActor(tx: Prisma.TransactionClient, actor: RequestActor, allowedRoles?: readonly Role[]) {
+  if (!Number.isSafeInteger(actor.authVersion)) {
+    throw new DomainError("INVALID_TOKEN", "Phiên đăng nhập không hợp lệ hoặc đã bị thu hồi.", 401);
+  }
+  const user = await tx.user.findUnique({
+    where: { id: actor.id },
+    select: { id: true, role: true, assignedCinemaId: true, authVersion: true }
+  });
+  if (!user || user.authVersion !== actor.authVersion) {
+    throw new DomainError("INVALID_TOKEN", "Phiên đăng nhập không hợp lệ hoặc đã bị thu hồi.", 401);
+  }
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    throw new DomainError("ROLE_FORBIDDEN", "Tài khoản không có quyền thực hiện thao tác này.", 403);
+  }
+  return user;
+}
+
+async function lockCurrentActor(
+  tx: Prisma.TransactionClient,
+  actor: RequestActor,
+  allowedRoles?: readonly Role[],
+  lockMode: "share" | "update" = "share"
+) {
+  if (lockMode === "update") {
+    await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`SELECT "id" FROM "User" WHERE "id" = ${actor.id} FOR UPDATE`);
+  } else {
+    await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`SELECT "id" FROM "User" WHERE "id" = ${actor.id} FOR SHARE`);
+  }
+  return readCurrentActor(tx, actor, allowedRoles);
+}
+
+async function lockAdminActorAndUserTarget(tx: Prisma.TransactionClient, actor: RequestActor, targetUserId: string) {
+  // Lock both identities in a stable order so reciprocal Admin role changes cannot deadlock.
+  const userIds = [...new Set([actor.id, targetUserId])].sort();
+  await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`SELECT "id" FROM "User" WHERE "id" IN (${Prisma.join(userIds)}) ORDER BY "id" FOR UPDATE`);
+  return readCurrentActor(tx, actor, [Role.ADMIN]);
+}
+
+export async function applyMockPaymentEvent(event: MockPaymentEvent, actor?: RequestActor, client: typeof prisma = prisma) {
   const payloadHash = mockPaymentPayloadHash(event);
   return client.$transaction(async (tx) => {
+    if (actor) await lockCurrentActor(tx, actor, [Role.CUSTOMER]);
     const priorEvent = await tx.paymentEvent.findUnique({ where: { providerEventId: event.eventId } });
     if (priorEvent) {
       if (priorEvent.orderId !== event.orderId || priorEvent.payloadHash !== payloadHash) {
@@ -146,7 +187,7 @@ export async function applyMockPaymentEvent(event: MockPaymentEvent, actorId?: s
           payload: { providerEventId: event.eventId, orderId: order.id, amountVnd: event.amountVnd, currency: event.currency, reason: "PAYMENT_AFTER_EXPIRY" }
         });
       }
-      await audit(tx, actorId, "PAYMENT_EVENT_EXPIRED", "CinemaOrder", order.id, { providerEventId: event.eventId, amountVnd: event.amountVnd, reconciliationRequired });
+      await audit(tx, actor?.id, "PAYMENT_EVENT_EXPIRED", "CinemaOrder", order.id, { providerEventId: event.eventId, amountVnd: event.amountVnd, reconciliationRequired });
       return { orderId: order.id, outcome: "EXPIRED", idempotent: false };
     }
     if (order.status !== OrderStatus.PAYMENT_PENDING) throw new DomainError("INVALID_ORDER_STATE", "Đơn hàng không còn chờ thanh toán.", 409);
@@ -168,7 +209,7 @@ export async function applyMockPaymentEvent(event: MockPaymentEvent, actorId?: s
           payload: { providerEventId: event.eventId, orderId: order.id, amountVnd: event.amountVnd, currency: event.currency, reason: "PAYMENT_AFTER_EXPIRY" }
         });
       }
-      await audit(tx, actorId, "PAYMENT_EVENT_EXPIRED", "CinemaOrder", order.id, { providerEventId: event.eventId, amountVnd: event.amountVnd, reconciliationRequired });
+      await audit(tx, actor?.id, "PAYMENT_EVENT_EXPIRED", "CinemaOrder", order.id, { providerEventId: event.eventId, amountVnd: event.amountVnd, reconciliationRequired });
       return { orderId: order.id, outcome: "EXPIRED", idempotent: false };
     }
 
@@ -178,7 +219,7 @@ export async function applyMockPaymentEvent(event: MockPaymentEvent, actorId?: s
       await tx.seatClaim.updateMany({ where: { orderId: order.id, status: ClaimStatus.HELD }, data: { status: ClaimStatus.RELEASED, holdId: null, orderId: null, expiresAt: null } });
       await tx.payment.upsert({ where: { orderId: order.id }, create: { orderId: order.id, providerEventId: event.eventId, amountVnd: order.totalVnd, status: PaymentStatus.FAILED }, update: { providerEventId: event.eventId, status: PaymentStatus.FAILED } });
       await tx.paymentEvent.create({ data: { providerEventId: event.eventId, orderId: order.id, status: PaymentStatus.FAILED, amountVnd: event.amountVnd, currency: event.currency, payloadHash, outcome: "FAILED" } });
-      await audit(tx, actorId, "PAYMENT_FAILED", "CinemaOrder", order.id, { providerEventId: event.eventId, amountVnd: order.totalVnd });
+      await audit(tx, actor?.id, "PAYMENT_FAILED", "CinemaOrder", order.id, { providerEventId: event.eventId, amountVnd: order.totalVnd });
       return { orderId: order.id, outcome: "FAILED", idempotent: false };
     }
 
@@ -190,7 +231,7 @@ export async function applyMockPaymentEvent(event: MockPaymentEvent, actorId?: s
       await tx.ticket.upsert({ where: { seatClaimId: claim.id }, create: { orderId: order.id, seatClaimId: claim.id, qrToken: randomBytes(32).toString("base64url") }, update: {} });
     }
     await tx.paymentEvent.create({ data: { providerEventId: event.eventId, orderId: order.id, status: PaymentStatus.SUCCEEDED, amountVnd: event.amountVnd, currency: event.currency, payloadHash, outcome: "CONFIRMED" } });
-    await audit(tx, actorId, "PAYMENT_CONFIRMED", "CinemaOrder", order.id, { providerEventId: event.eventId, amountVnd: order.totalVnd, provider: "MOCK" });
+    await audit(tx, actor?.id, "PAYMENT_CONFIRMED", "CinemaOrder", order.id, { providerEventId: event.eventId, amountVnd: order.totalVnd, provider: "MOCK" });
     return { orderId: order.id, outcome: "CONFIRMED", idempotent: false };
   }, { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted });
 }
@@ -204,17 +245,8 @@ function audit(client: Prisma.TransactionClient, actorId: string | undefined, ac
 }
 
 async function getCurrentCheckInActor(tx: Prisma.TransactionClient, req: express.Request) {
-  const userId = req.user!.id;
   // Serialize check-in with role/cinema changes so a committed revocation is visible before ticket state changes.
-  await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`SELECT "id" FROM "User" WHERE "id" = ${userId} FOR SHARE`);
-  const user = await tx.user.findUnique({ where: { id: userId }, select: { role: true, assignedCinemaId: true, authVersion: true } });
-  if (!user || user.authVersion !== req.authVersion) {
-    throw new DomainError("INVALID_TOKEN", "Phiên đăng nhập không hợp lệ hoặc đã bị thu hồi.", 401);
-  }
-  if (user.role !== Role.ADMIN && user.role !== Role.STAFF) {
-    throw new DomainError("ROLE_FORBIDDEN", "Tài khoản không có quyền thực hiện thao tác này.", 403);
-  }
-  return user;
+  return lockCurrentActor(tx, { id: req.user!.id, authVersion: req.authVersion }, staffRoles);
 }
 
 function assertStaffCinemaScope(user: { role: Role; assignedCinemaId: string | null }, ticketCinemaId: string) {
@@ -371,6 +403,7 @@ export function createApp() {
     const input = z.object({ name: z.string().trim().min(2).max(80), email: z.string().trim().email().max(254) }).partial().strict()
       .refine((value) => Object.keys(value).length > 0, "Cần ít nhất một trường để cập nhật.").parse(req.body);
     const user = await prisma.$transaction(async (tx) => {
+      await lockCurrentActor(tx, { id: req.user!.id, authVersion: req.authVersion }, undefined, "update");
       const updated = await tx.user.update({
         where: { id: req.user!.id },
         data: { ...input, ...(input.email !== undefined ? { email: input.email.toLowerCase() } : {}) },
@@ -445,7 +478,7 @@ export function createApp() {
     const expiresAt = new Date(now.getTime() + HOLD_TTL_SECONDS * 1000);
     const hold = await prisma.$transaction(async (tx) => {
       // Serialize all booking attempts for a Customer, including requests for different seats.
-      await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`SELECT "id" FROM "User" WHERE "id" = ${req.user!.id} FOR UPDATE`);
+      await lockCurrentActor(tx, { id: req.user!.id, authVersion: req.authVersion }, [Role.CUSTOMER], "update");
       const showtime = await tx.showtime.findFirst({ where: { id: input.showtimeId, status: RecordStatus.ACTIVE, startAt: { gt: now }, movie: { status: RecordStatus.ACTIVE }, auditorium: { cinema: { status: RecordStatus.ACTIVE } } }, include: { auditorium: { include: { seats: { where: { id: { in: seatIds } } } } } } });
       if (!showtime) throw new DomainError("SHOWTIME_UNAVAILABLE", "Suất chiếu không còn mở bán.", 404);
       if (showtime.auditorium.seats.length !== seatIds.length) throw new DomainError("SEAT_NOT_FOUND", "Một hoặc nhiều ghế không thuộc phòng chiếu này.", 422);
@@ -484,7 +517,7 @@ export function createApp() {
     const { holdId } = z.object({ holdId: z.string().min(1) }).strict().parse(req.body);
     const result = await prisma.$transaction(async (tx) => {
       // Use the same lock order as POST /api/holds so an order transition cannot race a new hold.
-      await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`SELECT "id" FROM "User" WHERE "id" = ${req.user!.id} FOR UPDATE`);
+      await lockCurrentActor(tx, { id: req.user!.id, authVersion: req.authVersion }, [Role.CUSTOMER], "update");
       await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`SELECT "id" FROM "SeatHold" WHERE "id" = ${holdId} FOR UPDATE`);
       const hold = await tx.seatHold.findFirst({ where: { id: holdId, userId: req.user!.id }, include: { order: true, claims: { include: { seat: true } } } });
       if (!hold) throw new DomainError("HOLD_NOT_FOUND", "Không tìm thấy lượt giữ ghế.", 404);
@@ -535,7 +568,7 @@ export function createApp() {
     };
     const signature = signMockPaymentEvent(event, getMockPaymentSecret());
     if (!verifyMockPaymentSignature(event, signature, getMockPaymentSecret())) throw new DomainError("INVALID_WEBHOOK_SIGNATURE", "Chữ ký callback thanh toán không hợp lệ.", 401);
-    const result = await applyMockPaymentEvent(event, req.user!.id);
+    const result = await applyMockPaymentEvent(event, { id: req.user!.id, authVersion: req.authVersion });
     if (result.outcome === "EXPIRED") throw new DomainError("PAYMENT_TOO_LATE", "Đơn đã hết thời gian giữ ghế; callback không phát vé.", 409);
     if (result.outcome === "FAILED") throw new DomainError("PAYMENT_FAILED", "Thanh toán mô phỏng thất bại. Ghế đã được giải phóng.", 402);
     const order = await getOrderForResponse(prisma, result.orderId);
@@ -661,6 +694,7 @@ export function createApp() {
   app.post("/api/admin/cinemas", requireAuth, requireRole(Role.ADMIN), asyncRoute(async (req, res) => {
     const input = z.object({ name: z.string().trim().min(2).max(120), city: z.string().trim().min(2).max(120), address: z.string().trim().min(5).max(300) }).strict().parse(req.body);
     const cinema = await prisma.$transaction(async (tx) => {
+      await lockCurrentActor(tx, { id: req.user!.id, authVersion: req.authVersion }, [Role.ADMIN]);
       const created = await tx.cinema.create({ data: input });
       await audit(tx, req.user!.id, "CINEMA_CREATED", "Cinema", created.id, { name: created.name, city: created.city });
       return created;
@@ -676,6 +710,7 @@ export function createApp() {
       status: z.nativeEnum(RecordStatus)
     }).partial().strict().refine((value) => Object.keys(value).length > 0, "Cần ít nhất một trường để cập nhật.").parse(req.body);
     const cinema = await prisma.$transaction(async (tx) => {
+      await lockCurrentActor(tx, { id: req.user!.id, authVersion: req.authVersion }, [Role.ADMIN]);
       const updated = await tx.cinema.update({ where: { id: String(req.params.id) }, data: input });
       await audit(tx, req.user!.id, "CINEMA_UPDATED", "Cinema", updated.id, { changedFields: Object.keys(input) });
       return updated;
@@ -690,6 +725,7 @@ export function createApp() {
   app.post("/api/admin/movies", requireAuth, requireRole(Role.ADMIN), asyncRoute(async (req, res) => {
     const input = z.object({ title: z.string().trim().min(2).max(160), slug: z.string().trim().min(2).max(180).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/), genre: z.string().trim().min(2).max(80), synopsis: z.string().trim().min(10).max(3000), runtimeMinutes: z.number().int().min(30).max(300), ageRating: z.string().trim().min(1).max(12), posterUrl: z.string().url().optional(), releaseDate: businessDateSchema.optional() }).strict().parse(req.body);
     const movie = await prisma.$transaction(async (tx) => {
+      await lockCurrentActor(tx, { id: req.user!.id, authVersion: req.authVersion }, [Role.ADMIN]);
       const created = await tx.movie.create({ data: { ...input, releaseDate: input.releaseDate ? calendarDateAtTime(input.releaseDate, 0) : null } });
       await audit(tx, req.user!.id, "MOVIE_CREATED", "Movie", created.id, { slug: created.slug });
       return created;
@@ -711,6 +747,7 @@ export function createApp() {
     }).partial().strict().refine((value) => Object.keys(value).length > 0, "Cần ít nhất một trường để cập nhật.").parse(req.body);
     const { releaseDate, ...fields } = input;
     const movie = await prisma.$transaction(async (tx) => {
+      await lockCurrentActor(tx, { id: req.user!.id, authVersion: req.authVersion }, [Role.ADMIN]);
       const updated = await tx.movie.update({ where: { id: String(req.params.id) }, data: { ...fields, ...(releaseDate !== undefined ? { releaseDate: releaseDate ? calendarDateAtTime(releaseDate, 0) : null } : {}) } });
       await audit(tx, req.user!.id, "MOVIE_UPDATED", "Movie", updated.id, { changedFields: Object.keys(input) });
       return updated;
@@ -751,6 +788,7 @@ export function createApp() {
       });
     }).parse(req.body);
     const auditorium = await prisma.$transaction(async (tx) => {
+      await lockCurrentActor(tx, { id: req.user!.id, authVersion: req.authVersion }, [Role.ADMIN]);
       const cinema = await tx.cinema.findFirst({ where: { id: input.cinemaId, status: RecordStatus.ACTIVE } });
       if (!cinema) throw new DomainError("CINEMA_NOT_FOUND", "Không tìm thấy rạp đang hoạt động.", 404);
       const created = await tx.auditorium.create({ data: { cinemaId: cinema.id, name: input.name, screenType: input.screenType } });
@@ -772,6 +810,7 @@ export function createApp() {
     const input = z.object({ name: z.string().trim().min(1).max(80), screenType: z.string().trim().min(1).max(40) }).partial().strict()
       .refine((value) => Object.keys(value).length > 0, "Cần ít nhất một trường để cập nhật.").parse(req.body);
     const auditorium = await prisma.$transaction(async (tx) => {
+      await lockCurrentActor(tx, { id: req.user!.id, authVersion: req.authVersion }, [Role.ADMIN]);
       const updated = await tx.auditorium.update({ where: { id: String(req.params.id) }, data: input, include: { cinema: true, _count: { select: { seats: true } } } });
       await audit(tx, req.user!.id, "AUDITORIUM_UPDATED", "Auditorium", updated.id, { changedFields: Object.keys(input) });
       return updated;
@@ -788,6 +827,7 @@ export function createApp() {
       isAccessible: z.boolean()
     }).partial().strict().refine((value) => Object.keys(value).length > 0, "Cần ít nhất một trường để cập nhật.").parse(req.body);
     const seat = await prisma.$transaction(async (tx) => {
+      await lockCurrentActor(tx, { id: req.user!.id, authVersion: req.authVersion }, [Role.ADMIN]);
       const current = await tx.seat.findUnique({ where: { id: String(req.params.id) } });
       if (!current) throw new DomainError("SEAT_NOT_FOUND", "Không tìm thấy ghế.", 404);
       const claimed = await tx.seatClaim.count({ where: { seatId: current.id, status: { in: [ClaimStatus.HELD, ClaimStatus.SOLD] } } });
@@ -813,6 +853,7 @@ export function createApp() {
   app.post("/api/admin/showtimes", requireAuth, requireRole(Role.ADMIN), asyncRoute(async (req, res) => {
     const input = z.object({ movieId: z.string().min(1), auditoriumId: z.string().min(1), startAt: z.string().datetime({ offset: true }), priceVnd: z.number().int().min(1000).max(1_000_000), premiumSurchargeVnd: z.number().int().min(0).max(500_000).default(30_000) }).strict().parse(req.body);
     const created = await prisma.$transaction(async (tx) => {
+      await lockCurrentActor(tx, { id: req.user!.id, authVersion: req.authVersion }, [Role.ADMIN]);
       const movie = await tx.movie.findUnique({ where: { id: input.movieId } });
       const auditorium = await tx.auditorium.findUnique({ where: { id: input.auditoriumId }, include: { cinema: true } });
       if (!movie || !auditorium) throw new DomainError("CATALOG_NOT_FOUND", "Không tìm thấy phim hoặc phòng chiếu.", 404);
@@ -841,6 +882,7 @@ export function createApp() {
       status: z.nativeEnum(RecordStatus)
     }).partial().strict().refine((value) => Object.keys(value).length > 0, "Cần ít nhất một trường để cập nhật.").parse(req.body);
     const showtime = await prisma.$transaction(async (tx) => {
+      await lockCurrentActor(tx, { id: req.user!.id, authVersion: req.authVersion }, [Role.ADMIN]);
       const current = await tx.showtime.findUnique({ where: { id: String(req.params.id) }, include: { movie: true, auditorium: { include: { cinema: true } } } });
       if (!current) throw new DomainError("SHOWTIME_NOT_FOUND", "Không tìm thấy suất chiếu.", 404);
       const changesIdentity = input.movieId !== undefined || input.auditoriumId !== undefined || input.startAt !== undefined;
@@ -896,9 +938,11 @@ export function createApp() {
 
   app.patch("/api/admin/users/:id/role", requireAuth, requireRole(Role.ADMIN), asyncRoute(async (req, res) => {
     const input = z.object({ role: z.nativeEnum(Role) }).strict().parse(req.body);
-    if (String(req.params.id) === req.user!.id && input.role !== Role.ADMIN) throw new DomainError("SELF_DEMOTION_FORBIDDEN", "Không thể tự hạ quyền quản trị.", 422);
+    const targetUserId = String(req.params.id);
+    if (targetUserId === req.user!.id && input.role !== Role.ADMIN) throw new DomainError("SELF_DEMOTION_FORBIDDEN", "Không thể tự hạ quyền quản trị.", 422);
     const updated = await prisma.$transaction(async (tx) => {
-      const user = await tx.user.update({ where: { id: String(req.params.id) }, data: { role: input.role, authVersion: { increment: 1 }, ...(input.role !== Role.STAFF ? { assignedCinemaId: null } : {}) }, select: { id: true, name: true, email: true, role: true, assignedCinemaId: true } });
+      await lockAdminActorAndUserTarget(tx, { id: req.user!.id, authVersion: req.authVersion }, targetUserId);
+      const user = await tx.user.update({ where: { id: targetUserId }, data: { role: input.role, authVersion: { increment: 1 }, ...(input.role !== Role.STAFF ? { assignedCinemaId: null } : {}) }, select: { id: true, name: true, email: true, role: true, assignedCinemaId: true } });
       await audit(tx, req.user!.id, "USER_ROLE_CHANGED", "User", user.id, { role: user.role });
       return user;
     });
@@ -907,8 +951,10 @@ export function createApp() {
 
   app.patch("/api/admin/users/:id/assigned-cinema", requireAuth, requireRole(Role.ADMIN), asyncRoute(async (req, res) => {
     const input = z.object({ cinemaId: z.string().min(1).nullable() }).strict().parse(req.body);
+    const targetUserId = String(req.params.id);
     const updated = await prisma.$transaction(async (tx) => {
-      const target = await tx.user.findUnique({ where: { id: String(req.params.id) }, select: { id: true, role: true } });
+      await lockAdminActorAndUserTarget(tx, { id: req.user!.id, authVersion: req.authVersion }, targetUserId);
+      const target = await tx.user.findUnique({ where: { id: targetUserId }, select: { id: true, role: true } });
       if (!target) throw new DomainError("USER_NOT_FOUND", "Không tìm thấy người dùng.", 404);
       if (target.role !== Role.STAFF) throw new DomainError("STAFF_REQUIRED", "Chỉ có thể phân công rạp cho tài khoản STAFF.", 422);
       if (input.cinemaId !== null) {

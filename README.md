@@ -116,7 +116,8 @@ $testDatabaseName = "cinema_browser_test_$([guid]::NewGuid().ToString('N').Subst
 docker compose -p cinema-qa exec -T postgres psql -U cinema -d postgres -c "CREATE DATABASE $testDatabaseName"
 $composeEnv = @{}
 Get-Content .env | ForEach-Object { if ($_ -match '^([^#=]+)=(.*)$') { $composeEnv[$matches[1]] = $matches[2] } }
-$testDatabaseUrl = "postgresql://cinema:$($composeEnv.POSTGRES_PASSWORD)@localhost:5435/$testDatabaseName?schema=public"
+$encodedPostgresPassword = [Uri]::EscapeDataString($composeEnv.POSTGRES_PASSWORD)
+$testDatabaseUrl = "postgresql://cinema:$encodedPostgresPassword@localhost:5435/${testDatabaseName}?schema=public"
 $env:DATABASE_URL = $testDatabaseUrl
 $env:DATABASE_URL_TEST = $testDatabaseUrl
 npm run db:deploy
