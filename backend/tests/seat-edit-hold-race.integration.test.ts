@@ -291,7 +291,7 @@ seatRaceDescribe("Admin seat edits serialize with customer seat holds", () => {
     const customerHoldAuditBefore = await prisma.auditLog.findMany({
       where: { actorId: customerAId!, action: "SEATS_HELD" }, select: auditFields
     });
-    expect(await prisma.seatClaim.findMany({ where: { seatId: editedSeatId }, select: claimFields })).toEqual([]);
+    expect(await prisma.seatClaim.findMany({ where: { seatId: editedSeatId, showtimeId }, select: claimFields })).toEqual([]);
     expect(await prisma.seatHold.findMany({ where: { userId: customerAId }, select: holdFields })).toEqual([]);
 
     const [editBeforeHold, holdAfterEdit] = await runBehindSeatLock(editedSeatId!, [
@@ -317,7 +317,7 @@ seatRaceDescribe("Admin seat edits serialize with customer seat holds", () => {
       status: HoldStatus.HELD,
       expiresAt: new Date(String(holdAfterEdit.body.expiresAt))
     });
-    const editedClaims = await prisma.seatClaim.findMany({ where: { seatId: editedSeatId }, select: claimFields });
+    const editedClaims = await prisma.seatClaim.findMany({ where: { seatId: editedSeatId, showtimeId }, select: claimFields });
     expect(editedClaims).toEqual([{
       id: expect.any(String),
       showtimeId,
@@ -359,7 +359,7 @@ seatRaceDescribe("Admin seat edits serialize with customer seat holds", () => {
     const holdAuditBeforeHeldRace = await prisma.auditLog.findMany({
       where: { actorId: customerBId!, action: "SEATS_HELD" }, select: auditFields
     });
-    expect(await prisma.seatClaim.findMany({ where: { seatId: claimedSeatId }, select: claimFields })).toEqual([]);
+    expect(await prisma.seatClaim.findMany({ where: { seatId: claimedSeatId, showtimeId }, select: claimFields })).toEqual([]);
     expect(await prisma.seatHold.findMany({ where: { userId: customerBId }, select: holdFields })).toEqual([]);
 
     const [holdBeforeEdit, rejectedSeatEdit] = await runBehindSeatLock(claimedSeatId!, [
@@ -384,7 +384,7 @@ seatRaceDescribe("Admin seat edits serialize with customer seat holds", () => {
       status: HoldStatus.HELD,
       expiresAt: new Date(String(holdBeforeEdit.body.expiresAt))
     });
-    expect(await prisma.seatClaim.findMany({ where: { seatId: claimedSeatId }, select: claimFields })).toEqual([{
+    expect(await prisma.seatClaim.findMany({ where: { seatId: claimedSeatId, showtimeId }, select: claimFields })).toEqual([{
       id: expect.any(String),
       showtimeId,
       seatId: claimedSeatId,
