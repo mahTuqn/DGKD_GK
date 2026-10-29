@@ -1,0 +1,49 @@
+{
+  "recordedAtLocal": "2026-10-29 08:21:33 +07:00",
+  "sourceHead": "c766be3c79266b5a214c680175a348dc11c6917d",
+  "dockerEngine": "29.7.2",
+  "hostMemory": {
+    "freeGiB": 0.52,
+    "totalGiB": 7.19,
+    "heavyTestHeadroomTargetGiB": 1.5
+  },
+  "stacks": [
+    {
+      "project": "dgkd_gk",
+      "containers": {
+        "web": "healthy",
+        "api": "healthy",
+        "postgres": "healthy",
+        "worker": "running; no healthcheck configured"
+      },
+      "webPort": 8080,
+      "postgresPort": 5434,
+      "apiHealth": {
+        "url": "http://localhost:8080/api/health",
+        "statusCode": 200,
+        "body": "status=ok; service=cinema-booking-api"
+      }
+    },
+    {
+      "project": "cinema-qa",
+      "containers": {
+        "web": "healthy",
+        "api": "healthy",
+        "postgres": "healthy",
+        "worker": "running; no healthcheck configured"
+      },
+      "webPort": 8081,
+      "postgresPort": 5435,
+      "apiHealth": {
+        "url": "http://localhost:8081/api/health",
+        "statusCode": 200,
+        "body": "status=ok; service=cinema-booking-api"
+      }
+    }
+  ],
+  "limitations": [
+    "No rebuild, load test, local browser journey or DAST was run; the host had 0.52 GiB free RAM, below the 1.5 GiB headroom target.",
+    "Local application images were previously observed as built on 2026-10-27; parity with source head c766be3 is unverified.",
+    "This is local liveness evidence only; it does not establish data recovery, staging or production readiness."
+  ]
+}

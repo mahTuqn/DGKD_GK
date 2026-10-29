@@ -1,10 +1,14 @@
 # Báo cáo tổng hợp kiểm thử
 
-## Latest exact-source CI result — `6581a76` — 29/10/2026
+## Latest exact-source CI result — `c766be3` — 29/10/2026
 
-All three GitHub Actions workflows passed on commit `6581a76adbbb736d917ad61b60e983792345e368`: [quality, DAST, mutation and Compose run 40793426096](https://github.com/mahTuqn/DGKD_GK/actions/runs/40793426096), [Firefox/WebKit smoke 40793426250](https://github.com/mahTuqn/DGKD_GK/actions/runs/40793426250), and [15-minute worker soak 40793426201](https://github.com/mahTuqn/DGKD_GK/actions/runs/40793426201). Application and test sources are unchanged from `e28360f`; this follow-up only updates documentation/evidence. Traceability passed at **92 cases / 26 requirements**. Quality/API, live hold expiry, five-minute worker soak/restart, build, Chromium desktop/Pixel 7, Compose runtime/browser, domain coverage/mutation, configured DAST High-alert gate, Firefox/WebKit desktop and the 15-minute two-worker soak/restart/catch-up all passed.
+All three GitHub Actions workflows passed on commit `c766be3c79266b5a214c680175a348dc11c6917d`: [quality, DAST, mutation and Compose run 40797609007](https://github.com/mahTuqn/DGKD_GK/actions/runs/40797609007), [Firefox/WebKit smoke 40797609261](https://github.com/mahTuqn/DGKD_GK/actions/runs/40797609261), and [15-minute worker soak 40797609052](https://github.com/mahTuqn/DGKD_GK/actions/runs/40797609052). Traceability passed at **92 cases / 26 requirements**. Quality/API, TC-PLAN-01’s 100-request same-seat race (1 success/99 conflicts within one Express process), live expiry, five-minute worker soak/restart, build, Chromium desktop/Pixel 7, Compose browser, domain coverage/mutation, Firefox/WebKit and the 15-minute worker soak/restart/catch-up all passed.
 
-The 15-minute job ran for 949 seconds and verified graceful worker restart and catch-up of a pending event. Detailed DAST alerts and severity counts were not independently reviewed; no zero-finding claim is made. Artifact names, sizes and SHA-256 digests are in the [6581a76 evidence manifest](evidence/followup/2026-10-29-github-actions-6581a76.json). The requester will complete manual WCAG review; no staging is available.
+The worker job ran for 950 seconds and verified graceful restart and catch-up of a pending event. The current DAST artifact was downloaded, digest-verified and reviewed: 0 High/Medium, one Low alert record with 3 instances, and 5 Informational records with 12 instances. The Low finding is the triaged `SEC-OBS-01` JSON markup observation; the Admin UI regression passes, but other JSON consumers still need context-appropriate output encoding. Artifact details and digests are in the [c766be3 evidence manifest](evidence/followup/2026-10-29-github-actions-c766be3.json). The requester will complete manual WCAG review; no staging is available.
+
+## Previous exact-source CI result — `6581a76` — 29/10/2026
+
+Runs 40793426096, 40793426250 and 40793426201 passed on commit `6581a76`. Its DAST artifact was also reviewed: it had the same alert records and instances documented for `c766be3`. The later `c766be3` source change only corrects DAST summary counting to distinguish alert records from instances; backend, frontend and browser test sources remain unchanged.
 
 ## Previous exact-source CI result — `e28360f` — 29/10/2026
 
@@ -71,27 +75,27 @@ Các phép đo unit/coverage, hiệu năng, ZAP và Gitleaks dùng fixture/histo
 
 ## Test đã triển khai
 
-- Browser: health, đăng ký/đặt vé/thanh toán demo/QR, staff check-in một lần, Admin occupancy/CRUD, lọc phim-rạp-ngày, axe trên discovery/seat map/checkout, keyboard/focus, security headers trên built preview và kiểm tra markup do Admin nhập được render an toàn. 24/24 trên hai cấu hình Chromium.
-- HTTP/PostgreSQL integration: auth/RBAC/profile, schedule overlap/buffer, hold limit/race/expiry, price snapshot/order retry, payment idempotency/late callback/revenue, admin và staff scope; unique seat claim và callback đồng thời trong DB.
-- Domain: 13 test; timezone, deadline, pricing, unique seat IDs, occupancy/input boundaries và bốn fixed-seed property tests.
-- Performance: 50 virtual users trong năm phút với backend build và PostgreSQL 17 riêng trên máy local.
-- Security: ZAP unauthenticated API và frontend preview có historical evidence; report API được gọi authenticated chưa thể tái lập từ config cũ nên chưa tính là đã xác minh; cần rerun trên database DAST riêng.
-- Backup/restore: PostgreSQL custom-format dump được khôi phục vào UTF8 database rồi kiểm tra counts; dump giữ trong gitignored `reports/generated/recovery/`.
+- Browser tự động theo push/PR: 24 E2E case trên Chromium desktop và Pixel 7; CI còn chạy 3 luồng trọng yếu trên Firefox và WebKit desktop. Full Compose smoke kiểm tra hành trình đăng ký, hold, order, demo payment và ticket qua Nginx.
+- HTTP/PostgreSQL integration: auth/RBAC/profile, schedule overlap/buffer, hold limit/race/expiry, price snapshot/order retry, payment idempotency/late callback/revenue, Admin/Staff scope; TC-PLAN-01 chạy 100 HTTP request cùng ghế trong một Express process và xác nhận 1 success/99 conflict.
+- Domain: 13 test; timezone, deadline, pricing, unique seat IDs, occupancy/input boundaries và bốn fixed-seed property tests; mutation threshold 70% đạt trong CI.
+- Reliability: live 5-minute hold expiry, two-worker five-minute soak/restart và two-worker 15-minute soak/graceful restart/catch-up đều pass trong CI.
+- Performance: k6 50 virtual users trong năm phút đạt trên Docker local; đây không phải staging/production benchmark.
+- Security: exact-source ZAP unauthenticated API, authenticated API và production preview đều được parse/review; không có High/Medium trong ba scan, nhưng còn một Low-confidence JSON markup observation (`SEC-OBS-01`). Source route matrix và automated checks chưa thay thế exhaustive ASVS/API Top 10/BOLA review.
+- Backup/restore: PostgreSQL custom-format dump được khôi phục vào UTF8 database rồi kiểm tra counts; rehearsal không chứng minh backup schedule/PITR/RPO/RTO/production restore.
 
 ## Lỗi đã sửa và quan sát bảo mật
 
 - `BUG-001` — Payment success làm mất modal khi `hold=null`; đã sửa và retest browser flow.
 - `BUG-002` — Axe tìm accessible name không khớp nội dung ở logo/áp phích; đã sửa, axe không còn serious/critical ở các màn đã quét.
 - `BUG-003` — CSP chặn React Refresh inline preamble trong Vite dev; đã giới hạn CSP vào built preview và chuyển E2E header check sang preview. Retest browser suite đạt 24/24.
-- `SEC-OBS-01` — Historical ZAP report ghi nhận payload script trong JSON cinema. Config auth cũ không khai báo credentials/header nên trạng thái đăng nhập của phiên tạo report chưa được xác minh. `TC-E2E-11` pass và xác nhận Admin UI render markup như text, không tạo node `img/script`; API JSON consumers khác vẫn phải escape nội dung.
+- `SEC-OBS-01` — Current exact-source authenticated ZAP uses seeded Admin preflight and reports a Low/Low-confidence persistent markup alert in JSON fields `name`, `address`, and `city`. `TC-E2E-11` confirms the tested Admin UI renders input as text and creates no `img/script/svg` nodes. This does not close other JSON consumer contexts.
 
 ## Còn thiếu so với kế hoạch
 
-- k6 local Docker QA 50 VU/5 phút đã đạt; TC-WORKER-04 xác nhận hai Prisma client độc lập xử lý một event đúng một lần trên PostgreSQL. Chưa chạy process-level worker soak/multi-instance hoặc staging.
-- Browser suite hiện bao phủ payment failure và lost-seat conflict; vẫn chưa chờ integration thực quanh TTL năm phút.
-- Authenticated ZAP cần rerun với disposable Admin token và preflight trả 200; sau đó xác minh `SEC-OBS-01`, mở rộng review BOLA/IDOR ra mọi object/role và checklist ASVS/API Top 10. Một ZAP pass không chứng minh ứng dụng an toàn toàn diện.
-- Accessibility chưa có manual WCAG 2.2 AA/screen-reader review. Lượt local mới nhất đã thêm axe cho login dialog, ticket và Admin, ngoài discovery, seat map, checkout.
-- Restore rehearsal không đánh giá lịch backup, PITR, RPO/RTO hay production restore. Reconciliation có integration test; Docker worker expiry/restart catch-up smoke pass; soak và gateway timeout còn thiếu.
+- Người yêu cầu chưa hoàn tất manual WCAG 2.2 AA/screen-reader/contrast/zoom/reflow/orientation/keyboard checklist.
+- Chưa có staging; k6 local không chứng minh performance staging/production. TC-PLAN-01 chạy race trong một Express process; API contention giữa nhiều process/replica chưa được đo.
+- DAST đã được xác minh và triaged, nhưng exhaustive ASVS/API Top 10 và adversarial BOLA/IDOR review rộng hơn route matrix còn mở.
+- Restore rehearsal không đánh giá lịch backup, PITR, RPO/RTO hay production restore. Worker reliability dài hơn 15 phút và gateway timeout chưa được đo.
 - Không có hazard analysis; safety chưa đánh giá. Payment vẫn là mock, không phải cổng thanh toán thật.
 
 ## Follow-up trên working tree — 27/10/2026

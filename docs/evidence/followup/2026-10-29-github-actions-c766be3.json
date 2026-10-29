@@ -1,0 +1,157 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "recordedAt": "2026-10-29",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "commit": "c766be3c79266b5a214c680175a348dc11c6917d",
+  "branch": "codex/cross-browser-smoke",
+  "overall": "PASS_AUTOMATED_CI_WITH_DOCUMENTED_LIMITATIONS",
+  "codeDeltaFromPreviousVerifiedSource": "Only scripts/summarize-dast.mjs changed after the previous verification: it now reports ZAP alert records separately from instance counts. Backend, frontend and browser test sources are unchanged from 6581a76.",
+  "traceability": {
+    "result": "PASS",
+    "testCases": 92,
+    "requirements": 26
+  },
+  "runs": {
+    "qualityDastCompose": {
+      "id": 40797609007,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40797609007",
+      "result": "PASS",
+      "durationSeconds": 856,
+      "jobs": {
+        "quality": {
+          "result": "PASS",
+          "verified": [
+            "Gitleaks and dependency audit",
+            "Migrations, seed, OpenAPI lint and traceability",
+            "PostgreSQL API integration, including the 100-request same-seat hold race (1 success, 99 conflicts) in one Express process",
+            "Live five-minute hold expiry and two-worker five-minute soak/restart",
+            "Production build and Chromium desktop/Pixel 7 Playwright suite"
+          ],
+          "browserExecutions": 48,
+          "artifact": {
+            "id": 12864672971,
+            "name": "cinema-booking-browser-results-c766be3c79266b5a214c680175a348dc11c6917d",
+            "sizeBytes": 338603,
+            "digest": "sha256:4be66ab157eb99e3c696555fa82f6f950f74d80dfb4af074f3ae8169a1835637"
+          }
+        },
+        "dast": {
+          "result": "PASS_WITHIN_CONFIGURED_HIGH_ALERT_GATE",
+          "findingDetailsReviewed": true,
+          "reportsParsed": "3/3",
+          "alertRecords": {
+            "High": 0,
+            "Medium": 0,
+            "Low": 1,
+            "Informational": 5,
+            "Unknown": 0
+          },
+          "alertInstances": {
+            "High": 0,
+            "Medium": 0,
+            "Low": 3,
+            "Informational": 12,
+            "Unknown": 0
+          },
+          "scans": [
+            "Unauthenticated API",
+            "Authenticated API with seeded Admin preflight",
+            "Production web preview"
+          ],
+          "triagedObservation": {
+            "id": "SEC-OBS-01",
+            "alert": "Cross Site Scripting Weakness (Persistent in JSON Response)",
+            "risk": "Low",
+            "confidence": "Low",
+            "instances": [
+              {
+                "path": "/api/admin/cinemas",
+                "parameter": "address"
+              },
+              {
+                "path": "/api/admin/cinemas",
+                "parameter": "name"
+              },
+              {
+                "path": "/api/cinemas",
+                "parameter": "city"
+              }
+            ],
+            "disposition": "TC-E2E-11 verifies the tested Admin UI renders submitted markup as text without img/script/svg DOM nodes. No execution was observed in that UI; other consumers of the JSON still require context-appropriate output encoding."
+          },
+          "artifact": {
+            "id": 12865350794,
+            "name": "cinema-booking-dast-reports-c766be3c79266b5a214c680175a348dc11c6917d",
+            "sizeBytes": 6487,
+            "digest": "sha256:5aeab7fd765afd4f74c08d95accd797fe8e2a99aade05edc26b0629ab449a12c"
+          }
+        },
+        "domainCoverageMutation": {
+          "result": "PASS",
+          "mutationThreshold": "70%; scoped to tests/domain.test.ts",
+          "artifact": {
+            "id": 12865011011,
+            "name": "cinema-booking-domain-quality-c766be3c79266b5a214c680175a348dc11c6917d",
+            "sizeBytes": 144503,
+            "digest": "sha256:922cc6bf28607bae459822cd911ad94734e59916d758524f1ff14dbd90aaf4c9"
+          }
+        },
+        "composeRuntimeBrowserSmoke": {
+          "result": "PASS",
+          "testCases": [
+            "TC-OPS-01",
+            "TC-SEC-28"
+          ],
+          "scope": "Built and seeded isolated PostgreSQL/migration/API/worker/web Compose services, passed health checks, and completed the Chromium booking-to-ticket journey through Nginx.",
+          "artifact": {
+            "id": 12864376944,
+            "name": "cinema-booking-compose-browser-results-c766be3c79266b5a214c680175a348dc11c6917d",
+            "sizeBytes": 200044,
+            "digest": "sha256:22754888c72096cab1494accceeeaf6b0053713c4c42588b0e213dba3ec3b532"
+          }
+        }
+      }
+    },
+    "crossBrowser": {
+      "id": 40797609261,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40797609261",
+      "result": "PASS",
+      "durationSeconds": 100,
+      "scope": "TC-E2E-01, TC-E2E-02 and TC-E2E-09 in Firefox and WebKit desktop (six configured executions).",
+      "artifact": {
+        "id": 12864551503,
+        "name": "cinema-booking-cross-browser-results-c766be3c79266b5a214c680175a348dc11c6917d",
+        "sizeBytes": 222907,
+        "digest": "sha256:d83f127cea70f479e8c7150aa78e847ce627f18358196c30baf1f2dac3e46f81"
+      }
+    },
+    "worker15MinuteSoak": {
+      "id": 40797609052,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40797609052",
+      "result": "PASS",
+      "durationSeconds": 950,
+      "testCase": "TC-WORKER-07",
+      "verified": [
+        "Two worker processes completed the 15-minute soak",
+        "Graceful worker shutdown/restart succeeded",
+        "Replacement worker processed the pending event after restart"
+      ]
+    }
+  },
+  "environment": {
+    "runner": "GitHub Actions clean checkouts with ephemeral PostgreSQL and isolated Compose projects",
+    "localDocker": "No local rebuild, load test, browser journey or DAST was run; the local demo databases were left unchanged.",
+    "staging": "Not available; no staging or production claim is made."
+  },
+  "notMeasured": [
+    "Requester-owned manual WCAG 2.2 AA, screen-reader, contrast, zoom/reflow, orientation and full keyboard review",
+    "Performance on named staging or production; the existing k6 result is a local Docker baseline",
+    "Multi-process API seat-race behavior; current 100-request CI regression runs through one Express process",
+    "Exhaustive ASVS/API Top 10 and adversarial BOLA review beyond the route matrix and automated cases",
+    "Production backup schedule, PITR, RPO/RTO and production restore",
+    "Reliability beyond the verified 15-minute worker soak",
+    "Real payment gateway/refund behavior, outside the SRS"
+  ],
+  "scopeNote": "All three workflows passed on the exact c766be3 source. The DAST artifact was downloaded with authenticated access, its SHA-256 matched GitHub metadata, all three JSON reports parsed, and alert names/severities/confidence/path parameters were reviewed without exposing payloads. Zero High/Medium applies only to these three ZAP scans and does not establish overall security, manual WCAG conformance, staging performance, or production readiness."
+}
