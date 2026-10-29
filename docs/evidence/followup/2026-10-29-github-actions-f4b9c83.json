@@ -1,0 +1,138 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "recordedAt": "2026-10-29",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "commit": "f4b9c830cfdfcdb1dec7cccda33d1d6e07ffe60e",
+  "branch": "codex/cross-browser-smoke",
+  "overall": "PASS_AUTOMATED_CI_WITH_DOCUMENTED_LIMITATIONS",
+  "codeDeltaFromPreviousVerifiedSource": "Enforced exact CUSTOMER role on GET /api/orders/me and GET /api/orders/:id. Expanded TC-SEC-21 with confirmed orders, payments, claims and tickets owned by Staff/Admin, checking denial of list/detail responses, QR non-disclosure, and unchanged booking state/audit. Updated authorization requirements, traceability and findings. No frontend code changed.",
+  "traceability": {
+    "result": "PASS",
+    "testCases": 93,
+    "requirements": 26
+  },
+  "runs": {
+    "qualityDastCompose": {
+      "id": 40803754822,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40803754822",
+      "result": "PASS",
+      "headSha": "f4b9c830cfdfcdb1dec7cccda33d1d6e07ffe60e",
+      "verified": [
+        "Gitleaks and dependency audit",
+        "Database migrations, OpenAPI lint, and traceability",
+        "API integration suite including TC-SEC-21: Staff/Admin receive 403 on Customer-only booking/payment APIs and own-order list/detail routes, with order/ticket/QR non-disclosure and unchanged state/audit",
+        "Live five-minute hold expiry and two-worker five-minute soak/restart",
+        "Backend/frontend build and Chromium desktop/Pixel 7 Playwright suite",
+        "Isolated Compose runtime and browser smoke",
+        "Authenticated, unauthenticated, and preview DAST scans",
+        "Domain coverage and mutation thresholds"
+      ],
+      "artifacts": [
+        {
+          "id": 12867976830,
+          "name": "cinema-booking-browser-results-f4b9c830cfdfcdb1dec7cccda33d1d6e07ffe60e",
+          "sizeBytes": 337575,
+          "digest": "sha256:e18d23ba3a27df97b7216e5e26d8b2fbf9ed63031c2e1d59d133bb0958ef95b4"
+        },
+        {
+          "id": 12867461491,
+          "name": "cinema-booking-domain-quality-f4b9c830cfdfcdb1dec7cccda33d1d6e07ffe60e",
+          "sizeBytes": 144559,
+          "digest": "sha256:3cd5444168ec61f77c51b8666ddc8157d4fa74b666dcb4c1360a45b012a35b55"
+        },
+        {
+          "id": 12867361798,
+          "name": "cinema-booking-compose-browser-results-f4b9c830cfdfcdb1dec7cccda33d1d6e07ffe60e",
+          "sizeBytes": 199973,
+          "digest": "sha256:5fa3f642d0e983239c88c41335d5ba42ec148967266719a063147737ea35e37a"
+        },
+        {
+          "id": 12867144010,
+          "name": "cinema-booking-dast-reports-f4b9c830cfdfcdb1dec7cccda33d1d6e07ffe60e",
+          "sizeBytes": 6463,
+          "digest": "sha256:6328cdc392bbe78c7528f59cf238cf10bb9ba5b12da4fa121a0f7afb4f233e2e"
+        }
+      ]
+    },
+    "crossBrowser": {
+      "id": 40803754783,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40803754783",
+      "result": "PASS",
+      "headSha": "f4b9c830cfdfcdb1dec7cccda33d1d6e07ffe60e",
+      "verified": [
+        "Firefox and WebKit desktop smoke"
+      ],
+      "artifact": {
+        "id": 12867461355,
+        "name": "cinema-booking-cross-browser-results-f4b9c830cfdfcdb1dec7cccda33d1d6e07ffe60e",
+        "sizeBytes": 223093,
+        "digest": "sha256:eaab065394e1f3b355afde98fb6cb40e9de77c1af7922d55c49f30dc9038c75b"
+      }
+    },
+    "workerLongSoak": {
+      "id": 40803754859,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/40803754859",
+      "result": "PASS",
+      "headSha": "f4b9c830cfdfcdb1dec7cccda33d1d6e07ffe60e",
+      "verified": [
+        "TC-WORKER-07 two-worker 15-minute soak",
+        "Graceful restart and pending-event catch-up"
+      ]
+    }
+  },
+  "dastReview": {
+    "artifactDigestVerified": true,
+    "artifactDigest": "sha256:6328cdc392bbe78c7528f59cf238cf10bb9ba5b12da4fa121a0f7afb4f233e2e",
+    "reportsParsed": "3/3",
+    "alertRecords": {
+      "High": 0,
+      "Medium": 0,
+      "Low": 1,
+      "Informational": 5,
+      "Unknown": 0
+    },
+    "alertInstances": {
+      "High": 0,
+      "Medium": 0,
+      "Low": 3,
+      "Informational": 11,
+      "Unknown": 0
+    },
+    "triagedObservation": {
+      "id": "SEC-OBS-01",
+      "alert": "Cross Site Scripting Weakness (Persistent in JSON Response)",
+      "risk": "Low",
+      "confidence": "Low",
+      "instances": [
+        {
+          "path": "/api/admin/cinemas",
+          "parameter": "address"
+        },
+        {
+          "path": "/api/admin/cinemas",
+          "parameter": "name"
+        },
+        {
+          "path": "/api/cinemas",
+          "parameter": "city"
+        }
+      ],
+      "disposition": "Current frontend consumer source audit found the fields are displayed as React text/form values; no raw HTML injection sink was found. /api/cinemas has no current frontend consumer. TC-E2E-11 remains runtime regression coverage for the tested Admin UI. No code change warranted from reviewed source. Future or external consumers remain outside this audit."
+    }
+  },
+  "remainingGates": [
+    "Requester-owned manual WCAG 2.2 AA review: keyboard-only, screen reader, contrast, zoom/reflow, and orientation",
+    "No staging environment is available; named-staging performance is unmeasured",
+    "Production backup schedule, PITR, RPO/RTO, and production restore are unverified",
+    "Exhaustive ASVS/API Top 10 and adversarial BOLA/IDOR review remain open",
+    "Reliability beyond the tested 15-minute worker soak is unmeasured",
+    "Real payment gateway/refund is outside the current SRS"
+  ],
+  "limitations": [
+    "Passing CI applies to the exact source commit above, on isolated GitHub Actions databases/runners.",
+    "Role regression fixtures prove the tested Staff/Admin order-read boundary; they are not exhaustive authorization proof for every user/state/field combination.",
+    "The DAST scans found no High/Medium alerts in their configured scopes; they are not exhaustive security certification.",
+    "Static frontend consumer review does not cover other repositories or future consumers."
+  ]
+}
