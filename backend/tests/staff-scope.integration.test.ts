@@ -255,4 +255,77 @@ staffScopeDescribe("REQ-TICKET-03: staff cinema-scoped check-in", () => {
     expect(await prisma.auditLog.count({ where: { actorId: adminId, action: "STAFF_CINEMA_ASSIGNED" } })).toBe(3);
     expect(await prisma.auditLog.count({ where: { actorId: staffAId, action: "PROFILE_UPDATED" } })).toBe(2);
   }, 60_000);
+
+  it("[TC-SEC-38] revalidates Staff authorization for both check-in routes during role revocation", async () => {
+    const assignment = await request(app).patch(`/api/admin/users/${unassignedStaffId}/assigned-cinema`).set({ Authorization: `Bearer ${adminToken}` }).send({ cinemaId: cinemaBId });
+    expect(assignment.status).toBe(200);
+
+    async function expectRevokedCheckInToBeDenied(actorId: string, route: "id" | "qr", column: number) {
+      const staff = await prisma.user.findUniqueOrThrow({ where: { id: actorId }, select: { id: true, authVersion: true } });
+      const token = createToken({ id: staff.id, authVersion: staff.authVersion });
+      const seat = await prisma.seat.create({ data: { auditoriumId: auditoriumBId!, label: `B${column}-${fixture.slice(0, 4)}`, row: "B", column, type: SeatType.STANDARD } });
+      seatIds.push(seat.id);
+      const hold = await prisma.seatHold.create({ data: { userId: buyerId!, showtimeId: showtimeIds[1]!, status: HoldStatus.CONFIRMED, expiresAt: new Date(Date.now() + 600_000) } });
+      const order = await prisma.cinemaOrder.create({ data: { userId: buyerId!, showtimeId: showtimeIds[1]!, holdId: hold.id, totalVnd: 100_000, status: OrderStatus.CONFIRMED } });
+      const claim = await prisma.seatClaim.create({ data: { showtimeId: showtimeIds[1]!, seatId: seat.id, holdId: hold.id, orderId: order.id, status: ClaimStatus.SOLD, priceVnd: 100_000 } });
+      await prisma.payment.create({ data: { orderId: order.id, amountVnd: 100_000, status: PaymentStatus.SUCCEEDED } });
+      const ticket = await prisma.ticket.create({ data: { orderId: order.id, seatClaimId: claim.id, qrToken: randomBytes(32).toString("base64url") } });
+      ticketIds.push(ticket.id);
+      const auditCountBefore = await prisma.auditLog.count({ where: { actorId: staff.id, action: "TICKET_CHECKED_IN", entityId: ticket.id } });
+
+      let signalRowLocked!: (pid: number) => void;
+      let releaseRevocation!: () => void;
+      const rowLocked = new Promise<number>((resolve) => { signalRowLocked = resolve; });
+      const waitForRevocation = new Promise<void>((resolve) => { releaseRevocation = resolve; });
+      const revocationTransaction = prisma.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${staff.id} FOR UPDATE`;
+        const [connection] = await tx.$queryRaw<Array<{ pid: number }>>`SELECT pg_backend_pid()::int AS pid`;
+        signalRowLocked(connection!.pid);
+        await waitForRevocation;
+        await tx.user.update({ where: { id: staff.id }, data: { role: Role.CUSTOMER, assignedCinemaId: null, authVersion: { increment: 1 } } });
+      }, { timeout: 15_000 });
+
+      let checkInPromise: Promise<{ status: number; body: Record<string, unknown> }> | undefined;
+      try {
+        const revocationBackendPid = await rowLocked;
+        const pendingRequest = route === "id"
+          ? request(app).post(`/api/tickets/${ticket.id}/check-in`).set({ Authorization: `Bearer ${token}` }).send({})
+          : request(app).post("/api/tickets/scan").set({ Authorization: `Bearer ${token}` }).send({ qrToken: ticket.qrToken });
+        checkInPromise = pendingRequest.then((response) => ({ status: response.status, body: response.body as Record<string, unknown> }));
+
+        let checkInIsBlockedOnCurrentAuthorization = false;
+        const deadline = Date.now() + 8_000;
+        while (!checkInIsBlockedOnCurrentAuthorization && Date.now() < deadline) {
+          const blockedChecks = await prisma.$queryRaw<Array<{ pid: number }>>`
+            SELECT pid::int AS pid
+            FROM pg_stat_activity
+            WHERE datname = current_database()
+              AND state = 'active'
+              AND wait_event_type = 'Lock'
+              AND query ILIKE 'SELECT%'
+              AND query ILIKE '%FOR SHARE%'
+              AND ${revocationBackendPid} = ANY(pg_blocking_pids(pid))
+          `;
+          checkInIsBlockedOnCurrentAuthorization = blockedChecks.length > 0;
+          if (!checkInIsBlockedOnCurrentAuthorization) await new Promise((resolve) => setTimeout(resolve, 25));
+        }
+        expect(checkInIsBlockedOnCurrentAuthorization).toBe(true);
+
+        releaseRevocation();
+        await revocationTransaction;
+        const response = await checkInPromise;
+        expect(response.status).toBe(401);
+        expect(response.body.error).toBe("INVALID_TOKEN");
+        expect(await prisma.ticket.findUniqueOrThrow({ where: { id: ticket.id }, select: { checkedInAt: true } })).toEqual({ checkedInAt: null });
+        expect(await prisma.auditLog.count({ where: { actorId: staff.id, action: "TICKET_CHECKED_IN", entityId: ticket.id } })).toBe(auditCountBefore);
+      } finally {
+        releaseRevocation();
+        await revocationTransaction.catch(() => undefined);
+        await checkInPromise?.catch(() => undefined);
+      }
+    }
+
+    await expectRevokedCheckInToBeDenied(staffAId!, "id", 5);
+    await expectRevokedCheckInToBeDenied(unassignedStaffId!, "qr", 6);
+  }, 60_000);
 });

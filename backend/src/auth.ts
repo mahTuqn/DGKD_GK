@@ -52,6 +52,7 @@ export const requireAuth: RequestHandler = async (req: Request, res: Response, n
       return res.status(401).json({ error: "INVALID_TOKEN", message: "Phiên đăng nhập không hợp lệ hoặc đã bị thu hồi." });
     }
     req.user = { id: user.id, name: user.name, email: user.email, role: user.role, assignedCinemaId: user.assignedCinemaId };
+    req.authVersion = payload.authVersion;
     next();
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError || error instanceof jwt.TokenExpiredError) {

@@ -203,7 +203,21 @@ function audit(client: Prisma.TransactionClient, actorId: string | undefined, ac
   return client.auditLog.create({ data: { actorId, action, entity, entityId, metadata: correlatedMetadata } });
 }
 
-function assertStaffCinemaScope(user: NonNullable<express.Request["user"]>, ticketCinemaId: string) {
+async function getCurrentCheckInActor(tx: Prisma.TransactionClient, req: express.Request) {
+  const userId = req.user!.id;
+  // Serialize check-in with role/cinema changes so a committed revocation is visible before ticket state changes.
+  await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`SELECT "id" FROM "User" WHERE "id" = ${userId} FOR SHARE`);
+  const user = await tx.user.findUnique({ where: { id: userId }, select: { role: true, assignedCinemaId: true, authVersion: true } });
+  if (!user || user.authVersion !== req.authVersion) {
+    throw new DomainError("INVALID_TOKEN", "Phiên đăng nhập không hợp lệ hoặc đã bị thu hồi.", 401);
+  }
+  if (user.role !== Role.ADMIN && user.role !== Role.STAFF) {
+    throw new DomainError("ROLE_FORBIDDEN", "Tài khoản không có quyền thực hiện thao tác này.", 403);
+  }
+  return user;
+}
+
+function assertStaffCinemaScope(user: { role: Role; assignedCinemaId: string | null }, ticketCinemaId: string) {
   if (user.role === Role.STAFF && user.assignedCinemaId !== ticketCinemaId) {
     throw new DomainError("CINEMA_FORBIDDEN", "Nhân viên chỉ được soát vé tại rạp được phân công.", 403);
   }
@@ -557,6 +571,7 @@ export function createApp() {
   app.post("/api/tickets/:ticketId/check-in", ticketIdCheckInLimiter, requireAuth, requireRole(...staffRoles), asyncRoute(async (req, res) => {
     const ticketId = String(req.params.ticketId);
     const checkedIn = await prisma.$transaction(async (tx) => {
+      const actor = await getCurrentCheckInActor(tx, req);
       await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`SELECT "id" FROM "Ticket" WHERE "id" = ${ticketId} FOR UPDATE`);
       const ticket = await tx.ticket.findUnique({
         where: { id: ticketId },
@@ -566,7 +581,7 @@ export function createApp() {
         }
       });
       if (!ticket) throw new DomainError("TICKET_NOT_FOUND", "Không tìm thấy vé.", 404);
-      assertStaffCinemaScope(req.user!, ticket.order.showtime.auditorium.cinema.id);
+      assertStaffCinemaScope(actor, ticket.order.showtime.auditorium.cinema.id);
       if (ticket.order.status !== OrderStatus.CONFIRMED) throw new DomainError("TICKET_NOT_VALID", "Vé chưa được thanh toán hoặc không còn hiệu lực.", 422);
       if (ticket.checkedInAt) throw new DomainError("TICKET_ALREADY_USED", "Vé này đã được sử dụng.", 409);
       const now = new Date();
@@ -585,6 +600,7 @@ export function createApp() {
     req.params.ticketId = ticket.id;
     const ticketId = ticket.id;
     const checkedIn = await prisma.$transaction(async (tx) => {
+      const actor = await getCurrentCheckInActor(tx, req);
       await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`SELECT "id" FROM "Ticket" WHERE "id" = ${ticketId} FOR UPDATE`);
       const current = await tx.ticket.findUnique({
         where: { id: ticketId },
@@ -594,7 +610,7 @@ export function createApp() {
         }
       });
       if (!current) throw new DomainError("TICKET_NOT_FOUND", "Không tìm thấy vé.", 404);
-      assertStaffCinemaScope(req.user!, current.order.showtime.auditorium.cinema.id);
+      assertStaffCinemaScope(actor, current.order.showtime.auditorium.cinema.id);
       if (current.order.status !== OrderStatus.CONFIRMED) throw new DomainError("TICKET_NOT_VALID", "Vé chưa được thanh toán hoặc không còn hiệu lực.", 422);
       if (current.checkedInAt) throw new DomainError("TICKET_ALREADY_USED", "Vé này đã được sử dụng.", 409);
       const now = new Date();
