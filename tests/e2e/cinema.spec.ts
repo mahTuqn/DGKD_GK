@@ -341,33 +341,76 @@ test("[TC-E2E-02] trang khám phá và dialog đăng nhập không có lỗi axe
   await expect(restoreFocus).toBeFocused();
 });
 
-test("[TC-E2E-03][TC-E2E-25] staff soát QR và thông báo thành công/lỗi có thể tiếp cận", async ({ page }) => {
+test("[TC-E2E-03][TC-E2E-25] Staff soát QR bằng bàn phím ở 320px và thông báo thành công/lỗi có thể tiếp cận", async ({ page }) => {
   await registerCustomer(page);
   await buyOneTicket(page);
   const qrToken = await getNewestTicketQrToken(page);
 
-  // Clear the customer session before signing in as staff.
+  // Prepare the small-viewport Staff flow before the keyboard-only section begins.
+  await page.setViewportSize({ width: 320, height: 800 });
   await page.evaluate(() => localStorage.removeItem("cinemabooking.session"));
   await page.reload();
-  await openLogin(page);
-  await page.getByLabel("Email").fill("staff@cinema.local");
-  await page.getByLabel("Mật khẩu").fill("CinemaStaff123!");
-  await page.getByRole("dialog").getByRole("button", { name: "Đăng nhập", exact: true }).click();
-  await page.getByRole("button", { name: "Soát vé" }).click();
 
-  await page.getByLabel("Mã QR vé").fill(qrToken);
-  await page.getByRole("button", { name: "Xác nhận vào rạp" }).click();
+  const loginLauncher = page.getByRole("button", { name: "Mở tài khoản", exact: true });
+  await tabUntilFocused(page, loginLauncher, 30);
+  await expectVisibleKeyboardFocus(loginLauncher);
+  await expect(loginLauncher).toBeInViewport({ ratio: 1 });
+  await page.keyboard.press("Enter");
+
+  const loginDialog = page.getByRole("dialog");
+  const email = loginDialog.getByLabel("Email");
+  const password = loginDialog.getByLabel("Mật khẩu");
+  await expectVisibleKeyboardFocus(email);
+  await expect(email).toBeInViewport({ ratio: 1 });
+  await page.keyboard.type("staff@cinema.local");
+  await page.keyboard.press("Tab");
+  await expectVisibleKeyboardFocus(password);
+  await expect(password).toBeInViewport({ ratio: 1 });
+  await page.keyboard.type("CinemaStaff123!");
+  await page.keyboard.press("Tab");
+  const loginSubmit = loginDialog.getByRole("button", { name: "Đăng nhập", exact: true });
+  await expectVisibleKeyboardFocus(loginSubmit);
+  await expect(loginSubmit).toBeInViewport({ ratio: 1 });
+  await page.keyboard.press("Enter");
+  await expect.poll(() => page.evaluate(() => Boolean(localStorage.getItem("cinemabooking.session")))).toBe(true);
+  const discoverNavigation = page.getByRole("button", { name: "Khám phá", exact: true });
+  await expectVisibleKeyboardFocus(discoverNavigation);
+  await expect(discoverNavigation).toBeInViewport({ ratio: 1 });
+
+  const staffNavigation = page.getByRole("button", { name: "Soát vé", exact: true });
+  await expect(staffNavigation).toBeVisible();
+  await tabUntilFocused(page, staffNavigation, 40);
+  await expectVisibleKeyboardFocus(staffNavigation);
+  await expect(staffNavigation).toBeInViewport({ ratio: 1 });
+  await page.keyboard.press("Enter");
+
+  await expect(page.getByRole("heading", { name: "Soát vé tại cửa" })).toBeVisible();
+  await expectVisibleKeyboardFocus(staffNavigation);
+  await expect(staffNavigation).toBeInViewport({ ratio: 1 });
+  const scanInput = page.getByLabel("Mã QR vé");
+  await tabUntilFocused(page, scanInput, 40);
+  await expectVisibleKeyboardFocus(scanInput);
+  await expect(scanInput).toBeInViewport({ ratio: 1 });
+  await page.keyboard.type(qrToken);
+  await page.keyboard.press("Enter");
   await expect(page.getByRole("status")).toContainText("Vé hợp lệ");
+  await expectVisibleKeyboardFocus(scanInput);
+  await expect(scanInput).toBeInViewport({ ratio: 1 });
   expect(axeViolations((await wcagAxe(page).include(".scan-panel").analyze()).violations)).toEqual([]);
 
-  await page.getByLabel("Mã QR vé").fill(qrToken);
-  await page.getByRole("button", { name: "Xác nhận vào rạp" }).click();
+  await page.keyboard.type(qrToken);
+  await page.keyboard.press("Enter");
   await expect(page.getByRole("alert")).toContainText("đã được sử dụng");
+  await expectVisibleKeyboardFocus(scanInput);
+  await expect(scanInput).toBeInViewport({ ratio: 1 });
   expect(axeViolations((await wcagAxe(page).include(".scan-panel").analyze()).violations)).toEqual([]);
 
-  await page.getByLabel("Mã QR vé").fill("invalid-qr-token-that-is-not-in-db");
-  await page.getByRole("button", { name: "Xác nhận vào rạp" }).click();
+  await page.keyboard.press("ControlOrMeta+A");
+  await page.keyboard.type("invalid-qr-token-that-is-not-in-db");
+  await page.keyboard.press("Enter");
   await expect(page.getByRole("alert")).toContainText("Mã vé không hợp lệ");
+  await expectVisibleKeyboardFocus(scanInput);
+  await expect(scanInput).toBeInViewport({ ratio: 1 });
   expect(axeViolations((await wcagAxe(page).include(".scan-panel").analyze()).violations)).toEqual([]);
 });
 

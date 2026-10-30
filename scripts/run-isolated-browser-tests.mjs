@@ -20,11 +20,36 @@ const playwrightArgs = [];
 for (let index = 2; index < process.argv.length; index += 1) {
   const argument = process.argv[index] ?? "";
   const project = argument === "--project" ? process.argv[++index] : argument.startsWith("--project=") ? argument.slice("--project=".length) : undefined;
-  if (!project || !allowedProjects.has(project)) {
-    console.error("Only --project=chromium-desktop and --project=chromium-mobile are supported; the isolated runner owns the config, workers, URLs, and database.");
+  if (project !== undefined) {
+    if (!allowedProjects.has(project)) {
+      console.error("Only --project=chromium-desktop and --project=chromium-mobile are supported; the isolated runner owns the config, workers, URLs, and database.");
+      process.exit(2);
+    }
+    playwrightArgs.push(`--project=${project}`);
+    continue;
+  }
+
+  const grep = argument === "--grep"
+    ? process.argv[++index]?.trim()
+    : argument.startsWith("--grep=")
+      ? argument.slice("--grep=".length).trim()
+      : undefined;
+  if (grep !== undefined) {
+    if (!grep || grep.length > 200 || playwrightArgs.includes("--grep")) {
+      console.error("Pass one non-empty --grep pattern of at most 200 characters to select isolated browser tests.");
+      process.exit(2);
+    }
+    playwrightArgs.push("--grep", grep);
+    continue;
+  }
+
+  if (argument === "--grep") {
+    console.error("Pass a non-empty test pattern after --grep.");
     process.exit(2);
   }
-  playwrightArgs.push(`--project=${project}`);
+
+  console.error("Only --project=chromium-desktop, --project=chromium-mobile, and one --grep pattern are supported; the isolated runner owns the config, workers, URLs, and database.");
+  process.exit(2);
 }
 const childEnv = {
   ...process.env,

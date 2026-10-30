@@ -1,5 +1,11 @@
 # Kế hoạch kiểm thử CinemaBooking
 
+## Local browser/accessibility follow-up — based on `78636af` — 31/10/2026
+
+The pre-fix isolated full browser run recorded **70/72** passes; the two TC-E2E-03 executions failed because the mobile account button's accessible name included its decorative arrow. The visible arrow remains, but it was removed from the button's `aria-label`. The targeted isolated retest `npm run test:browser:isolated -- --grep TC-E2E-03` then passed **2/2** at 320×800 on Chromium desktop and mobile. The isolated runner now supports a bounded `--grep` option for focused browser retests. Exact-source CI for the fix is pending; see the [local retest evidence](evidence/followup/2026-10-31-local-staff-keyboard-retest-78636af.json).
+
+The 90-row accessibility checklist remains **8 Fail / 5 Pass / 77 Not tested**. The targeted browser test checks keyboard operation, DOM focus, status/alert roles, and axe results; it does not verify real screen-reader speech, browser zoom/text resizing, or physical-device touch.
+
 ## Exact-source verification — `5ff39ca` — 31/10/2026
 
 All three workflows passed for commit `5ff39ca369bc408b8a301925a0fdf89b611ada0a`: [quality/API/DAST/domain/Compose 41114224279](https://github.com/mahTuqn/DGKD_GK/actions/runs/41114224279), [Firefox/WebKit smoke 41114224249](https://github.com/mahTuqn/DGKD_GK/actions/runs/41114224249), and [15-minute worker soak 41114224111](https://github.com/mahTuqn/DGKD_GK/actions/runs/41114224111). The quality job completed in **16m 28s** and reported **72 Playwright passes** in 3.4 minutes on Chromium desktop and mobile. The API/typecheck/traceability, OpenAPI, Compose browser smoke, DAST configured gate, and domain/mutation gates passed. Mutation score was **82.89%** (155 killed / 32 survived against a 70% threshold). The cross-browser workflow includes TC-E2E-38 and passed on Firefox and WebKit (**1/1 each**); the worker soak/restart passed in **15m 18s**, with cleanup successful.

@@ -1,0 +1,37 @@
+{
+  "recordedAt": "2026-10-31",
+  "baseCommit": "78636afae474862f8581b51a4389a057b58cc5b9",
+  "scope": "Local working-tree follow-up for TC-E2E-03 / TC-E2E-25 keyboard-only Staff scanning at a 320x800 viewport.",
+  "initialRun": {
+    "command": "npm run test:browser:isolated",
+    "result": "70/72 passed; both TC-E2E-03 executions failed because the account button accessible name included its decorative arrow (\"↗ Mở tài khoản\").",
+    "disposition": "The visible arrow was retained and removed from the aria-label."
+  },
+  "focusedRetest": {
+    "command": "npm run test:browser:isolated -- --grep TC-E2E-03",
+    "result": "2/2 passed",
+    "projects": ["chromium-desktop", "chromium-mobile"],
+    "viewport": "320x800",
+    "coverage": [
+      "Keyboard-only Staff sign-in and view navigation",
+      "Keyboard-only valid, duplicate, and invalid ticket scans",
+      "Visible focus and viewport assertions",
+      "Status/alert role assertions and axe scans"
+    ]
+  },
+  "isolation": {
+    "database": "Disposable PostgreSQL 17 container and volume removed after the run.",
+    "frontend": "Isolated test server used port 5175; existing app on port 5173 was preserved."
+  },
+  "checks": {
+    "scriptSyntax": "node --check scripts/run-isolated-browser-tests.mjs passed.",
+    "traceability": "npm run qa:trace passed: 131 cases / 29 requirements.",
+    "secretScan": "npm run scan:secrets passed: 132 commits scanned, no leaks."
+  },
+  "ci": "Exact-source GitHub Actions for the fix is pending.",
+  "limitations": [
+    "The focused retest is not a full rerun of all 72 browser executions.",
+    "The manual 90-row accessibility checklist remains 8 Fail / 5 Pass / 77 Not tested.",
+    "Real screen-reader speech, browser zoom/text resizing, and physical-device touch were not verified."
+  ]
+}
