@@ -226,5 +226,14 @@
     "manual": "Keyboard submit of duplicate demo email displayed the error but left focus on body.",
     "retest": "Working-tree Chromium test passed for duplicate registration and invalid login; submit focus restored after error.",
     "limitations": "Does not establish full workflow or real screen-reader speech."
+  },
+  "crossBrowserRegressions20261030": {
+    "source": "863e74d",
+    "cases": [
+      "Seat limit provides feedback and allows changing selection",
+      "Auth errors retain keyboard focus on the submit button"
+    ],
+    "result": "Firefox and WebKit: 4/4 passed in 17.8 seconds",
+    "limitations": "Automated keyboard assertions do not verify actual screen-reader speech or complete the manual checklist."
   }
 }
