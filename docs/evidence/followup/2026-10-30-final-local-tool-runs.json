@@ -1,0 +1,62 @@
+{
+  "reviewDate": "2026-10-30",
+  "sourceBaseline": "7adffff",
+  "scope": "Final local verification after mobile movie-card CSS and TC-E2E-27 updates.",
+  "checks": {
+    "testTypecheck": "passed",
+    "traceability": {
+      "result": "passed",
+      "testCases": 122,
+      "requirements": 28
+    },
+    "openApiLint": "passed",
+    "secretScan": {
+      "result": "passed",
+      "commitsScanned": 116,
+      "leaks": 0
+    },
+    "backendTests": {
+      "command": "npm run test --workspace backend",
+      "passed": 24,
+      "skipped": 48,
+      "databaseTestUrlConfigured": false,
+      "note": "Database-dependent integration tests were skipped because DATABASE_URL_TEST is not configured in this shell."
+    },
+    "mobileMovieRegression": {
+      "test": "TC-E2E-27",
+      "target": "http://127.0.0.1:5173/",
+      "api": "Mocked by the test",
+      "results": {
+        "chromiumDesktop": "1 passed",
+        "chromiumMobilePixel7": "1 passed",
+        "firefoxDesktop": "1 passed",
+        "webkitDesktop": "1 passed"
+      },
+      "assertions": [
+        "All four movie cards remain visible at 320 and 800 CSS px.",
+        "Long and unbreakable movie titles are not clipped.",
+        "Movie-card actions meet the 24x24 CSS px minimum at 320 CSS px.",
+        "The page has no horizontal overflow at 320 and 800 CSS px."
+      ]
+    },
+    "responsiveCatalogFinding": {
+      "id": "A11Y-F10",
+      "before": "At widths below 1000px, CSS hid movie cards from the fourth onward.",
+      "change": "Removed both responsive nth-child hide rules so the catalog remains available on mobile and tablet.",
+      "retest": "TC-E2E-27 asserted four rendered movie cards at 320px and 800px in all four listed browser projects.",
+      "result": "passed"
+    },
+    "frontendProductionBuild": "passed",
+    "backendTypeScriptBuildCheck": "passed with tsc --noEmit",
+    "combinedBuild": {
+      "result": "blocked",
+      "detail": "npm run build stopped during prisma generate: Windows returned EPERM while replacing query_engine-windows.dll.node. The local API process was still running and using the Prisma engine."
+    }
+  },
+  "notRun": [
+    "Full browser suite on the current working tree; the earlier 64/64 Chromium and 64/64 Firefox/WebKit runs are recorded separately, and the current mobile regression was rerun across all four projects.",
+    "Database-backed API, worker, and authorization integration tests because dedicated test database URLs are not configured.",
+    "Local ZAP DAST and worker soak because available physical memory was about 673 MiB during this run.",
+    "Screen-reader speech output and real mobile touch review because no screen reader/device surface was available to observe."
+  ]
+}

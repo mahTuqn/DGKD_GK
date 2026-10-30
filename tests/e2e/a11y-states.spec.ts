@@ -67,7 +67,7 @@ const seatMap = {
 type MockOptions = {
   loginError?: { status: number; error: string; message: string };
   registrationError?: { status: number; error: string; message: string };
-  movieTitle?: string;
+  movieTitles?: string[];
 };
 
 async function fulfillJson(route: Route, status: number, body: unknown) {
@@ -82,7 +82,15 @@ async function mockApi(page: Page, options: MockOptions = {}) {
     const { pathname } = new URL(request.url());
 
     if (request.method() === "GET" && pathname === "/api/movies") {
-      await fulfillJson(route, 200, [{ ...movie, title: options.movieTitle ?? movie.title }]);
+      const movies = options.movieTitles?.length
+        ? options.movieTitles.map((title, index) => ({
+          ...movie,
+          id: index === 0 ? movie.id : `${movie.id}-${index}`,
+          slug: index === 0 ? movie.slug : `${movie.slug}-${index}`,
+          title,
+        }))
+        : [movie];
+      await fulfillJson(route, 200, movies);
     } else if (request.method() === "GET" && pathname === "/api/showtimes") {
       await fulfillJson(route, 200, [showtime]);
     } else if (request.method() === "GET" && pathname === `/api/showtimes/${showtime.id}/seats`) {
@@ -165,18 +173,52 @@ function contrastRatioOver(foregroundColor: string, backgroundColor: string, for
   return (Math.max(foregroundLuminance, backgroundLuminance) + 0.05) / (Math.min(foregroundLuminance, backgroundLuminance) + 0.05);
 }
 
-test("[TC-E2E-27] nhãn sơ đồ ghế mô tả trạng thái và loại ghế tiếp cận", async ({ page }) => {
+test("[TC-E2E-27] mobile shows every movie title without clipping and keeps targets large enough", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 800 });
-  const longMovieTitle = "Thành Phố Lúc Nửa Đêm";
-  await mockApi(page, { movieTitle: longMovieTitle });
+  const movieTitles = [
+    "Thành Phố Lúc Nửa Đêm",
+    "SupercalifragilisticexpialidociousCinema",
+    "A11y Mobile Film Three",
+    "A11y Mobile Film Four",
+  ];
+  await mockApi(page, { movieTitles });
   await page.goto("/");
-  await expect(page.getByTestId("movie-card").first()).toBeVisible();
-  const movieTitleHeading = page.getByRole("heading", { name: longMovieTitle, level: 3 });
-  await expect(movieTitleHeading).toBeVisible();
-  const movieTitleIsClipped = await movieTitleHeading.evaluate((element) => {
-    return element.scrollWidth > element.clientWidth || element.scrollHeight > element.clientHeight;
+  const movieCards = page.getByTestId("movie-card");
+  await expect(movieCards).toHaveCount(movieTitles.length);
+  for (const title of movieTitles) await expect(page.getByRole("heading", { name: title, level: 3 })).toBeVisible();
+  const movieTitleBoxes = await page.locator(".movie-info h3").evaluateAll((elements) => {
+    return elements.map((element) => ({
+      clipped: element.scrollWidth > element.clientWidth || element.scrollHeight > element.clientHeight,
+    }));
   });
-  expect(movieTitleIsClipped).toBe(false);
+  expect(movieTitleBoxes).toHaveLength(movieTitles.length);
+  expect(movieTitleBoxes.every(({ clipped }) => !clipped)).toBe(true);
+  const movieActionTargets = await movieCards.getByRole("button", { name: "Xem suất chiếu" }).evaluateAll((elements) => {
+    return elements.map((element) => {
+      const bounds = element.getBoundingClientRect();
+      return { width: bounds.width, height: bounds.height };
+    });
+  });
+  expect(movieActionTargets).toHaveLength(movieTitles.length);
+  expect(movieActionTargets.every(({ width, height }) => width >= 24 && height >= 24)).toBe(true);
+  const moviePageWidth = await page.evaluate(() => ({
+    clientWidth: document.documentElement.clientWidth,
+    scrollWidth: document.documentElement.scrollWidth,
+  }));
+  expect(moviePageWidth.scrollWidth).toBeLessThanOrEqual(moviePageWidth.clientWidth);
+  await page.setViewportSize({ width: 800, height: 800 });
+  await expect(movieCards).toHaveCount(movieTitles.length);
+  for (const title of movieTitles) await expect(page.getByRole("heading", { name: title, level: 3 })).toBeVisible();
+  const tabletMovieTitleBoxes = await page.locator(".movie-info h3").evaluateAll((elements) => {
+    return elements.map((element) => element.scrollWidth > element.clientWidth || element.scrollHeight > element.clientHeight);
+  });
+  expect(tabletMovieTitleBoxes.every((clipped) => !clipped)).toBe(true);
+  const tabletPageWidth = await page.evaluate(() => ({
+    clientWidth: document.documentElement.clientWidth,
+    scrollWidth: document.documentElement.scrollWidth,
+  }));
+  expect(tabletPageWidth.scrollWidth).toBeLessThanOrEqual(tabletPageWidth.clientWidth);
+  await page.setViewportSize({ width: 320, height: 800 });
   await page.getByTestId("movie-card").first().getByRole("button", { name: "Xem suất chiếu" }).click();
   await page.getByTestId("showtime-option").first().click();
 

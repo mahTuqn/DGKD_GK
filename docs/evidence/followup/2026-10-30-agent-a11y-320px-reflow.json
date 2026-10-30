@@ -19,6 +19,83 @@
     "result": "Focus moved to the first movie poster button and an orange focus outline was visible.",
     "scope": "Partial observation only; the full keyboard workflow was not completed."
   },
+  "filterWorkflow": {
+    "workflow": "A11Y-02 movie, cinema and date filters",
+    "keyboardActions": [
+      "ArrowDown on the date select changed 2026-10-31 to 2026-11-01; the visible no-results message and role=status text updated.",
+      "ArrowUp restored 2026-10-31 and the two showtimes; focus stayed on the date select.",
+      "Tab moved from the date select to the cinema select; Shift+Tab returned to the date select.",
+      "ArrowDown on the cinema select chose Cinema Saigon Center; the two-showtime result remained and focus stayed on the select.",
+      "Escape retained the selected date and focus. Space and Enter left the selected value and visible focus intact; this browser surface did not expose a native option popup for visual confirmation."
+    ],
+    "visualAndAccessibilityTree": {
+      "visibleLabels": ["NGÀY XEM PHIM", "RẠP CHIẾU"],
+      "accessibilityTreeNames": ["Ngày xem phim", "Rạp chiếu"],
+      "selectedValuesWereExposed": true,
+      "focusIndicator": "rgb(255, 152, 118) solid 1.6px",
+      "emptyStateText": "Ngày này chưa có suất chiếu phù hợp. Hãy thử một ngày khác hoặc đổi rạp nhé.",
+      "roleStatusChanged": true,
+      "actualScreenReaderSpeech": "not tested"
+    },
+    "targetMeasurementsAt320": {
+      "viewportWidth": 320,
+      "documentClientWidth": 305,
+      "documentScrollWidth": 305,
+      "dateSelect": {
+        "width": 117,
+        "height": 38
+      },
+      "cinemaSelect": {
+        "width": 117,
+        "height": 38
+      },
+      "gap": 9
+    },
+    "contrastRatios": {
+      "filterLabel": {
+        "foreground": "rgb(170, 164, 155)",
+        "background": "rgb(23, 23, 22)",
+        "ratio": "7.26:1"
+      },
+      "selectedControlText": {
+        "foreground": "rgb(244, 240, 235)",
+        "background": "rgb(32, 32, 30)",
+        "ratio": "14.39:1"
+      },
+      "controlBorder": {
+        "foreground": "rgb(133, 128, 120)",
+        "background": "rgb(32, 32, 30)",
+        "ratio": "4.16:1"
+      },
+      "focusIndicator": {
+        "foreground": "rgb(255, 152, 118)",
+        "background": "rgb(23, 23, 22)",
+        "ratio": "8.55:1"
+      },
+      "emptyMessageHeading": {
+        "foreground": "rgb(231, 227, 221)",
+        "background": "rgb(16, 16, 15)",
+        "ratio": "14.89:1"
+      },
+      "emptyMessageBody": {
+        "foreground": "rgb(147, 144, 136)",
+        "background": "rgb(16, 16, 15)",
+        "ratio": "5.97:1"
+      }
+    },
+    "screenshots": [
+      "docs/evidence/followup/2026-10-30-a11y-320px-filter-keyboard.png",
+      "docs/evidence/followup/2026-10-30-a11y-320px-filter-empty.png"
+    ],
+    "manualOutcomes": {
+      "focusOrderAndPersistence": "Pass",
+      "focusNotObscured": "Pass",
+      "colorAndContrastForObservedFilterStates": "Pass",
+      "pointerTargetSize": "Pass",
+      "accessibleNameRetest": "labels and selected values match; prior Fail remains recorded",
+      "keyboardAndReflow": "Not tested as complete criteria; native activation popup and actual 200% zoom/text resizing remain unverified"
+    }
+  },
   "reflowFinding": {
     "id": "A11Y-F08",
     "workflow": "A11Y-01 movie discovery",
@@ -57,8 +134,42 @@
       "crossBrowserRetest": {
         "projects": ["firefox", "webkit"],
         "result": "2 passed"
-      }
+      },
+      "assertions": ["movie-card title does not clip at 320 CSS px", "movie-card showtime buttons meet 24x24 CSS px"]
     }
+  },
+  "targetSizeFinding": {
+    "id": "A11Y-F09",
+    "workflow": "A11Y-01 movie discovery",
+    "check": "TARGET-01 at 320 CSS px",
+    "before": {
+      "element": "Xem suất chiếu button in each movie card",
+      "width": 78,
+      "height": 11,
+      "result": "Target height was below the 24 CSS px minimum."
+    },
+    "change": "The mobile rule now sets a 24px minimum height and adds vertical padding.",
+    "after": {
+      "targets": 3,
+      "eachWidth": 78,
+      "eachHeight": 24,
+      "viewportCssPixels": {
+        "width": 320,
+        "height": 800
+      },
+      "documentClientWidth": 305,
+      "documentScrollWidth": 305,
+      "horizontalPageOverflow": false,
+      "result": "All three movie-card actions meet 24x24 CSS px and remain within the page width."
+    },
+    "visualRetestScreenshot": "docs/evidence/followup/2026-10-30-a11y-320px-after.png",
+    "automatedRetest": {
+      "test": "TC-E2E-27",
+      "chromium": "1 passed",
+      "firefox": "1 passed",
+      "webkit": "1 passed"
+    },
+    "originalFailRetained": true
   },
   "additionalViewportObservations": [
     {
