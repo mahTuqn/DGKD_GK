@@ -1,0 +1,36 @@
+{
+  "reviewDate": "2026-10-30",
+  "testId": "TC-OPS-02",
+  "sourceCommit": "eed69b377e8da05d0d0757fc23af32f5cc706dd9",
+  "scope": "Exercise a custom-format PostgreSQL backup and restore only against the disposable PostgreSQL 17 service created by GitHub Actions.",
+  "safetyConstraints": [
+    "The script requires GITHUB_ACTIONS=true and CI=true.",
+    "Source and target URLs must resolve to loopback PostgreSQL; remote hosts are refused.",
+    "The source database must be the seeded CI database named cinema.",
+    "The restore target must use the run-specific cinema_restore_target_<run>_<attempt> name and must not already exist.",
+    "Source and target share the same CI role and PostgreSQL service; the source is read-only during this check."
+  ],
+  "verification": {
+    "command": "node scripts/verify-ci-backup-restore.mjs (CI step: Verify disposable PostgreSQL backup/restore)",
+    "workflowRun": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41067858301",
+    "result": "passed",
+    "stepsConfirmed": [
+      "Source encoding is UTF8 and seeded user tables contain rows.",
+      "pg_dump creates a non-empty custom-format archive.",
+      "A new UTF8 target is created from template0.",
+      "pg_restore completes with --exit-on-error and --single-transaction.",
+      "Restored target encoding is UTF8 and every user-table row count matches the source.",
+      "The run-specific target database and temporary dump are removed; cleanup failure would fail the step."
+    ]
+  },
+  "fullSourceCi": {
+    "crossBrowserSmoke": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41067858390",
+    "workerSoak15Minutes": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41067858365",
+    "allWorkflows": "passed on the source commit above"
+  },
+  "limitations": [
+    "Matching row counts do not prove that every restored field value or large object is identical.",
+    "This CI smoke does not establish production backup scheduling, off-site retention, encryption, point-in-time recovery, RPO/RTO, or production restore readiness.",
+    "No production or user database was accessed."
+  ]
+}

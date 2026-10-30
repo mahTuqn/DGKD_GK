@@ -1,5 +1,11 @@
 # Báo cáo tổng hợp kiểm thử
 
+## Exact-source test run — `eed69b3` — 30/10/2026
+
+All three workflows passed on source `eed69b377e8da05d0d0757fc23af32f5cc706dd9`: [quality/API/DAST/domain/Compose 41067858301](https://github.com/mahTuqn/DGKD_GK/actions/runs/41067858301), [Firefox/WebKit smoke 41067858390](https://github.com/mahTuqn/DGKD_GK/actions/runs/41067858390), and [15-minute worker soak 41067858365](https://github.com/mahTuqn/DGKD_GK/actions/runs/41067858365). Quality confirms the complete API suite, TC-OPS-02 backup/restore against a disposable PostgreSQL service, build, browser tests, Compose booking smoke, configured DAST gate and summary accuracy, and domain/mutation thresholds. The independent worker job passed its two-worker 15-minute soak and graceful restart.
+
+TC-E2E-35 passed locally **4/4** on the production preview across Chromium desktop/mobile, Firefox and WebKit; TC-SEC-49 passed **10/10** in the focused configuration suite. Traceability is **126 test cases / 29 requirements**. The DAST artifact metadata is recorded in [the run](https://github.com/mahTuqn/DGKD_GK/actions/runs/41067858301); unauthenticated download returns HTTP 401, so alert details and triage are still open. The manual accessibility checklist remains **8 Fail / 5 Pass / 77 Not tested**. Screen-reader speech, actual browser zoom/text resizing, physical-device touch, staging performance, production backup/PITR/RPO/RTO, and exhaustive ASVS/BOLA review remain unverified. Evidence: [exact-source manifest](evidence/followup/2026-10-30-github-actions-eed69b3.json).
+
 ## Accessibility and CI follow-up — 30/10/2026
 
 Local full Playwright suite on source `7adffff` passed **64/64 configured executions** across Chromium desktop and Pixel 7 (0 unexpected, skipped or flaky; 4m 23s), excluding the separate Compose smoke. See [local evidence](evidence/followup/2026-10-30-local-full-browser-7adffff.json). This does not establish GitHub CI or manual screen-reader/touch completion.

@@ -1,6 +1,7 @@
 {
   "reviewDate": "2026-10-30",
   "testId": "TC-E2E-35",
+  "sourceCommitUnderTest": "eed69b377e8da05d0d0757fc23af32f5cc706dd9",
   "sourceBaseCommit": "adb1204e0f5faa0ef62202a5a45eb78d24e67229",
   "sourceChangesUnderTest": [
     "tests/e2e/a11y-states.spec.ts",
@@ -30,6 +31,30 @@
         "failed": 0,
         "durationSeconds": 5.1
       }
+    }
+  },
+  "productionPreviewVerification": {
+    "environment": "Locally built Vite production preview with Content-Security-Policy style-src 'self' https://fonts.googleapis.com; all API calls mocked; no database or Docker writes.",
+    "sourceCommitUnderTest": "eed69b377e8da05d0d0757fc23af32f5cc706dd9",
+    "results": {
+      "chromium-desktop": { "passed": 1, "failed": 0 },
+      "chromium-mobile": { "passed": 1, "failed": 0 },
+      "firefox-desktop": { "passed": 1, "failed": 0 },
+      "webkit-desktop": { "passed": 1, "failed": 0 }
+    },
+    "total": { "passed": 4, "failed": 0 },
+    "reportNote": "The final JSON report was written at 2026-10-30 21:04:56 +07 and contains the two Chromium passes; the preceding Firefox/WebKit run reported two passes in console, but its JSON was overwritten. No failure trace or screenshot was produced."
+  },
+  "exactSourceCi": {
+    "qualityRun": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41067858301",
+    "crossBrowserRun": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41067858390",
+    "workerSoakRun": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41067858365",
+    "result": "All three workflows passed on source commit eed69b377e8da05d0d0757fc23af32f5cc706dd9; TC-E2E-35 is included in the Firefox/WebKit smoke and the quality browser suite.",
+    "crossBrowserArtifact": {
+      "id": 12983331957,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41067858390/artifacts/12983331957",
+      "downloaded": false,
+      "note": "Unauthenticated artifact download returned HTTP 401."
     }
   },
   "limitations": [

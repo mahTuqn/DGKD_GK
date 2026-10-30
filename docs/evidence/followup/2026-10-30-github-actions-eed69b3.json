@@ -1,0 +1,91 @@
+{
+  "reviewDate": "2026-10-30",
+  "sourceCommit": "eed69b377e8da05d0d0757fc23af32f5cc706dd9",
+  "branch": "codex/cross-browser-smoke",
+  "workflows": {
+    "quality": {
+      "runId": 41067858301,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41067858301",
+      "conclusion": "success",
+      "successfulJobs": [
+        "quality",
+        "Compose runtime and browser smoke",
+        "DAST (isolated Docker Compose)",
+        "Domain coverage and mutation thresholds"
+      ],
+      "keySuccessfulSteps": [
+        "Verify disposable PostgreSQL backup/restore (TC-OPS-02)",
+        "OpenAPI lint and traceability (126 test cases / 29 requirements)",
+        "Full API suite, including TC-SEC-49",
+        "Live five-minute hold expiry",
+        "Two-worker five-minute soak and graceful restart",
+        "Production build and configured Chromium browser tests",
+        "Isolated Compose booking/browser smoke",
+        "Three-scope DAST run and summary-accuracy/data-minimization check",
+        "Domain coverage and mutation thresholds"
+      ],
+      "artifacts": [
+        {
+          "id": 12984557467,
+          "name": "cinema-booking-browser-results-eed69b377e8da05d0d0757fc23af32f5cc706dd9",
+          "sizeBytes": 433677,
+          "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41067858301/artifacts/12984557467"
+        },
+        {
+          "id": 12984405720,
+          "name": "cinema-booking-domain-quality-eed69b377e8da05d0d0757fc23af32f5cc706dd9",
+          "sizeBytes": 144491,
+          "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41067858301/artifacts/12984405720"
+        },
+        {
+          "id": 12983931126,
+          "name": "cinema-booking-compose-browser-results-eed69b377e8da05d0d0757fc23af32f5cc706dd9",
+          "sizeBytes": 199935,
+          "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41067858301/artifacts/12983931126"
+        }
+      ]
+    },
+    "crossBrowserSmoke": {
+      "runId": 41067858390,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41067858390",
+      "conclusion": "success",
+      "scope": "Firefox and WebKit desktop smoke, including TC-E2E-35.",
+      "artifact": {
+        "id": 12983331957,
+        "name": "cinema-booking-cross-browser-results-eed69b377e8da05d0d0757fc23af32f5cc706dd9",
+        "sizeBytes": 308603,
+        "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41067858390/artifacts/12983331957"
+      }
+    },
+    "workerSoak15Minutes": {
+      "runId": 41067858365,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41067858365",
+      "conclusion": "success",
+      "scope": "Two-worker 15-minute soak and graceful restart."
+    }
+  },
+  "dastArtifact": {
+    "id": 12984161891,
+    "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41067858301/artifacts/12984161891",
+    "sizeBytes": 6508,
+    "digest": "sha256:500bb68cc54e99467bfe97152306cfe1efc0f45e44caa184f209636e7001c437",
+    "gateConclusion": "success",
+    "summaryAccuracyStep": "success",
+    "contentReview": "Not completed: unauthenticated artifact download returned HTTP 401. Alert names, affected inputs/routes, payloads, and triage are unknown."
+  },
+  "localFollowUp": {
+    "TC-E2E-35": "Passed 4/4 on the production preview with self-origin stylesheet CSP: Chromium desktop/mobile, Firefox, and WebKit. API calls were mocked; no database or Docker writes.",
+    "TC-SEC-49": "Focused database-independent configuration suite passed 10/10.",
+    "npm run qa:trace": "Passed: 126 test cases / 29 requirements.",
+    "npm run typecheck:tests": "Passed.",
+    "node --check scripts/verify-ci-backup-restore.mjs": "Passed.",
+    "git diff --check": "Passed after documentation updates."
+  },
+  "remainingGaps": [
+    "The manual accessibility checklist remains 8 Fail / 5 Pass / 77 Not tested.",
+    "Real screen-reader speech, actual browser zoom/text resizing, and physical-device touch are not verified.",
+    "DAST report contents and alert triage remain unreviewed because artifact download returned HTTP 401.",
+    "No staging performance run or production backup/PITR/RPO/RTO exercise was performed.",
+    "Exhaustive ASVS/API Top 10 and adversarial BOLA/IDOR review remain open."
+  ]
+}

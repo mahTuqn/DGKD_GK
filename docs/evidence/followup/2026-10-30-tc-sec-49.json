@@ -1,6 +1,7 @@
 {
   "reviewDate": "2026-10-30",
   "testId": "TC-SEC-49",
+  "sourceCommitUnderTest": "eed69b377e8da05d0d0757fc23af32f5cc706dd9",
   "scope": "JWT session expiry and maximum token age enforcement.",
   "initialRegression": {
     "signedTokenWithoutExp": {
@@ -27,10 +28,19 @@
   },
   "otherChecks": {
     "npm run typecheck:tests": "passed",
-    "npm run qa:trace": "passed: 125 test cases / 28 requirements; all sources and links resolved"
+    "npm run qa:trace": "passed: 126 test cases / 29 requirements; all sources and links resolved"
+  },
+  "exactSourceCi": {
+    "run": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41067858301",
+    "sourceCommit": "eed69b377e8da05d0d0757fc23af32f5cc706dd9",
+    "result": "The complete npm run test:api step passed; the quality workflow and all parallel workflows passed.",
+    "browserAndOperationalRuns": [
+      "https://github.com/mahTuqn/DGKD_GK/actions/runs/41067858390",
+      "https://github.com/mahTuqn/DGKD_GK/actions/runs/41067858365"
+    ]
   },
   "limitations": [
     "This focused regression does not constitute comprehensive JWT or ASVS testing.",
-    "Exact-source GitHub CI for this new authentication change is pending."
+    "The passing API suite does not establish comprehensive ASVS coverage or exhaustive BOLA/IDOR resistance."
   ]
 }
