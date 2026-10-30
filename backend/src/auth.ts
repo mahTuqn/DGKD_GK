@@ -44,8 +44,11 @@ export const requireAuth: RequestHandler = async (req: Request, res: Response, n
   const token = req.header("authorization")?.replace(/^Bearer\s+/i, "");
   if (!token) return res.status(401).json({ error: "AUTH_REQUIRED", message: "Vui lòng đăng nhập để tiếp tục." });
   try {
-    const payload = jwt.verify(token, jwtSecret(), { issuer: "cinema-booking" }) as jwt.JwtPayload;
+    const payload = jwt.verify(token, jwtSecret(), { issuer: "cinema-booking", maxAge: "8h" }) as jwt.JwtPayload;
     if (!payload.sub) return res.status(401).json({ error: "INVALID_TOKEN", message: "Phiên đăng nhập không hợp lệ." });
+    if (typeof payload.exp !== "number" || !Number.isFinite(payload.exp)) {
+      return res.status(401).json({ error: "INVALID_TOKEN", message: "Phiên đăng nhập không có thời hạn hợp lệ." });
+    }
     const user = await prisma.user.findUnique({ where: { id: payload.sub }, select: { id: true, name: true, email: true, role: true, assignedCinemaId: true, authVersion: true } });
     if (!user) return res.status(401).json({ error: "INVALID_TOKEN", message: "Tài khoản không còn tồn tại." });
     if (typeof payload.authVersion !== "number" || !Number.isSafeInteger(payload.authVersion) || payload.authVersion !== user.authVersion) {

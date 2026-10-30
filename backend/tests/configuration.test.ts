@@ -1,7 +1,9 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import jwt from "jsonwebtoken";
 import request from "supertest";
 import { assertMockPaymentConfiguration, createApp, getMutationRateLimit, getRegistrationRateLimit, isMockPaymentCompletionEnabled } from "../src/app.js";
 import { assertAuthenticationConfiguration } from "../src/auth.js";
+import { prisma } from "../src/db.js";
 
 const environmentKeys = ["NODE_ENV", "JWT_SECRET", "MOCK_PAYMENT_SECRET", "TRUST_PROXY_HOPS", "CORS_ORIGIN", "E2E_REGISTRATION_RATE_LIMIT", "E2E_MUTATION_RATE_LIMIT"] as const;
 const originalEnvironment = Object.fromEntries(environmentKeys.map((key) => [key, process.env[key]]));
@@ -178,5 +180,48 @@ describe("TC-SEC-48 HTTP security middleware and safe parser errors", () => {
     expect(oversized.status).toBe(413);
     expect(oversized.body.error).toBe("PAYLOAD_TOO_LARGE");
     expect(JSON.stringify(oversized.body)).not.toMatch(/stack|PayloadTooLargeError|node_modules/i);
+  });
+});
+
+describe("TC-SEC-49 JWT session lifetime enforcement", () => {
+  afterEach(() => {
+    restoreEnvironment();
+    vi.restoreAllMocks();
+  });
+
+  it("rejects signed tokens without exp or beyond the eight-hour maximum age before loading a user", async () => {
+    process.env.NODE_ENV = "test";
+    process.env.JWT_SECRET = "tc-sec-49-session-policy-test-secret-32chars";
+    const userId = "00000000-0000-4000-8000-000000000049";
+    const userLookup = vi.spyOn(prisma.user, "findUnique").mockResolvedValue({
+      id: userId,
+      name: "JWT policy test",
+      email: "jwt-policy@test.local",
+      role: "CUSTOMER",
+      assignedCinemaId: null,
+      authVersion: 0
+    } as never);
+    const app = createApp();
+    const options = { issuer: "cinema-booking", subject: userId };
+    const now = Math.floor(Date.now() / 1000);
+    const missingExpiry = jwt.sign({ authVersion: 0 }, process.env.JWT_SECRET, options);
+    const olderThanMaximumAge = jwt.sign(
+      { authVersion: 0, iat: now - 9 * 60 * 60, exp: now + 60 * 60 },
+      process.env.JWT_SECRET,
+      options
+    );
+
+    for (const token of [missingExpiry, olderThanMaximumAge]) {
+      const response = await request(app).get("/api/auth/me").set("Authorization", `Bearer ${token}`);
+      expect(response.status).toBe(401);
+      expect(response.body.error).toBe("INVALID_TOKEN");
+      expect(JSON.stringify(response.body)).not.toMatch(/stack|JsonWebTokenError|node_modules/i);
+    }
+    expect(userLookup).not.toHaveBeenCalled();
+
+    const validWithinLifetime = jwt.sign({ authVersion: 0 }, process.env.JWT_SECRET, { ...options, expiresIn: "8h" });
+    const accepted = await request(app).get("/api/auth/me").set("Authorization", `Bearer ${validWithinLifetime}`);
+    expect(accepted.status).toBe(200);
+    expect(userLookup).toHaveBeenCalledOnce();
   });
 });

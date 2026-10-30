@@ -430,3 +430,59 @@ test("[TC-E2E-33] Seat limit provides feedback and allows changing selection", a
   await page.keyboard.press("Space");
   await expect(seats.nth(8)).toHaveAttribute("aria-pressed", "true");
 });
+
+test("[TC-E2E-35] discovery text reflows under WCAG text-spacing overrides and filters remain keyboard operable", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  await mockApi(page, { movieTitles: [movie.title, "SupercalifragilisticexpialidociousCinema"] });
+  await page.goto("/");
+  await page.addStyleTag({
+    content: `
+      *, *::before, *::after {
+        line-height: 1.5 !important;
+        letter-spacing: 0.12em !important;
+        word-spacing: 0.16em !important;
+      }
+      p { margin-block-end: 2em !important; }
+    `,
+  });
+
+  const paragraph = page.locator(".hero-content > p");
+  const spacing = await paragraph.evaluate((element) => {
+    const style = getComputedStyle(element);
+    const fontSize = Number.parseFloat(style.fontSize);
+    return {
+      fontSize,
+      lineHeight: Number.parseFloat(style.lineHeight),
+      letterSpacing: Number.parseFloat(style.letterSpacing),
+      wordSpacing: Number.parseFloat(style.wordSpacing),
+      paragraphSpacing: Number.parseFloat(style.marginBlockEnd),
+    };
+  });
+  expect(spacing.lineHeight).toBeGreaterThanOrEqual(spacing.fontSize * 1.5 - 0.1);
+  expect(spacing.letterSpacing).toBeGreaterThanOrEqual(spacing.fontSize * 0.12 - 0.1);
+  expect(spacing.wordSpacing).toBeGreaterThanOrEqual(spacing.fontSize * 0.16 - 0.1);
+  expect(spacing.paragraphSpacing).toBeGreaterThanOrEqual(spacing.fontSize * 2 - 0.1);
+
+  const keyText = await page.locator(".hero h1, .hero-content > p, .section-heading h2, .movie-info h3, .movie-info p").evaluateAll((elements) => {
+    return elements.filter((element) => element.getClientRects().length > 0).map((element) => ({
+      text: element.textContent?.trim() || "",
+      clipped: element.scrollWidth > element.clientWidth + 1 || element.scrollHeight > element.clientHeight + 1,
+    }));
+  });
+  expect(keyText.length).toBeGreaterThan(0);
+  expect(keyText.filter(({ clipped, text }) => clipped || text.length === 0)).toEqual([]);
+  await expect(page.getByRole("heading", { name: "SupercalifragilisticexpialidociousCinema" })).toBeVisible();
+
+  const dateFilter = page.getByLabel("Ngày xem phim");
+  await expect(dateFilter).toHaveAccessibleName("Ngày xem phim");
+  await tabUntilFocused(page, dateFilter);
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
+  await expect(dateFilter).toBeFocused();
+
+  const pageWidth = await page.evaluate(() => ({
+    clientWidth: document.documentElement.clientWidth,
+    scrollWidth: document.documentElement.scrollWidth,
+  }));
+  expect(pageWidth.scrollWidth).toBeLessThanOrEqual(pageWidth.clientWidth);
+});

@@ -89,7 +89,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .movie-tags { display: flex; align-items: center; gap: 8px; color: #929089; font-size: 8px; white-space: nowrap; }
 .rating-tag { padding: 3px 5px; border: 1px solid rgba(255,255,255,.18); border-radius: 3px; color: #ddd8d0; font-weight: 700; }
 .movie-info h3 { overflow-wrap: anywhere; font: 700 14px Manrope,sans-serif; margin: 9px 0 6px; }
-.movie-info p { min-height: 38px; margin: 0; color: #918d86; font-size: 10px; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.movie-info p { min-height: 38px; margin: 0; color: #918d86; font-size: 10px; line-height: 1.6; }
 .movie-select { min-height: 24px; margin-top: 12px; font-size: 10px; }
 .schedule-section { padding-top: 65px; padding-bottom: 85px; }
 .schedule-section .section-heading { margin-bottom: 26px; }

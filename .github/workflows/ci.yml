@@ -63,6 +63,11 @@ jobs:
         env:
           DATABASE_URL: postgresql://cinema:cinema_dev@localhost:5432/cinema_api_process_race_test?schema=public
       - run: npm run db:seed
+      - name: Verify disposable PostgreSQL backup/restore
+        run: node scripts/verify-ci-backup-restore.mjs
+        env:
+          RESTORE_TEST_SOURCE_URL: postgresql://cinema:cinema_dev@127.0.0.1:5432/cinema
+          RESTORE_TEST_TARGET_URL: postgresql://cinema:cinema_dev@127.0.0.1:5432/cinema_restore_target_${{ github.run_id }}_${{ github.run_attempt }}
       - run: npm run lint:openapi
       - run: npm run qa:trace
       - name: Verify DAST summary accuracy and data minimization

@@ -1,0 +1,40 @@
+{
+  "reviewDate": "2026-10-30",
+  "testId": "TC-E2E-35",
+  "sourceBaseCommit": "adb1204e0f5faa0ef62202a5a45eb78d24e67229",
+  "sourceChangesUnderTest": [
+    "tests/e2e/a11y-states.spec.ts",
+    "frontend/src/styles.css"
+  ],
+  "scope": "At 320x800 CSS pixels, apply WCAG text-spacing overrides, verify long discovery content does not clip or overflow, and operate the date filter with the keyboard.",
+  "initialRegression": "Movie synopses were visually clamped to two lines with overflow hidden, clipping content when increased text spacing was applied.",
+  "fix": "Removed the line clamp and hidden overflow from movie synopsis paragraphs so text can reflow.",
+  "verification": {
+    "environment": "Running local app at http://127.0.0.1:5173 with mocked API responses; no database or Docker writes.",
+    "results": {
+      "chromium-desktop": {
+        "command": "$env:GITHUB_ACTIONS='true'; $env:E2E_BASE_URL='http://127.0.0.1:5173'; npx playwright test tests/e2e/a11y-states.spec.ts --grep 'TC-E2E-35' --project=chromium-desktop",
+        "passed": 1,
+        "failed": 0,
+        "durationSeconds": 2.4
+      },
+      "firefox-desktop": {
+        "command": "$env:GITHUB_ACTIONS='true'; $env:E2E_BASE_URL='http://127.0.0.1:5173'; $env:PLAYWRIGHT_CROSS_BROWSER_SMOKE='true'; npx playwright test tests/e2e/a11y-states.spec.ts --grep 'TC-E2E-35' --project=firefox-desktop",
+        "passed": 1,
+        "failed": 0,
+        "durationSeconds": 8.3
+      },
+      "webkit-desktop": {
+        "command": "$env:GITHUB_ACTIONS='true'; $env:E2E_BASE_URL='http://127.0.0.1:5173'; $env:PLAYWRIGHT_CROSS_BROWSER_SMOKE='true'; npx playwright test tests/e2e/a11y-states.spec.ts --grep 'TC-E2E-35' --project=webkit-desktop",
+        "passed": 1,
+        "failed": 0,
+        "durationSeconds": 5.1
+      }
+    }
+  },
+  "limitations": [
+    "The test is automated browser evidence and does not complete the manual accessibility checklist.",
+    "Actual 200%/400% browser zoom, screen-reader speech, physical mobile touch and device behavior remain unverified.",
+    "No screenshots, video or trace were retained for the successful runs."
+  ]
+}

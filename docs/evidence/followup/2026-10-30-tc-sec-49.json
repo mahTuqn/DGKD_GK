@@ -1,0 +1,36 @@
+{
+  "reviewDate": "2026-10-30",
+  "testId": "TC-SEC-49",
+  "scope": "JWT session expiry and maximum token age enforcement.",
+  "initialRegression": {
+    "signedTokenWithoutExp": {
+      "expectedStatus": 401,
+      "actualStatusBeforeFix": 200
+    },
+    "unexpiredTokenWithIatOlderThanEightHours": {
+      "expectedStatus": 401,
+      "reason": "A future exp alone must not permit an authentication session older than the application eight-hour lifetime."
+    }
+  },
+  "fix": "JWT verification now enforces maxAge=8h and rejects payloads without a finite exp claim before loading the user.",
+  "verification": {
+    "command": "npm run test --workspace backend -- tests/configuration.test.ts",
+    "result": "passed",
+    "testsPassed": 10,
+    "testsFailed": 0,
+    "includes": [
+      "validly signed token without exp returns 401 INVALID_TOKEN before database lookup",
+      "unexpired token with iat older than eight hours returns 401 INVALID_TOKEN before database lookup",
+      "valid token with an eight-hour expiry is accepted and performs the user lookup"
+    ],
+    "databaseRequired": false
+  },
+  "otherChecks": {
+    "npm run typecheck:tests": "passed",
+    "npm run qa:trace": "passed: 125 test cases / 28 requirements; all sources and links resolved"
+  },
+  "limitations": [
+    "This focused regression does not constitute comprehensive JWT or ASVS testing.",
+    "Exact-source GitHub CI for this new authentication change is pending."
+  ]
+}
