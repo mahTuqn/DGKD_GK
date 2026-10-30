@@ -1,8 +1,14 @@
 # Kế hoạch kiểm thử CinemaBooking
 
+## Exact-source verification — `c028998` — 31/10/2026
+
+All three GitHub Actions workflows completed successfully for source commit `c0289988bb3e7ca66ebfe380a47fb252632c4f96`: [quality/API/DAST/domain/Compose 41119419570](https://github.com/mahTuqn/DGKD_GK/actions/runs/41119419570), [Firefox/WebKit smoke 41119419623](https://github.com/mahTuqn/DGKD_GK/actions/runs/41119419623), and [15-minute worker soak 41119419490](https://github.com/mahTuqn/DGKD_GK/actions/runs/41119419490). The quality run passed API, typecheck, traceability, Playwright, configured DAST/severity-summary, domain/mutation, and Compose runtime/browser steps. Mutation score was **82.89%** (155 killed / 32 survived; 70% threshold). Cross-browser smoke passed **34 tests**; the combined TC-E2E-03/25 keyboard Staff scan passed **1/1 Firefox and 1/1 WebKit**. The worker soak/restart job passed in **15m 47s** including cleanup; the soak step took **15m 17s**.
+
+The DAST scan, severity-summary step, and report upload passed, but the artifact download returned HTTP 401 in this session, so its finding counts/severities are unknown. Exact API and Chromium Playwright test counts were not available from the public run summary. Browser result artifacts were uploaded. See [exact-source evidence](evidence/followup/2026-10-31-github-actions-c028998.json).
+
 ## Local browser/accessibility follow-up — based on `78636af` — 31/10/2026
 
-The pre-fix isolated full browser run recorded **70/72** passes; the two TC-E2E-03 executions failed because the mobile account button's accessible name included its decorative arrow. The visible arrow remains, but it was removed from the button's `aria-label`. The targeted isolated retest `npm run test:browser:isolated -- --grep TC-E2E-03` then passed **2/2** at 320×800 on Chromium desktop and mobile. The isolated runner now supports a bounded `--grep` option for focused browser retests. Exact-source CI for the fix is pending; see the [local retest evidence](evidence/followup/2026-10-31-local-staff-keyboard-retest-78636af.json).
+The pre-fix isolated full browser run recorded **70/72** passes; the two TC-E2E-03 executions failed because the mobile account button's accessible name included its decorative arrow. The visible arrow remains, but it was removed from the button's `aria-label`. The targeted isolated retest `npm run test:browser:isolated -- --grep TC-E2E-03` then passed **2/2** at 320×800 on Chromium desktop and mobile. The isolated runner now supports a bounded `--grep` option for focused browser retests. Exact-source CI passed as recorded above; see the [local retest evidence](evidence/followup/2026-10-31-local-staff-keyboard-retest-78636af.json).
 
 The 90-row accessibility checklist remains **8 Fail / 5 Pass / 77 Not tested**. The targeted browser test checks keyboard operation, DOM focus, status/alert roles, and axe results; it does not verify real screen-reader speech, browser zoom/text resizing, or physical-device touch.
 

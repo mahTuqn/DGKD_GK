@@ -1,0 +1,84 @@
+{
+  "recordedAt": "2026-10-31",
+  "commit": "c0289988bb3e7ca66ebfe380a47fb252632c4f96",
+  "branch": "codex/cross-browser-smoke",
+  "workflows": {
+    "quality": {
+      "runId": "41119419570",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41119419570",
+      "conclusion": "success",
+      "checks": [
+        "API tests",
+        "backend and test typecheck",
+        "traceability",
+        "Playwright browser tests",
+        "configured DAST scan and severity-summary gate",
+        "domain coverage and mutation threshold",
+        "Compose runtime and browser smoke"
+      ],
+      "mutation": {
+        "scorePercent": 82.89,
+        "killed": 155,
+        "survived": 32,
+        "thresholdPercent": 70
+      },
+      "artifacts": [
+        {
+          "name": "cinema-booking-browser-results-c0289988bb3e7ca66ebfe380a47fb252632c4f96",
+          "id": "13008018929",
+          "size": "447 KB",
+          "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41119419570/artifacts/13008018929"
+        },
+        {
+          "name": "cinema-booking-compose-browser-results-c0289988bb3e7ca66ebfe380a47fb252632c4f96",
+          "id": "13007097931",
+          "size": "195 KB",
+          "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41119419570/artifacts/13007097931"
+        },
+        {
+          "name": "cinema-booking-dast-reports-c0289988bb3e7ca66ebfe380a47fb252632c4f96",
+          "id": "13007392937",
+          "size": "6.34 KB",
+          "sha256": "11e8c7bbabacb1aa7724dc2b35e761687dc860a02f1475e66b1f7f2e0938e329",
+          "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41119419570/artifacts/13007392937"
+        },
+        {
+          "name": "cinema-booking-domain-quality-c0289988bb3e7ca66ebfe380a47fb252632c4f96",
+          "id": "13007097958",
+          "size": "141 KB",
+          "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41119419570/artifacts/13007097958"
+        }
+      ]
+    },
+    "crossBrowser": {
+      "runId": "41119419623",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41119419623",
+      "conclusion": "success",
+      "testsPassed": 34,
+      "staffKeyboardScan": {
+        "testIds": ["TC-E2E-03", "TC-E2E-25"],
+        "firefox": "1/1 passed",
+        "webkit": "1/1 passed"
+      }
+    },
+    "workerSoak": {
+      "runId": "41119419490",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41119419490",
+      "conclusion": "success",
+      "jobDuration": "15m 47s",
+      "soakAndRestartDuration": "15m 17s",
+      "cleanup": "Stop containers step passed"
+    }
+  },
+  "localChecks": {
+    "focusedKeyboardRetest": "npm run test:browser:isolated -- --grep TC-E2E-03 passed 2/2 on Chromium desktop and mobile at 320x800.",
+    "traceability": "npm run qa:trace passed: 131 test cases / 29 requirements.",
+    "secretScan": "npm run scan:secrets passed after the source commit: 133 commits scanned; no leaks found."
+  },
+  "limitations": [
+    "Exact API and Chromium Playwright counts were not available in the public workflow summary.",
+    "The DAST report artifact could not be downloaded in this session (HTTP 401); finding counts and severities are unknown. Passing the configured gate is not evidence of zero findings.",
+    "The manual 90-row accessibility checklist remains 8 Fail / 5 Pass / 77 Not tested.",
+    "Real screen-reader speech, browser zoom/text resizing, and physical-device touch remain unverified."
+  ]
+}
