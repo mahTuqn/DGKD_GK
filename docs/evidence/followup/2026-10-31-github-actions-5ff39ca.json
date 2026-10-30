@@ -1,0 +1,61 @@
+{
+  "reviewDate": "2026-10-31",
+  "repository": "https://github.com/mahTuqn/DGKD_GK",
+  "branch": "codex/cross-browser-smoke",
+  "sourceCommit": "5ff39ca369bc408b8a301925a0fdf89b611ada0a",
+  "workflows": [
+    {
+      "name": "CinemaBooking quality",
+      "runId": "41114224279",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41114224279",
+      "status": "success",
+      "durationSeconds": 988,
+      "checks": {
+        "gitleaks": "passed; local history scan also found no leaks",
+        "apiSuite": "passed, including TC-API-02 exact eight-seat acceptance and nine-seat rejection",
+        "backendAndTestTypecheck": "passed",
+        "traceability": "131 test cases / 29 requirements; all source links resolved",
+        "openapiLint": "passed",
+        "playwright": "72 passed in 3.4 minutes on Chromium desktop and mobile",
+        "composeBrowserSmoke": "passed; Compose cleanup passed",
+        "dast": "configured scan gate, summary step, and artifact-upload step passed; report contents and severity counts were not inspected",
+        "domainAndMutation": "passed; mutation score 82.89% (155 killed, 32 survived; 70% threshold)"
+      },
+      "browserArtifact": {
+        "size": "442 KB",
+        "contentsInspected": false
+      }
+    },
+    {
+      "name": "Cross-browser smoke",
+      "runId": "41114224249",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41114224249",
+      "status": "success",
+      "coverage": "TC-E2E-38 selected by the workflow filter and passed 1/1 in Firefox and 1/1 in WebKit"
+    },
+    {
+      "name": "Worker Reliability Soak (15 minutes)",
+      "runId": "41114224111",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41114224111",
+      "status": "success",
+      "durationSeconds": 946,
+      "soakAndGracefulRestartSeconds": 918,
+      "cleanup": "passed"
+    }
+  ],
+  "localVerification": {
+    "browser": "npm run test:browser:isolated passed 72/72 across Chromium desktop and mobile; TC-E2E-38 passed 2/2",
+    "api": "backend/tests/api.integration.test.ts passed 5/5 against disposable PostgreSQL 17; TC-API-02 covers exactly eight seats accepted and nine rejected without a hold or claims",
+    "testTypecheck": "passed",
+    "frontendBuild": "passed",
+    "secretScan": "passed across 131 commits with no leaks",
+    "traceability": "131 test cases / 29 requirements",
+    "testDatabase": "PostgreSQL 17 disposable container; four migrations and seed applied; container and volume removed",
+    "portIsolation": "Existing app on port 5173 remained running; isolated Playwright used port 5175"
+  },
+  "limitations": [
+    "The DAST workflow passed, but this session did not inspect the current run's report contents or alert counts; do not carry counts from the previous source forward.",
+    "The 90-row accessibility checklist remains 8 Fail, 5 Pass, 77 Not tested. Real screen-reader speech and physical-device touch remain unverified.",
+    "Staging performance, production backup/PITR/RPO/RTO, and exhaustive ASVS/BOLA review remain open."
+  ]
+}

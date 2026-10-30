@@ -1,10 +1,12 @@
 # Báo cáo tổng hợp kiểm thử
 
-## Current working-tree follow-up — based on `3294a74` — 31/10/2026
+## Exact-source test run — `5ff39ca` — 31/10/2026
 
-The isolated local Playwright suite passed **72/72** configured Chromium desktop and Pixel 7 mobile executions; TC-E2E-38 passed in both projects. The runner created a disposable PostgreSQL 17 database, applied all four migrations and demo seed, then removed its container and anonymous volume. The existing app on port 5173 remained running; Playwright used port 5175. The backend API integration file passed **5/5**, including TC-API-02 for the exact eight-seat hold boundary and the existing nine-seat rejection. Test typecheck, frontend build, and traceability (**131 test cases / 29 requirements**) passed. Exact-source GitHub CI is pending; the Firefox/WebKit smoke now includes TC-E2E-38.
+All three workflows passed on source commit `5ff39ca369bc408b8a301925a0fdf89b611ada0a`: [quality/API/DAST/domain/Compose 41114224279](https://github.com/mahTuqn/DGKD_GK/actions/runs/41114224279), [Firefox/WebKit smoke 41114224249](https://github.com/mahTuqn/DGKD_GK/actions/runs/41114224249), and [15-minute worker soak 41114224111](https://github.com/mahTuqn/DGKD_GK/actions/runs/41114224111). Quality passed **72 Playwright tests** in 3.4 minutes on Chromium desktop/mobile, plus API, typecheck, traceability, OpenAPI, Compose browser smoke, the configured DAST gate, and domain/mutation thresholds. Mutation score was **82.89%** (155 killed / 32 survived; 70% threshold). TC-E2E-38 passed locally in both Chromium projects and in the Firefox/WebKit workflow (**1/1 each**). The two-worker soak/restart passed in **15m 18s**, and cleanup succeeded.
 
-The 90-row accessibility checklist remains **8 Fail / 5 Pass / 77 Not tested**. Real screen-reader speech, physical-device touch, staging performance, production backup/PITR/RPO/RTO, and exhaustive ASVS/BOLA review remain open.
+Local API integration passed **5/5**, including TC-API-02 for the eight-seat limit; test typecheck, frontend build, secret scan (**131 commits, no leaks**), and traceability (**131 test cases / 29 requirements**) passed. The local isolated browser run used a disposable PostgreSQL 17 container, removed its container/volume, preserved the existing app on port 5173, and used Playwright port 5175. See the [local verification evidence](evidence/followup/2026-10-31-local-browser-and-api-after-3294a74.json) and [exact-source CI manifest](evidence/followup/2026-10-31-github-actions-5ff39ca.json).
+
+The DAST scan, summary step, and artifact-upload step passed; this session could not inspect the new report contents or severity counts. The 90-row accessibility checklist remains **8 Fail / 5 Pass / 77 Not tested**. Real screen-reader speech, physical-device touch, staging performance, production backup/PITR/RPO/RTO, and exhaustive ASVS/BOLA review remain open.
 
 ## Exact-source test run — `6d92394` — 31/10/2026
 
