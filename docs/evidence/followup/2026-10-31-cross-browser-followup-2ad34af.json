@@ -1,0 +1,25 @@
+{
+  "recordedAt": "2026-10-31",
+  "workflowCommit": "2ad34affbaccf7ad2cfed398ecf7cad4318ba4de",
+  "applicationSourceCommit": "fa715497a39184b0c80f91990f93c98a3830ef6a",
+  "change": "Added TC-E2E-12 to the Firefox/WebKit cross-browser smoke selection.",
+  "run": {
+    "runId": "41138300003",
+    "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41138300003",
+    "conclusion": "success",
+    "duration": "3m 39s",
+    "testsPassed": 40,
+    "projects": ["Firefox desktop", "WebKit desktop"],
+    "includedTest": "TC-E2E-12",
+    "coverage": "Payment failure leaves the order PAYMENT_FAILED with no tickets and releases the seat for reuse."
+  },
+  "localChecks": {
+    "traceability": "133 test cases / 29 requirements passed",
+    "diffCheck": "git diff --check passed"
+  },
+  "limitations": [
+    "The commit changes CI workflow selection only; application source remains fa715497a39184b0c80f91990f93c98a3830ef6a.",
+    "The manual 90-item accessibility review remains 8 Fail, 5 Pass and 77 Not tested; focused defect retests do not complete all checklist criteria.",
+    "The current DAST artifact detail for rule 40014 could not be retrieved in this session."
+  ]
+}

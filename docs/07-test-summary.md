@@ -1,5 +1,11 @@
 # Báo cáo tổng hợp kiểm thử
 
+## Cross-browser workflow follow-up — 2ad34af — 31/10/2026
+
+Commit 2ad34af changes only the Firefox/WebKit workflow selection. Cross-browser run [41138300003](https://github.com/mahTuqn/DGKD_GK/actions/runs/41138300003) passed **40 Playwright tests in 3m 39s** on Firefox and WebKit desktop. It now includes TC-E2E-12, which verifies that failed payment creates no tickets and releases the seat; the successful 40-test run covers this scenario in both configured browser projects. Traceability remains **133 test cases / 29 requirements**. The application source is unchanged from fa71549, whose exact-source quality/DAST and worker-soak results are recorded below. See the [2ad34af cross-browser evidence manifest](evidence/followup/2026-10-31-cross-browser-followup-2ad34af.json).
+
+Manual accessibility status remains **8 Fail / 5 Pass / 77 Not tested**. The failed rows preserve initial findings; focused retests are documented separately and do not complete their broader manual criteria. Screen-reader speech, actual browser zoom/text resizing and physical-device touch remain unverified. The DAST artifact still needs detailed triage for rule 40014.
+
 ## Exact-source follow-up — `fa71549` — 31/10/2026
 
 All three GitHub Actions workflows passed for commit `fa715497a39184b0c80f91990f93c98a3830ef6a`: [quality/API/DAST/domain/Compose 41134118546](https://github.com/mahTuqn/DGKD_GK/actions/runs/41134118546), [Firefox/WebKit smoke 41134118614](https://github.com/mahTuqn/DGKD_GK/actions/runs/41134118614), and [15-minute worker soak 41134118475](https://github.com/mahTuqn/DGKD_GK/actions/runs/41134118475). Quality passed **77 API test results across 20 files** and **74 Chromium Playwright tests in 3m 36s**. Cross-browser smoke passed **38 tests in 2m 18s** on Firefox and WebKit. TC-E2E-04 passed its Admin overflow checks at **320×800 and 800×320** across the configured Chromium and Firefox/WebKit projects. The independent two-worker soak/restart step passed in **15m 16s**; its test observed 91 events processed exactly once and a successful post-restart event. This is worker reliability evidence, not HTTP load or throughput evidence.
