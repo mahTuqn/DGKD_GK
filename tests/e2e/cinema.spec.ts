@@ -496,8 +496,35 @@ test("[TC-E2E-04] Admin xem báo cáo doanh thu và tỉ lệ lấp đầy ở c
   await expect(occupancy.getByRole("heading", { name: "Mức lấp đầy chỗ ngồi" })).toBeVisible();
   await expect(occupancy.getByText(/[\d.,]+ \/ [\d.,]+ ghế đã bán/)).toBeVisible();
   await expect(occupancy.getByText(/\d+ suất đang mở/)).toBeVisible();
-  await expect(occupancy.getByRole("progressbar", { name: "Tỉ lệ lấp đầy ghế" })).toHaveAttribute("value", /\d/);
+  const occupancyProgress = occupancy.getByRole("progressbar", { name: "Tỉ lệ lấp đầy ghế" });
+  await expect(occupancyProgress).toHaveAttribute("value", /\d/);
   expect(axeViolations((await wcagAxe(page).include(".admin-view").analyze()).violations)).toEqual([]);
+
+  const metricLabels = ["Phim đang chiếu", "Suất chiếu", "Đơn đặt vé", "Vé đã phát", "Tỉ lệ lấp đầy", "Doanh thu xác nhận"];
+  for (const viewport of [{ width: 320, height: 800 }, { width: 800, height: 320 }]) {
+    await page.setViewportSize(viewport);
+
+    const widths = await page.evaluate(() => {
+      const dashboard = document.querySelector<HTMLElement>(".admin-view");
+      return {
+        viewport: window.innerWidth,
+        document: document.documentElement.scrollWidth,
+        dashboardClient: dashboard?.clientWidth ?? 0,
+        dashboardScroll: dashboard?.scrollWidth ?? 0
+      };
+    });
+    expect(widths.document, `document must not overflow horizontally at ${viewport.width}×${viewport.height}`).toBeLessThanOrEqual(widths.viewport);
+    expect(widths.dashboardClient, "Admin dashboard should remain mounted").toBeGreaterThan(0);
+    expect(widths.dashboardScroll, `Admin dashboard must not overflow horizontally at ${viewport.width}×${viewport.height}`).toBeLessThanOrEqual(widths.dashboardClient);
+
+    for (const label of metricLabels) {
+      await expect(page.locator(".admin-metrics").getByText(label, { exact: true }), `${label} remains available at ${viewport.width}×${viewport.height}`).toBeVisible();
+    }
+    await expect(occupancy, `occupancy summary remains available at ${viewport.width}×${viewport.height}`).toBeVisible();
+    await expect(occupancyProgress, `occupancy progressbar remains available at ${viewport.width}×${viewport.height}`).toBeVisible();
+    await occupancyProgress.scrollIntoViewIfNeeded();
+    await expect(occupancyProgress).toBeInViewport();
+  }
 });
 
 test("[TC-E2E-05] Admin tạo rạp, cập nhật trạng thái và thấy trạng thái được lưu", async ({ page }) => {

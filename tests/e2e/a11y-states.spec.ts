@@ -256,6 +256,14 @@ test("[TC-E2E-27] mobile shows every movie title without clipping and keeps targ
   await page.getByTestId("showtime-option").first().click();
 
   const dialog = page.getByRole("dialog", { name: movie.title });
+  await expect(dialog.getByTestId("seat").first()).toBeVisible();
+  const seatTargetDimensions = await dialog.getByTestId("seat").evaluateAll((elements) => elements.map((element) => {
+    const bounds = element.getBoundingClientRect();
+    return { width: bounds.width, height: bounds.height };
+  }));
+  expect(seatTargetDimensions.length).toBeGreaterThan(0);
+  expect(seatTargetDimensions.every(({ width, height }) => width >= 24 && height >= 24)).toBe(true);
+
   const availableSeat = dialog.getByRole("button", { name: "Ghế A 1 — trống — ghế tiêu chuẩn" });
   await expect(availableSeat).toBeEnabled();
   await expect(dialog.getByRole("button", { name: "Ghế A 2 — trống — ghế hỗ trợ tiếp cận" })).toBeEnabled();
@@ -314,6 +322,7 @@ async function tabUntilFocused(page: Page, target: import("@playwright/test").Lo
 }
 
 test("[TC-E2E-16] dialog đăng ký có tên trường và trạng thái validation/error dễ tiếp cận", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 800 });
   const requests = await mockApi(page, {
     registrationError: { status: 409, error: "EMAIL_TAKEN", message: "Email này đã được đăng ký." },
   });
@@ -327,6 +336,37 @@ test("[TC-E2E-16] dialog đăng ký có tên trường và trạng thái validat
   const name = dialog.getByLabel("Họ và tên");
   const email = dialog.getByLabel("Email");
   const password = dialog.getByLabel("Mật khẩu");
+  const submitButton = dialog.getByRole("button", { name: "Tạo tài khoản", exact: true });
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toBeInViewport({ ratio: 1 });
+  await expect(name).toBeVisible();
+  await expect(name).toBeInViewport({ ratio: 1 });
+  await expect(email).toBeVisible();
+  await expect(email).toBeInViewport({ ratio: 1 });
+  await expect(password).toBeVisible();
+  await expect(password).toBeInViewport({ ratio: 1 });
+  await expect(submitButton).toBeVisible();
+  await expect(submitButton).toBeInViewport({ ratio: 1 });
+  const widths = await dialog.evaluate((element) => ({
+    document: { client: document.documentElement.clientWidth, scroll: document.documentElement.scrollWidth },
+    dialog: { client: element.clientWidth, scroll: element.scrollWidth },
+  }));
+  expect(widths.document.scroll).toBeLessThanOrEqual(widths.document.client);
+  expect(widths.dialog.scroll).toBeLessThanOrEqual(widths.dialog.client);
+  await tabUntilFocused(page, name);
+  await page.keyboard.press("Tab");
+  await expect(email).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(password).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(submitButton).toBeFocused();
+  await expect(submitButton).toBeInViewport({ ratio: 1 });
+  const submitFocusStyle = await submitButton.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return { outlineStyle: style.outlineStyle, outlineWidth: Number.parseFloat(style.outlineWidth) };
+  });
+  expect(submitFocusStyle.outlineStyle).toBe("solid");
+  expect(submitFocusStyle.outlineWidth).toBeGreaterThan(0);
   await expect(name).toHaveAccessibleName("Họ và tên");
   await expect(email).toHaveAccessibleName("Email");
   await expect(password).toHaveAccessibleName("Mật khẩu");
@@ -348,7 +388,7 @@ test("[TC-E2E-16] dialog đăng ký có tên trường và trạng thái validat
   expect(contrastRatioOver(inputColors.border, inputColors.panel)).toBeGreaterThanOrEqual(3);
   await expectNoWcagAxeViolations(page, ".auth-dialog");
 
-  await dialog.getByRole("button", { name: "Tạo tài khoản", exact: true }).click();
+  await submitButton.click();
   expect(await name.evaluate((input: HTMLInputElement) => input.validity.valid)).toBe(false);
   expect(await email.evaluate((input: HTMLInputElement) => input.validity.valid)).toBe(false);
   expect(await password.evaluate((input: HTMLInputElement) => input.validity.valid)).toBe(false);
@@ -357,14 +397,14 @@ test("[TC-E2E-16] dialog đăng ký có tên trường và trạng thái validat
   await name.fill("QA Accessibility User");
   await email.fill("invalid-email");
   await password.fill("short");
-  await dialog.getByRole("button", { name: "Tạo tài khoản", exact: true }).click();
+  await submitButton.click();
   expect(await email.evaluate((input: HTMLInputElement) => input.validity.valid)).toBe(false);
   expect(await password.evaluate((input: HTMLInputElement) => input.validity.valid)).toBe(false);
   expect(requests.registration).toBe(0);
 
   await email.fill("existing@example.test");
   await password.fill("CinemaQa123!");
-  await dialog.getByRole("button", { name: "Tạo tài khoản", exact: true }).click();
+  await submitButton.click();
   const alert = dialog.getByRole("alert");
   await expect(alert).toBeVisible();
   await expect(alert).toHaveText("Email này đã được đăng ký.");
