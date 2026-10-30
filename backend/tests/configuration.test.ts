@@ -1,8 +1,9 @@
 import { afterEach, describe, expect, it } from "vitest";
+import request from "supertest";
 import { assertMockPaymentConfiguration, createApp, getMutationRateLimit, getRegistrationRateLimit, isMockPaymentCompletionEnabled } from "../src/app.js";
 import { assertAuthenticationConfiguration } from "../src/auth.js";
 
-const environmentKeys = ["NODE_ENV", "JWT_SECRET", "MOCK_PAYMENT_SECRET", "TRUST_PROXY_HOPS", "E2E_REGISTRATION_RATE_LIMIT", "E2E_MUTATION_RATE_LIMIT"] as const;
+const environmentKeys = ["NODE_ENV", "JWT_SECRET", "MOCK_PAYMENT_SECRET", "TRUST_PROXY_HOPS", "CORS_ORIGIN", "E2E_REGISTRATION_RATE_LIMIT", "E2E_MUTATION_RATE_LIMIT"] as const;
 const originalEnvironment = Object.fromEntries(environmentKeys.map((key) => [key, process.env[key]]));
 
 function restoreEnvironment() {
@@ -128,5 +129,54 @@ describe("TC-SEC-13 deployment secrets and trusted proxy configuration", () => {
       process.env.TRUST_PROXY_HOPS = value;
       expect(() => createApp()).toThrow("TRUST_PROXY_HOPS must be a non-negative integer");
     }
+  });
+});
+
+describe("TC-SEC-48 HTTP security middleware and safe parser errors", () => {
+  afterEach(restoreEnvironment);
+
+  it("sets security headers and only grants CORS access to configured origins", async () => {
+    process.env.CORS_ORIGIN = "https://cinema.example";
+    const app = createApp();
+
+    const allowed = await request(app).get("/api/health").set("Origin", "https://cinema.example");
+    expect(allowed.status).toBe(200);
+    expect(allowed.headers["x-content-type-options"]).toBe("nosniff");
+    expect(allowed.headers["content-security-policy"]).toContain("object-src 'none'");
+    expect(allowed.headers["content-security-policy"]).toContain("frame-ancestors 'self'");
+    expect(allowed.headers["permissions-policy"]).toBe("camera=(), microphone=(), geolocation=()");
+    expect(allowed.headers["cache-control"]).toBe("no-store");
+    expect(allowed.headers["x-request-id"]).toMatch(/^[0-9a-f-]{36}$/i);
+    expect(allowed.headers["access-control-allow-origin"]).toBe("https://cinema.example");
+
+    const preflight = await request(app)
+      .options("/api/auth/me")
+      .set("Origin", "https://cinema.example")
+      .set("Access-Control-Request-Method", "GET");
+    expect(preflight.status).toBe(204);
+    expect(preflight.headers["access-control-allow-origin"]).toBe("https://cinema.example");
+
+    const hostile = await request(app).get("/api/health").set("Origin", "https://attacker.example");
+    expect(hostile.status).toBe(200);
+    expect(hostile.headers["access-control-allow-origin"]).toBeUndefined();
+  });
+
+  it("returns safe 400 and 413 responses for malformed and over-limit JSON", async () => {
+    const app = createApp();
+    const malformed = await request(app)
+      .post("/api/auth/register")
+      .set("Content-Type", "application/json")
+      .send('{"name":');
+    expect(malformed.status).toBe(400);
+    expect(malformed.body.error).toBe("INVALID_JSON");
+    expect(JSON.stringify(malformed.body)).not.toMatch(/stack|SyntaxError|node_modules/i);
+
+    const oversized = await request(app)
+      .post("/api/auth/register")
+      .set("Content-Type", "application/json")
+      .send(JSON.stringify({ name: "A", padding: "x".repeat(66 * 1024) }));
+    expect(oversized.status).toBe(413);
+    expect(oversized.body.error).toBe("PAYLOAD_TOO_LARGE");
+    expect(JSON.stringify(oversized.body)).not.toMatch(/stack|PayloadTooLargeError|node_modules/i);
   });
 });

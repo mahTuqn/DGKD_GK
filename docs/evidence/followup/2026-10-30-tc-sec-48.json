@@ -1,0 +1,37 @@
+{
+  "reviewDate": "2026-10-30",
+  "testId": "TC-SEC-48",
+  "bugId": "BUG-027",
+  "scope": "HTTP security headers, CORS origin allowlist, and safe parser error responses.",
+  "initialRegression": {
+    "request": "JSON body above the configured 64 KiB limit",
+    "expectedStatus": 413,
+    "actualStatus": 500,
+    "actualError": "INTERNAL_ERROR"
+  },
+  "fix": "Map body-parser entity.too.large errors to HTTP 413 PAYLOAD_TOO_LARGE with a stable safe message.",
+  "verification": {
+    "command": "npm run test --workspace backend -- tests/configuration.test.ts",
+    "result": "passed",
+    "testsPassed": 9,
+    "testsFailed": 0,
+    "broaderBackendSuite": {
+      "command": "npm run test --workspace backend",
+      "testsPassed": 26,
+      "testsSkipped": 48,
+      "total": 74,
+      "skipReason": "Database-backed integration tests were skipped because DATABASE_URL_TEST is not configured in this shell."
+    },
+    "backendSourceTypecheck": "passed with tsc --noEmit",
+    "traceability": "passed: 123 test cases / 28 requirements",
+    "checks": [
+      "helmet/CSP/Permissions-Policy/cache/request ID headers",
+      "allowed origin and preflight",
+      "hostile origin receives no CORS grant",
+      "malformed JSON returns safe 400",
+      "oversized JSON returns safe 413 with no stack details"
+    ],
+    "databaseRequired": false,
+    "exactSourceCi": "pending"
+  }
+}

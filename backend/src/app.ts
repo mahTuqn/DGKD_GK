@@ -1030,6 +1030,9 @@ export function createApp() {
   app.use((_req, res) => res.status(404).json({ error: "NOT_FOUND", message: "Không tìm thấy tài nguyên." }));
 
   app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    if (typeof error === "object" && error !== null && "type" in error && error.type === "entity.too.large") {
+      return res.status(413).json({ error: "PAYLOAD_TOO_LARGE", message: "Nội dung gửi lên vượt quá giới hạn cho phép." });
+    }
     if (error instanceof SyntaxError && "status" in error && error.status === 400) return res.status(400).json({ error: "INVALID_JSON", message: "Nội dung JSON không hợp lệ." });
     if (error instanceof z.ZodError) return res.status(422).json({ error: "VALIDATION_ERROR", message: "Dữ liệu gửi lên chưa hợp lệ.", details: error.flatten() });
     if (error instanceof DomainError) return res.status(error.status).json({ error: error.code, message: error.message });
