@@ -2,6 +2,8 @@
 
 ## Accessibility and CI follow-up — 30/10/2026
 
+On `d6fa6a0`, [cross-browser smoke](https://github.com/mahTuqn/DGKD_GK/actions/runs/40994475746) and [15-minute soak](https://github.com/mahTuqn/DGKD_GK/actions/runs/40994475579) passed; [quality](https://github.com/mahTuqn/DGKD_GK/actions/runs/40994475683) failed because TC-E2E-21 expected a desktop sign-in button while running in the Chromium mobile project. The scenario now explicitly starts at desktop width before switching to 320px; the Pixel 7 regression passed locally (1 test, 5.9s). This retest does not establish a full passing CI run. Narrator launch was attempted; its UI could not be inspected due to tool timeouts, and a subsequent process check showed it was no longer running. Screen-reader speech remains unverified.
+
 The [ffa530d Firefox/WebKit smoke run](https://github.com/mahTuqn/DGKD_GK/actions/runs/40993849275) passed. Its quality and 15-minute worker soak runs remained in progress at the latest check. Subsequent working-tree work adds selectable manual QR content and corrects discovery focus and filter names. Local Chromium TC-E2E-06/07/09 and TC-E2E-32 passed; Firefox/WebKit TC-E2E-06/07/09/32 passed 8/8. These local runs are not CI for the later source, and actual screen-reader speech and touch remain unverified.
 
 Source `c6ba2b0` restores Admin action focus; local Chromium regressions TC-E2E-15/22 passed (2 tests), and TC-E2E-28 passed (1 test), against a dedicated disposable database. An agent-operated keyboard retest confirmed focus after creating a movie. The checklist remains incomplete and retains the original failed findings with retest notes.

@@ -91,6 +91,8 @@ test("[TC-E2E-20][TC-E2E-24] dialog đăng nhập lồng trên sơ đồ ghế g
 });
 
 test("[TC-E2E-21] session Admin được giữ sau reload và bị xóa khi đăng xuất", async ({ page }) => {
+  // Exercise the desktop controls first even when this case runs in the mobile project.
+  await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto("/");
   await expect(page.getByTestId("movie-card").first()).toBeVisible();
   await openLogin(page);
