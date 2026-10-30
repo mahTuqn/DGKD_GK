@@ -32,6 +32,6 @@
       "oversized JSON returns safe 413 with no stack details"
     ],
     "databaseRequired": false,
-    "exactSourceCi": "pending"
+    "exactSourceCi": "passed on commit 72efab146acbf5ec5acb9be3d7ddd5936a8e2a33; all quality, cross-browser, and 15-minute worker-soak workflows passed (runs 41054515762, 41054515718, 41054515736)."
   }
 }

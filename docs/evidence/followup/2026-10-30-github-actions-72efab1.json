@@ -1,0 +1,103 @@
+{
+  "manifestVersion": "1.0",
+  "project": "CinemaBooking QA",
+  "recordedAt": "2026-10-30",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "commit": "72efab146acbf5ec5acb9be3d7ddd5936a8e2a33",
+  "branch": "codex/cross-browser-smoke",
+  "sourceDelta": "Added TC-SEC-48 for HTTP security headers, CORS allowlisting, malformed JSON and oversized JSON handling; oversized JSON now returns 413 PAYLOAD_TOO_LARGE.",
+  "overall": "PASS_ALL_THREE_EXACT_SOURCE_GITHUB_ACTIONS_WORKFLOWS; DAST_ARTIFACT_CONTENTS_NOT_RETRIEVED",
+  "runs": {
+    "qualityApiDastDomainCompose": {
+      "id": 41054515762,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41054515762",
+      "result": "PASS",
+      "jobs": {
+        "quality": "success",
+        "dastIsolatedCompose": "success",
+        "domainCoverageAndMutation": "success",
+        "composeRuntimeAndBrowserSmoke": "success"
+      },
+      "verifiedStages": [
+        "Dependency audit at moderate severity threshold",
+        "Database generation, migrations and seed setup",
+        "OpenAPI lint and traceability",
+        "Backend/API tests including isolated database-backed CI suites",
+        "Live five-minute hold-expiry check",
+        "Five-minute two-worker soak and restart check",
+        "Production build and configured Chromium browser suite",
+        "Isolated Compose runtime and browser smoke",
+        "Configured DAST gate and domain/mutation thresholds"
+      ],
+      "artifacts": {
+        "browser": {
+          "id": 12977605533,
+          "name": "cinema-booking-browser-results-72efab146acbf5ec5acb9be3d7ddd5936a8e2a33",
+          "sizeBytes": 429654,
+          "githubDigest": "sha256:33280b58e0f856be59f32b791cf84f82b5ad9580a64a06f9796ae29e02d12b19"
+        },
+        "dast": {
+          "id": 12976463026,
+          "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41054515762/artifacts/12976463026",
+          "name": "cinema-booking-dast-reports-72efab146acbf5ec5acb9be3d7ddd5936a8e2a33",
+          "sizeBytes": 6487,
+          "githubDigest": "sha256:cfd934d2221d65f182dff1cf80bf81e547f0a8bd0f3396aa50b9a8a1ddac4f6b",
+          "artifactContentsRetrieved": false,
+          "alertDetailsReviewed": false
+        },
+        "composeBrowser": {
+          "id": 12975873479,
+          "name": "cinema-booking-compose-browser-results-72efab146acbf5ec5acb9be3d7ddd5936a8e2a33",
+          "sizeBytes": 199991,
+          "githubDigest": "sha256:2673d9a7179ec9699df3c7440169e313dbeb9865cc3dba1514c432865a17b204"
+        },
+        "domainQuality": {
+          "id": 12975214541,
+          "name": "cinema-booking-domain-quality-72efab146acbf5ec5acb9be3d7ddd5936a8e2a33",
+          "sizeBytes": 144542,
+          "githubDigest": "sha256:960087a3e7a8f1bdce28f49b30d581502fef95a315277cdd5b66896eec9ccfbe"
+        }
+      },
+      "limitations": [
+        "The DAST report archive was not retrieved, so alert names, affected endpoints, payloads and dispositions remain unknown.",
+        "Passing DAST threshold does not establish that any Low or Informational alert is a false positive or accepted."
+      ]
+    },
+    "crossBrowserSmoke": {
+      "id": 41054515718,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41054515718",
+      "result": "PASS",
+      "scope": "Configured Firefox and WebKit smoke workflow. Its browser-results artifact is metadata-only in this manifest.",
+      "artifact": {
+        "id": 12976197306,
+        "name": "cinema-booking-cross-browser-results-72efab146acbf5ec5acb9be3d7ddd5936a8e2a33",
+        "sizeBytes": 304226,
+        "githubDigest": "sha256:edf0fcc40d6efa3cdfbcb5fc7d0749f02d97efc76c07baf04373294163cd1fc0"
+      }
+    },
+    "workerLongSoak": {
+      "id": 41054515736,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41054515736",
+      "result": "PASS",
+      "scope": "15-minute two-worker soak with graceful restart and pending-event catch-up."
+    }
+  },
+  "localChecksOnExactSource": {
+    "npm run test --workspace backend -- tests/configuration.test.ts": "PASS: 9 passed / 0 failed",
+    "npm run qa:trace": "PASS: 123 test cases / 28 requirements; all sources and links resolved",
+    "npm run lint:openapi": "PASS",
+    "localResourceNote": "Host memory was approximately 392–461 MiB free during this session; heavier database/browser checks were left to isolated CI."
+  },
+  "remainingGates": [
+    "Manual accessibility checklist: 8 Fail, 5 Pass and 77 Not tested; screen-reader speech and physical mobile touch require real assistive technology or hardware.",
+    "Review DAST Low and Informational alert identities, affected routes, request/response context and disposition from the full artifact.",
+    "No staging environment is available for named-staging performance or release validation.",
+    "Production backup schedule/PITR/RPO/RTO/restore and reliability beyond the tested 15-minute soak remain unverified.",
+    "Comprehensive ASVS/API Top 10 and adversarial BOLA/IDOR review remain open."
+  ],
+  "limitations": [
+    "CI results establish behavior only for this commit and the isolated GitHub runner environment.",
+    "The cross-browser workflow is the configured smoke subset, not proof of complete browser equivalence.",
+    "Automated accessibility checks do not complete the manual checklist."
+  ]
+}
