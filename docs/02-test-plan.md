@@ -1,5 +1,11 @@
 # Kế hoạch kiểm thử CinemaBooking
 
+## Current working-tree follow-up — based on `3294a74` — 31/10/2026
+
+The isolated local Playwright suite passed **72/72** configured Chromium desktop and Pixel 7 mobile executions; new TC-E2E-38 passed in both projects. The runner created a disposable PostgreSQL 17 database, applied all four migrations and demo seed, then removed its container and anonymous volume. The existing app on port 5173 remained running; Playwright used port 5175. The backend API integration file passed **5/5**, including the exact eight-seat hold boundary and the existing nine-seat rejection. Test typecheck, frontend build, and traceability (**131 test cases / 29 requirements**) passed. Exact-source CI for this follow-up is pending; the Firefox/WebKit smoke filter now includes TC-E2E-38.
+
+The 90-row accessibility checklist remains **8 Fail / 5 Pass / 77 Not tested**. Real screen-reader speech, physical-device touch, staging performance, production backup/PITR/RPO/RTO, and exhaustive ASVS/BOLA review remain open.
+
 ## Exact-source verification — `6d92394` — 31/10/2026
 
 All three workflows passed against commit `6d9239405cb90e8028bd13075e9f225c0f952d84`: [quality/API/DAST/domain/Compose 41095194755](https://github.com/mahTuqn/DGKD_GK/actions/runs/41095194755), [Firefox/WebKit smoke 41095194792](https://github.com/mahTuqn/DGKD_GK/actions/runs/41095194792), and [15-minute worker soak 41095194991](https://github.com/mahTuqn/DGKD_GK/actions/runs/41095194991). Quality passed Gitleaks, dependency audit, PostgreSQL API tests including TC-PLAN-10, live expiry, five-minute worker soak, build, and **70 Playwright tests**. Compose browser smoke, DAST, domain coverage, and mutation gates passed. Mutation score was **82.89%** (155 killed / 32 survived; 70% threshold); the independent two-worker soak and graceful restart passed in **15m 49s**.

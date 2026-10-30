@@ -20,7 +20,15 @@ const securityHeaders = {
   "X-Frame-Options": "DENY",
 };
 
+const frontendPortValue = process.env.E2E_FRONTEND_PORT ?? process.env.VITE_PORT ?? "5173";
+const frontendPort = Number(frontendPortValue);
+
+if (!Number.isInteger(frontendPort) || frontendPort < 1 || frontendPort > 65_535) {
+  throw new Error("E2E_FRONTEND_PORT or VITE_PORT must be a valid TCP port.");
+}
+
 export default defineConfig({
   plugins: [react()],
+  server: { host: "127.0.0.1", port: frontendPort, strictPort: true },
   preview: { headers: securityHeaders },
 });

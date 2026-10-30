@@ -1,0 +1,45 @@
+{
+  "reviewDate": "2026-10-31",
+  "repository": "https://github.com/mahTuqn/DGKD_GK",
+  "branch": "codex/cross-browser-smoke",
+  "baselineCommit": "3294a74",
+  "scope": "Local working-tree follow-up; exact-source GitHub Actions for these changes was pending at capture time.",
+  "browser": {
+    "command": "npm run test:browser:isolated",
+    "status": "passed",
+    "durationSeconds": 288,
+    "projects": ["chromium-desktop", "chromium-mobile"],
+    "passed": 72,
+    "failed": 0,
+    "skipped": 0,
+    "tcE2e38": "Passed 2/2, once in each Chromium project; the first committed order response was dropped, retry returned the same order ID, and history contained one order.",
+    "database": {
+      "engine": "PostgreSQL 17",
+      "migrationsApplied": 4,
+      "demoSeedApplied": true,
+      "disposableContainerAndVolumeRemoved": true
+    },
+    "ports": {
+      "existingAppPort": "5173 remained running; its process was not stopped",
+      "playwrightDevServerPort": 5175
+    }
+  },
+  "api": {
+    "file": "backend/tests/api.integration.test.ts",
+    "status": "passed",
+    "passed": 5,
+    "failed": 0,
+    "tcApi02": "Accepted exactly eight seats with eight correctly priced HELD claims; nine seats returned 422 without a hold or claims.",
+    "testTypecheck": "passed"
+  },
+  "otherChecks": {
+    "frontendBuild": "passed",
+    "traceability": "131 test cases / 29 requirements; all source links resolved",
+    "gitDiffCheck": "passed"
+  },
+  "remainingWork": [
+    "Run exact-source GitHub Actions for this follow-up; Firefox/WebKit smoke now selects TC-E2E-38.",
+    "The 90-row accessibility checklist remains 8 Fail, 5 Pass, 77 Not tested; real screen-reader speech and physical-device touch remain unverified.",
+    "Staging performance, production backup/PITR/RPO/RTO, and exhaustive ASVS/BOLA review remain open."
+  ]
+}

@@ -240,7 +240,8 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
 
     const customerBResponse = await request(app).post("/api/auth/register").send({ name: "HTTP Customer B", email: `customer-b-${fixture}@test.local`, password: "CustomerIntegration123!" });
     expect(customerBResponse.status).toBe(201);
-    userIds.push(customerBResponse.body.user.id as string);
+    const customerBId = customerBResponse.body.user.id as string;
+    userIds.push(customerBId);
     const authB = { Authorization: `Bearer ${customerBResponse.body.token as string}` };
 
     expect((await request(app).get("/api/admin/summary").set(authA)).status).toBe(403);
@@ -292,6 +293,33 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
     const ownerSpoofHold = await request(app).post("/api/holds").set(authA).send({ showtimeId, seatIds: [seatIds[0]], userId: userIds[1] });
     expect(ownerSpoofHold.status).toBe(422);
     expect(await holdBoundarySnapshot()).toEqual(beforeOwnerSpoofAttempt);
+
+    // [TC-API-02] The API must accept the inclusive eight-seat limit and persist every claim atomically.
+    let maxSeatHoldId: string | undefined;
+    try {
+      const maxSeatHold = await request(app).post("/api/holds").set(authB).send({ showtimeId, seatIds: seatIds.slice(0, 8) });
+      expect(maxSeatHold.status).toBe(201);
+      maxSeatHoldId = maxSeatHold.body.id as string;
+      expect(maxSeatHold.body.seatIds).toEqual(seatIds.slice(0, 8));
+      expect(maxSeatHold.body.totalVnd).toBe(8 * 92_000);
+
+      const persistedMaxHold = await prisma.seatHold.findUniqueOrThrow({ where: { id: maxSeatHoldId } });
+      expect(persistedMaxHold).toMatchObject({ userId: customerBId, showtimeId, status: HoldStatus.HELD });
+      const persistedMaxClaims = await prisma.seatClaim.findMany({ where: { holdId: maxSeatHoldId } });
+      expect(persistedMaxClaims).toHaveLength(8);
+      expect(persistedMaxClaims.map((claim) => claim.seatId).sort()).toEqual(seatIds.slice(0, 8).sort());
+      expect(persistedMaxClaims.every((claim) => claim.status === ClaimStatus.HELD && claim.priceVnd === 92_000)).toBe(true);
+
+      const maxSeatMap = await request(app).get(`/api/showtimes/${showtimeId}/seats`);
+      expect(maxSeatMap.status).toBe(200);
+      expect(maxSeatMap.body.seats.filter((seat: { id: string; status: string }) => seatIds.slice(0, 8).includes(seat.id) && seat.status === "HELD")).toHaveLength(8);
+    } finally {
+      if (maxSeatHoldId) {
+        await prisma.auditLog.deleteMany({ where: { actorId: customerBId, action: "SEATS_HELD", entity: "SeatHold", entityId: maxSeatHoldId } });
+        await prisma.seatClaim.deleteMany({ where: { holdId: maxSeatHoldId } });
+        await prisma.seatHold.deleteMany({ where: { id: maxSeatHoldId } });
+      }
+    }
 
     const tooManySeats = await request(app).post("/api/holds").set(authA).send({ showtimeId, seatIds });
     expect(tooManySeats.status).toBe(422);

@@ -3,6 +3,18 @@ import { defineConfig, devices } from "@playwright/test";
 const externalBaseUrl = process.env.E2E_BASE_URL;
 const isGitHubActions = process.env.GITHUB_ACTIONS === "true";
 const crossBrowserSmoke = process.env.PLAYWRIGHT_CROSS_BROWSER_SMOKE === "true";
+const configuredFrontendPort = process.env.E2E_FRONTEND_PORT ?? process.env.VITE_PORT;
+const frontendPort = Number(configuredFrontendPort ?? (isGitHubActions ? 5173 : 5175));
+
+if (!Number.isInteger(frontendPort) || frontendPort < 1 || frontendPort > 65_535) {
+  throw new Error("E2E_FRONTEND_PORT or VITE_PORT must be a valid TCP port.");
+}
+
+const frontendOrigin = `http://127.0.0.1:${frontendPort}`;
+const corsOrigins = [...new Set([5173, 5174, frontendPort].flatMap((port) => [
+  `http://localhost:${port}`,
+  `http://127.0.0.1:${port}`,
+]))].join(",");
 
 function localBrowserTestDatabaseUrl() {
   const configured = process.env.DATABASE_URL_TEST?.trim();
@@ -54,7 +66,7 @@ export default defineConfig({
   workers: 1,
   reporter: [["list"], ["html", { outputFolder: "reports/generated/playwright", open: "never" }], ["json", { outputFile: "reports/generated/playwright-results.json" }]],
   use: {
-    baseURL: externalBaseUrl || (isGitHubActions ? "http://127.0.0.1:5174" : "http://127.0.0.1:5173"),
+    baseURL: externalBaseUrl || (isGitHubActions ? "http://127.0.0.1:5174" : frontendOrigin),
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
@@ -78,11 +90,17 @@ export default defineConfig({
         NODE_ENV: "test",
         DATABASE_URL: browserApiDatabaseUrl,
         DATABASE_URL_TEST: browserApiDatabaseUrl,
-        CORS_ORIGIN: "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174",
+        CORS_ORIGIN: corsOrigins,
         E2E_REGISTRATION_RATE_LIMIT: "100"
       }
     },
-    { command: "npm run dev --workspace frontend", url: "http://127.0.0.1:5173", reuseExistingServer: false, timeout: 60_000 },
+    {
+      command: "npm run dev --workspace frontend",
+      url: frontendOrigin,
+      reuseExistingServer: false,
+      timeout: 60_000,
+      env: { E2E_FRONTEND_PORT: String(frontendPort), VITE_PORT: String(frontendPort) },
+    },
     { command: "npm run preview --workspace frontend", url: "http://127.0.0.1:5174", reuseExistingServer: false, timeout: 60_000 },
   ],
 });
