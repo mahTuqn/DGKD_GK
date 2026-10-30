@@ -13,6 +13,37 @@
     "includedTest": "TC-E2E-12",
     "coverage": "Payment failure leaves the order PAYMENT_FAILED with no tickets and releases the seat for reuse."
   },
+  "relatedRuns": [
+    {
+      "workflow": "quality/API/DAST/domain/Compose",
+      "runId": "41138299992",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41138299992",
+      "conclusion": "success",
+      "duration": "16m 35s",
+      "chromiumBrowserTestsPassed": 74,
+      "dast": {
+        "parsedReports": "3/3",
+        "alertRecords": {"high": 0, "medium": 0, "low": 1, "informational": 5, "unknown": 0},
+        "instances": {"low": 3, "informational": 11},
+        "lowRuleForTriage": "40014",
+        "exploitability": "undetermined; report artifact still requires review",
+        "artifactId": "13018900636",
+        "artifactSize": "6.34 KB",
+        "artifactSha256": "f16592c4dfa4306fa97a8e11485f671809befba266cfa4541a97d9ae46943dbc"
+      },
+      "mutation": {"scorePercent": 82.89, "killed": 155, "survived": 32, "thresholdPercent": 70},
+      "composeBrowserSmoke": "passed"
+    },
+    {
+      "workflow": "Worker Reliability Soak (15 minutes)",
+      "runId": "41138299999",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41138299999",
+      "conclusion": "success",
+      "duration": "15m 48s",
+      "soakRestartStepDuration": "15m 16s",
+      "outcome": "Two-worker 15-minute soak and graceful restart passed. This is worker reliability evidence, not HTTP throughput evidence."
+    }
+  ],
   "localChecks": {
     "traceability": "133 test cases / 29 requirements passed",
     "diffCheck": "git diff --check passed"
