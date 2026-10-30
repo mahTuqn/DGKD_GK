@@ -62,6 +62,7 @@ const containerDumpPath = "/backup/cinema.dump";
 const childEnv = { ...process.env, PGPASSWORD: source.password };
 let targetCreated = false;
 let failure;
+let activePhase = "validate disposable restore configuration";
 
 function runPgTool(tool, args, { input, allowFailure = false } = {}) {
   const result = spawnSync(
@@ -156,18 +157,21 @@ function countsForComparison(counts) {
 }
 
 try {
+  activePhase = "check restore target does not already exist";
   const existingTarget = psql(
     source,
     `SELECT count(*) FROM pg_catalog.pg_database WHERE datname = '${target.database}';`,
   );
   assert.equal(existingTarget, "0", "Refusing to overwrite an existing restore target database.");
 
+  activePhase = "check source encoding and seeded row counts";
   const sourceEncoding = psql(source, "SHOW server_encoding;");
   assert.equal(sourceEncoding, "UTF8", "The source database must be UTF8.");
   const sourceCounts = relationCounts(source);
   assert(sourceCounts.size > 0, "The seeded source database has no user tables.");
   assert(totalRows(sourceCounts) > 0n, "The seeded source database has no rows to restore.");
 
+  activePhase = "create custom-format PostgreSQL dump";
   runPgTool("pg_dump", [
     "--format=custom",
     "--no-owner",
@@ -179,6 +183,7 @@ try {
   ]);
   assert(statSync(dumpPath).size > 0, "pg_dump created an empty archive.");
 
+  activePhase = "create fresh UTF8 restore target";
   runPgTool("createdb", [
     "--maintenance-db",
     source.database,
@@ -190,6 +195,7 @@ try {
   ]);
   targetCreated = true;
 
+  activePhase = "restore custom-format dump";
   runPgTool("pg_restore", [
     "--exit-on-error",
     "--single-transaction",
@@ -200,6 +206,7 @@ try {
     containerDumpPath,
   ]);
 
+  activePhase = "verify restored target encoding and row counts";
   const targetEncoding = psql(target, "SHOW server_encoding;");
   assert.equal(targetEncoding, "UTF8", "The restored target database must be UTF8.");
   const targetCounts = relationCounts(target);
@@ -217,6 +224,7 @@ try {
 } finally {
   if (targetCreated) {
     try {
+      activePhase = "drop run-specific restore target";
       runPgTool("dropdb", ["--if-exists", "--force", "--maintenance-db", source.database, target.database]);
     } catch (error) {
       failure ??= error;
@@ -226,6 +234,14 @@ try {
 }
 
 if (failure) {
-  console.error(failure.stack ?? failure.message ?? failure);
+  const failureText = String(failure.stack ?? failure.message ?? failure)
+    .replaceAll(source.password, "[REDACTED]")
+    .replaceAll(target.password, "[REDACTED]");
+  const annotation = `${testId} failed during ${activePhase}: ${failureText}`
+    .replaceAll("%", "%25")
+    .replaceAll("\r", "%0D")
+    .replaceAll("\n", "%0A");
+  console.error(`::error::${annotation}`);
+  console.error(`${testId} failure during ${activePhase}: ${failure.message ?? failure}`);
   process.exitCode = 1;
 }

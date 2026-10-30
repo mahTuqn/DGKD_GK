@@ -98,7 +98,7 @@ jobs:
           DATABASE_URL_WORKER_PROCESS_TEST: postgresql://cinema:cinema_dev@localhost:5432/cinema_worker_soak_ci?schema=public
       - run: npm run build
       - run: npx playwright install --with-deps chromium
-      - run: npm run test:browser
+      - run: npm run test:browser -- --add-reporter=github
       - uses: actions/upload-artifact@v6
         if: always()
         with:
