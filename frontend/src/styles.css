@@ -295,6 +295,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .scan-panel h1 { font: 700 26px Manrope; margin: 8px 0; }
 .scan-panel > .muted { font-size: 11px; line-height: 1.65; margin: 0 0 22px; }
 .scan-panel .alert { margin-top: 14px; }
+.scan-panel .button-primary:disabled { opacity: 1; background: #d85e3e; }
 
 @media (max-width: 1000px) {
   .hero { padding-left: 7vw; }
