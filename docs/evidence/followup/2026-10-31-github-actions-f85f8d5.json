@@ -1,0 +1,128 @@
+{
+  "recordedAt": "2026-10-31",
+  "commit": "f85f8d5d4f5d73d528e7c635ffb58106ac71b278",
+  "branch": "codex/cross-browser-smoke",
+  "workflows": {
+    "quality": {
+      "runId": "41124731335",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41124731335",
+      "conclusion": "success",
+      "checks": [
+        "Gitleaks",
+        "API integration and authorization tests",
+        "backend and test typecheck",
+        "traceability",
+        "OpenAPI and database/recovery checks",
+        "live hold expiry and five-minute worker restart rehearsal",
+        "Chromium Playwright browser suite",
+        "DAST summary validation and artifact upload",
+        "domain coverage and mutation threshold",
+        "Compose runtime and browser smoke"
+      ],
+      "api": {
+        "filesPassed": 20,
+        "testsPassed": 77,
+        "includes": ["TC-SEC-50"]
+      },
+      "playwright": {
+        "testsPassed": 74,
+        "duration": "2m 48s"
+      },
+      "mutation": {
+        "scorePercent": 82.89,
+        "killed": 155,
+        "survived": 32,
+        "thresholdPercent": 70
+      },
+      "dast": {
+        "reportsParsed": "3/3",
+        "alertRecords": {
+          "high": 0,
+          "medium": 0,
+          "low": 1,
+          "informational": 5,
+          "unknown": 0
+        },
+        "alertInstances": {
+          "high": 0,
+          "medium": 0,
+          "low": 3,
+          "informational": 11,
+          "unknown": 0
+        },
+        "lowRuleIds": ["40014"],
+        "triage": "The sanitized summary omits alert names, routes and payloads. Review the report artifact before determining exploitability or remediation."
+      },
+      "artifacts": [
+        {
+          "name": "cinema-booking-browser-results-f85f8d5d4f5d73d528e7c635ffb58106ac71b278",
+          "id": "13009889225",
+          "size": "451 KB",
+          "sha256": "299236f6ccfa4966443c15fecd7126a630480eea6f09f70e07a6726d1d9248ab",
+          "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41124731335/artifacts/13009889225"
+        },
+        {
+          "name": "cinema-booking-compose-browser-results-f85f8d5d4f5d73d528e7c635ffb58106ac71b278",
+          "id": "13010701151",
+          "size": "195 KB",
+          "sha256": "da6982ce3ae7c4682376ffcd9d4c87f04a762f85e4bc2e22bc1bef42d69a20b5",
+          "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41124731335/artifacts/13010701151"
+        },
+        {
+          "name": "cinema-booking-dast-reports-f85f8d5d4f5d73d528e7c635ffb58106ac71b278",
+          "id": "13010457524",
+          "size": "6.33 KB",
+          "sha256": "843b454c20eaa7250bc391a5995e148fda10c51a274a1382c583ac730b2c3c83",
+          "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41124731335/artifacts/13010457524"
+        },
+        {
+          "name": "cinema-booking-domain-quality-f85f8d5d4f5d73d528e7c635ffb58106ac71b278",
+          "id": "13009194362",
+          "size": "141 KB",
+          "sha256": "ab54c76ec830ea562ba008b4d39d705fa67b498a67ebc9ac0608086405b6cba1",
+          "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41124731335/artifacts/13009194362"
+        }
+      ]
+    },
+    "crossBrowser": {
+      "runId": "41124731252",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41124731252",
+      "conclusion": "success",
+      "testsPassed": 36,
+      "testDuration": "1m 54s",
+      "engines": ["Firefox", "WebKit"],
+      "perProjectBreakdown": "The workflow summary exposes 36 aggregate passes; it does not show counts separately for Firefox and WebKit.",
+      "tcE2E39": "Passed in both engines",
+      "artifact": {
+        "name": "cinema-booking-cross-browser-results-f85f8d5d4f5d73d528e7c635ffb58106ac71b278",
+        "id": "13009413545",
+        "size": "330 KB",
+        "sha256": "78ecf6f6ebe90e53c080bc24945ecfe72b73ed9f24f163f97535fc282830faae",
+        "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41124731252/artifacts/13009413545"
+      }
+    },
+    "workerSoak": {
+      "runId": "41124731365",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41124731365",
+      "conclusion": "success",
+      "jobDuration": "15m 44s",
+      "workflowDuration": "15m 48s",
+      "twoWorkerSoakAndRestartStep": "15m 13s",
+      "testsPassed": 1
+    }
+  },
+  "localChecks": {
+    "tcE2E39": "1/1 passed on isolated Chromium desktop at 320x800 and 800x320",
+    "tcSEC50": "1/1 passed with a PostgreSQL 17 tie-break fixture; backend/test typecheck passed",
+    "dastSummaryTooling": "4/4 passed",
+    "traceability": "133 test cases / 29 requirements passed",
+    "secretScan": "135 commits scanned, no leaks",
+    "diffCheck": "git diff --check passed"
+  },
+  "limitations": [
+    "The DAST summary exposes rule ID 40014 and severity counts but omits alert names, routes and payloads; inspect the artifact to triage the Low alert.",
+    "The manual 90-row accessibility checklist remains 8 Fail / 5 Pass / 77 Not tested. Automated regressions cover prior reported symptoms, but this is not a completed manual WCAG review.",
+    "Real screen-reader speech, actual zoom/text resizing, and physical-device touch remain unverified.",
+    "Named-staging performance, production backup/PITR/RPO/RTO, and exhaustive ASVS/API Top 10 and adversarial BOLA review remain open."
+  ]
+}

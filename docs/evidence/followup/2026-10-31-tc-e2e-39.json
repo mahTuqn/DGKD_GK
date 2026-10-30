@@ -16,5 +16,5 @@
     "orderOrPayment": "Neither was created; the test stops before order creation/payment.",
     "database": "Disposable PostgreSQL container and volume removed after the run."
   },
-  "crossBrowser": "Added to the Firefox/WebKit smoke workflow filter; exact-source CI is pending for this new test."
+  "crossBrowser": "Exact-source Firefox/WebKit run 41124731252 passed 36 aggregate tests; TC-E2E-39 is included, while per-browser counts are not shown. Quality run 41124731335 also passed 74 Chromium Playwright tests."
 }

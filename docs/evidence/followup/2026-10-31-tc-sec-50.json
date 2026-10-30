@@ -19,5 +19,11 @@
     "foreignCursor": "Customer A requests history using Customer B's cursor while A's own order is older.",
     "assertions": "B receives the ticket-bearing boundary order; A receives only A's order and no foreign order ID, ticket ID, or QR token."
   },
-  "scope": "Targeted cross-customer cursor/BOLA regression. Comprehensive ASVS/API Top 10 and adversarial BOLA review remain broader open work. Exact-source CI is pending."
+  "exactSourceCi": {
+    "runId": "41124731335",
+    "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41124731335",
+    "conclusion": "success",
+    "suite": "77 API test results across 20 files passed; TC-SEC-50 is in the pushed source."
+  },
+  "scope": "Targeted cross-customer cursor/BOLA regression. Comprehensive ASVS/API Top 10 and adversarial BOLA review remain broader open work."
 }
