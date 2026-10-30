@@ -1,0 +1,125 @@
+{
+  "recordedAt": "2026-10-31",
+  "commit": "fa715497a39184b0c80f91990f93c98a3830ef6a",
+  "branch": "codex/cross-browser-smoke",
+  "workflows": {
+    "quality": {
+      "runId": "41134118546",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41134118546",
+      "conclusion": "success",
+      "workflowDuration": "16m 26s",
+      "jobDuration": "16m 22s",
+      "checks": [
+        "Gitleaks and dependency audit",
+        "API integration and authorization tests",
+        "backend and test typecheck",
+        "traceability and OpenAPI lint",
+        "disposable PostgreSQL backup and restore",
+        "live five-minute hold expiry and two-worker soak/restart",
+        "Chromium Playwright browser suite",
+        "DAST summary validation and artifact upload",
+        "domain coverage and mutation threshold",
+        "Compose runtime and browser smoke"
+      ],
+      "api": {
+        "filesPassed": 20,
+        "testsPassed": 77
+      },
+      "playwright": {
+        "testsPassed": 74,
+        "duration": "3m 36s",
+        "projects": ["Chromium desktop", "Chromium mobile"],
+        "includes": ["TC-E2E-04"],
+        "tcE2E04Viewports": ["320x800", "800x320"]
+      },
+      "mutation": {
+        "scorePercent": 82.89,
+        "killed": 155,
+        "survived": 32,
+        "thresholdPercent": 70
+      },
+      "dast": {
+        "reportsParsed": "3/3",
+        "alertRecords": {
+          "high": 0,
+          "medium": 0,
+          "low": 1,
+          "informational": 5,
+          "unknown": 0
+        },
+        "alertInstances": {
+          "high": 0,
+          "medium": 0,
+          "low": 3,
+          "informational": 11,
+          "unknown": 0
+        },
+        "lowRuleIds": ["40014"],
+        "triage": "The sanitized summary omits alert names, routes and payloads. Review the report artifact before determining exploitability or remediation.",
+        "artifact": {
+          "id": "13016335334",
+          "size": "6.33 KB",
+          "sha256": "6506df21026cf1a82fb98fe2781acebce95ca9018dc20b42540b94d71a78e4ee",
+          "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41134118546/artifacts/13016335334"
+        }
+      },
+      "artifacts": [
+        {
+          "name": "cinema-booking-browser-results-fa715497a39184b0c80f91990f93c98a3830ef6a",
+          "id": "13016691565",
+          "size": "458 KB",
+          "sha256": "5fa20480735ce8829f36535fcb12b8353d4f332c8e71d736a00f5f207afdf8e8",
+          "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41134118546/artifacts/13016691565"
+        },
+        {
+          "name": "cinema-booking-compose-browser-results-fa715497a39184b0c80f91990f93c98a3830ef6a",
+          "id": "13014566578",
+          "size": "195 KB",
+          "sha256": "787a7d7c89175bc4088361fc01e25052341ff4bc19c63ffe53da6e73db8a4b8b",
+          "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41134118546/artifacts/13014566578"
+        },
+        {
+          "name": "cinema-booking-domain-quality-fa715497a39184b0c80f91990f93c98a3830ef6a",
+          "id": "13015770626",
+          "size": "141 KB",
+          "sha256": "9fb5230a4e79848b39e12352c752ae0099d9990a4e1cf0b9aff1a575192530c9",
+          "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41134118546/artifacts/13015770626"
+        }
+      ]
+    },
+    "crossBrowser": {
+      "runId": "41134118614",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41134118614",
+      "conclusion": "success",
+      "testsPassed": 38,
+      "testDuration": "2m 18s",
+      "engines": ["Firefox desktop", "WebKit desktop"],
+      "includes": ["TC-E2E-04"],
+      "tcE2E04Viewports": ["320x800", "800x320"]
+    },
+    "workerSoak": {
+      "runId": "41134118475",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41134118475",
+      "conclusion": "success",
+      "jobDuration": "15m 44s",
+      "workflowDuration": "15m 48s",
+      "twoWorkerSoakAndRestartStep": "15m 16s",
+      "workers": 2,
+      "soakEventsProcessedExactlyOnce": 91,
+      "restartEventProcessedExactlyOnce": true,
+      "scope": "Worker/outbox reliability and graceful restart; does not measure HTTP virtual users, throughput, latency or HTTP error rate."
+    }
+  },
+  "localChecks": {
+    "traceability": "133 test cases / 29 requirements passed",
+    "frontendBuild": "npm run build --workspace frontend passed",
+    "diffCheck": "git diff --check passed"
+  },
+  "limitations": [
+    "The DAST summary exposes rule ID 40014 and severity counts but omits alert names, routes and payloads; inspect the artifact to triage the Low alert.",
+    "The manual 90-item accessibility checklist remains 8 Fail / 5 Pass / 77 Not tested. Automated regressions are not a completed manual WCAG review.",
+    "Real screen-reader speech, actual zoom/text resizing and physical-device touch remain unverified.",
+    "No staging environment is available; named-staging performance is unmeasured.",
+    "Production backup/PITR/RPO/RTO evidence and exhaustive ASVS/API Top 10 and adversarial BOLA review remain open."
+  ]
+}
