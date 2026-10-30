@@ -354,7 +354,7 @@ test("[TC-E2E-18] Admin details mở rộng có thể truy cập bằng tên sum
   await expectNoWcagAxeViolations(page, ".admin-view");
 });
 
-test("Seat limit provides feedback and allows changing selection", async ({ page }) => {
+test("[TC-E2E-33] Seat limit provides feedback and allows changing selection", async ({ page }) => {
   await mockApi(page);
   await page.route(`**/api/showtimes/${showtime.id}/seats`, async (route) => {
     await fulfillJson(route, 200, { showtime, seats: Array.from({ length: 9 }, (_, index) => ({

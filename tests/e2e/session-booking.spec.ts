@@ -179,7 +179,7 @@ test("[TC-E2E-21] session Admin được giữ sau reload và bị xóa khi đă
   await expect(page.locator(".mobile-account")).toBeFocused();
 });
 
-test("Auth errors retain keyboard focus on the submit button", async ({ page }) => {
+test("[TC-E2E-34] Auth errors retain keyboard focus on the submit button", async ({ page }) => {
   await page.goto("/");
   await openLogin(page);
   const dialog = page.getByRole("dialog");
