@@ -190,6 +190,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .seat.available:hover { border-color: var(--orange-2); transform: translateY(-2px); }
 .seat.selected { border-color: var(--orange); background: var(--orange); color: #211714; font-weight: 800; box-shadow: 0 0 0 3px rgba(255,112,72,.12); }
 .seat.held, .seat.sold { background: #393835; color: #6f6c66; border-color: transparent; cursor: not-allowed; }
+.seat.held { background: repeating-linear-gradient(45deg, #393835 0 4px, #a39f98 4px 5px); }
 .seat.sold { opacity: .45; }
 .seat.accessible { border-style: dashed; }
 .seat-legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 21px; color: #aaa59d; font-size: 9px; padding: 4px 0 17px; }

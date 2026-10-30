@@ -179,6 +179,10 @@ test("[TC-E2E-27] nhãn sơ đồ ghế mô tả trạng thái và loại ghế 
   await expect(dialog.getByRole("button", { name: "Ghế A 3 — đang giữ — ghế cao cấp" })).toBeDisabled();
   await expect(dialog.getByRole("button", { name: "Ghế A 4 — đã bán — ghế hỗ trợ tiếp cận" })).toBeDisabled();
   await expect(dialog.locator(".seat-legend").getByText("Đang giữ", { exact: true })).toBeVisible();
+  const heldPattern = await dialog.getByRole("button", { name: "Ghế A 3 — đang giữ — ghế cao cấp" }).evaluate((element) => getComputedStyle(element).backgroundImage);
+  const soldPattern = await dialog.getByRole("button", { name: "Ghế A 4 — đã bán — ghế hỗ trợ tiếp cận" }).evaluate((element) => getComputedStyle(element).backgroundImage);
+  expect(heldPattern).toContain("repeating-linear-gradient");
+  expect(soldPattern).toBe("none");
 
   const seatColors = await availableSeat.evaluate((element) => {
     const style = getComputedStyle(element);
