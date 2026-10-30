@@ -88,4 +88,21 @@ test("[TC-E2E-32] nội dung QR có thể được chọn bằng bàn phím và 
   await page.getByLabel("Mã QR vé").fill(manualCode);
   await page.getByRole("button", { name: "Xác nhận vào rạp" }).click();
   await expect(page.getByRole("alert")).toContainText("đã được sử dụng");
+  const ordersResponse = await request.get(`${API_URL}/orders/me`, { headers: customerHeaders });
+  expect(ordersResponse.ok()).toBeTruthy();
+  const orders = await ordersResponse.json() as { items: Array<{ id: string; seats: Array<{ label: string }>; tickets: Array<{ qrToken: string; seatLabel: string | null; checkedInAt: string | null }> }> };
+  const purchased = orders.items.find((item) => item.id === order.id)!;
+  expect(purchased.tickets.map((item) => item.seatLabel).sort()).toEqual(purchased.seats.map((item) => item.label).sort());
+  expect(purchased.tickets.filter((item) => item.checkedInAt)).toHaveLength(1);
+  expect(purchased.tickets.find((item) => item.qrToken === manualCode)?.checkedInAt).toBeTruthy();
+  await page.getByRole("button", { name: "Đăng xuất", exact: true }).click();
+  await page.getByRole("button", { name: /Mở tài khoản/ }).click();
+  await page.getByLabel("Email").fill(customer.user.email);
+  await page.getByLabel("Mật khẩu").fill("CinemaQa123!");
+  await page.getByRole("dialog").getByRole("button", { name: "Đăng nhập", exact: true }).click();
+  await page.getByRole("button", { name: "Vé của tôi", exact: true }).click();
+  for (const ticket of purchased.tickets) {
+    const code = page.getByTestId("ticket-card").first().locator(".ticket-code").filter({ has: page.getByText(`Ghế ${ticket.seatLabel}`, { exact: true }) });
+    await expect(code).toContainText(ticket.checkedInAt ? "Đã vào rạp" : "Chưa vào rạp");
+  }
 });

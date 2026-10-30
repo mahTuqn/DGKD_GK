@@ -318,7 +318,7 @@ function toOrder(order: Prisma.CinemaOrderGetPayload<{ include: { showtime: { in
     createdAt: order.createdAt.toISOString(),
     showtime: toShowtime({ ...order.showtime, auditorium: { ...order.showtime.auditorium, cinema: order.showtime.auditorium.cinema } }),
     seats: order.claims.map((claim) => ({ seatId: claim.seatId, label: claim.seat.label, row: claim.seat.row, column: claim.seat.column, type: claim.seat.type, priceVnd: claim.priceVnd })),
-    tickets: order.tickets.map((ticket) => ({ id: ticket.id, qrToken: ticket.qrToken, checkedInAt: ticket.checkedInAt?.toISOString() ?? null }))
+    tickets: order.tickets.map((ticket) => ({ id: ticket.id, qrToken: ticket.qrToken, checkedInAt: ticket.checkedInAt?.toISOString() ?? null, seatLabel: order.claims.find((claim) => claim.id === ticket.seatClaimId)?.seat.label ?? null }))
   };
 }
 

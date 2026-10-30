@@ -1125,6 +1125,7 @@ components:
         id: { type: string }
         qrToken: { type: string }
         checkedInAt: { type: [string, 'null'], format: date-time }
+        seatLabel: { type: [string, 'null'], description: Seat label on customer order responses. }
     Order:
       type: object
       required: [id, status, totalVnd, createdAt, showtime, seats, tickets]

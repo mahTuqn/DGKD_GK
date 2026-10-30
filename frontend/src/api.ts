@@ -18,7 +18,7 @@ export type Seat = {
 };
 export type SeatMap = { showtime: Partial<Showtime> & Pick<Showtime, "id" | "movieTitle" | "cinemaName" | "auditoriumName" | "startAt" | "endAt" | "date" | "priceVnd">; seats: Seat[] };
 export type Hold = { id: string; showtimeId: string; seatIds: string[]; expiresAt: string; totalVnd: number; status: string };
-export type Ticket = { id: string; qrToken: string; checkedInAt: string | null };
+export type Ticket = { id: string; qrToken: string; checkedInAt: string | null; seatLabel?: string | null };
 export type Order = {
   id: string; status: string; totalVnd: number; createdAt: string; showtime: Showtime;
   seats: Array<{ seatId: string; label: string }>; tickets: Ticket[];

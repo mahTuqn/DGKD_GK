@@ -234,6 +234,8 @@ function TicketCard({ order }: { order: Order }) {
     </div>
     <div className="ticket-codes">{order.tickets.map((ticket, index) => <div className="ticket-code" key={ticket.id} aria-label="Mã vé QR">
       <QRCodeSVG value={ticket.qrToken} title={`Mã QR vé ${ticket.id.slice(-8).toUpperCase()}`} size={108} bgColor="#ffffff" fgColor="#151515" level="M" />
+      <b>{ticket.seatLabel ? `Ghế ${ticket.seatLabel}` : `Vé ${index + 1}`}</b>
+      <span>{ticket.checkedInAt ? "Đã vào rạp" : "Chưa vào rạp"}</span>
       <small>Tham chiếu · {ticket.id.slice(-8).toUpperCase()}</small>
       <details className="ticket-manual-code"><summary>Hiển thị mã soát vé · vé {index + 1}</summary>
         <label>Nội dung mã QR vé {index + 1} · {ticket.id.slice(-8).toUpperCase()}<textarea readOnly rows={3} value={ticket.qrToken} spellCheck={false} /></label>
