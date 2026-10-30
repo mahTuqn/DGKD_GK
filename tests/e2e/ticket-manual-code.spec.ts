@@ -95,6 +95,17 @@ test("[TC-E2E-32] nội dung QR có thể được chọn bằng bàn phím và 
   expect(purchased.tickets.map((item) => item.seatLabel).sort()).toEqual(purchased.seats.map((item) => item.label).sort());
   expect(purchased.tickets.filter((item) => item.checkedInAt)).toHaveLength(1);
   expect(purchased.tickets.find((item) => item.qrToken === manualCode)?.checkedInAt).toBeTruthy();
+  const otherRegistration = await request.post(`${API_URL}/auth/register`, {
+    data: { name: "QA Other Customer", email: `qa-other-${Date.now()}-${Math.random().toString(16).slice(2)}@example.test`, password: "CinemaQa123!" },
+  });
+  expect(otherRegistration.status()).toBe(201);
+  const otherCustomer = await otherRegistration.json() as { token: string };
+  const otherHeaders = { authorization: `Bearer ${otherCustomer.token}` };
+  expect((await request.get(`${API_URL}/orders/${encodeURIComponent(order.id)}`, { headers: otherHeaders })).status()).toBe(404);
+  const otherOrders = await request.get(`${API_URL}/orders/me`, { headers: otherHeaders });
+  expect(otherOrders.ok()).toBeTruthy();
+  const otherPage = await otherOrders.json() as { items: Array<{ id: string }> };
+  expect(otherPage.items.some((item) => item.id === order.id)).toBe(false);
   await page.getByRole("button", { name: "Đăng xuất", exact: true }).click();
   await page.getByRole("button", { name: /Mở tài khoản/ }).click();
   await page.getByLabel("Email").fill(customer.user.email);
