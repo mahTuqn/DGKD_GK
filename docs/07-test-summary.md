@@ -2,6 +2,8 @@
 
 ## Accessibility and CI follow-up — 30/10/2026
 
+Local full Playwright suite on source `7adffff` passed **64/64 configured executions** across Chromium desktop and Pixel 7 (0 unexpected, skipped or flaky; 4m 23s), excluding the separate Compose smoke. See [local evidence](evidence/followup/2026-10-30-local-full-browser-7adffff.json). This does not establish GitHub CI or manual screen-reader/touch completion.
+
 On source `863e74d`, the seat-limit and authentication-error focus regressions passed locally in Firefox and WebKit (4/4 executions); this does not replace screen-reader review. The [5f0df85 cross-browser smoke](https://github.com/mahTuqn/DGKD_GK/actions/runs/41021466186) passed. Quality and worker-soak workflows for later commits were in progress or queued at the latest check.
 
 Customer order responses now associate each ticket with its seat through the ticket’s seat claim; the ticket card displays the seat and individual check-in status. TC-E2E-32 passed locally on Chromium, Firefox and WebKit with two tickets and one check-in, using a disposable database. The expanded local Chromium case also verifies another customer receives 404 for the order and does not see it in their list. API/OpenAPI lint and traceability passed; exact-source CI remains pending.

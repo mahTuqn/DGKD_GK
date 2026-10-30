@@ -1,0 +1,17 @@
+{
+  "sourceCommit": "7adffff71b4e79206b9f2e4c99114e14aa1f2f93",
+  "method": "Playwright against locally running API and Vite with dedicated disposable PostgreSQL database",
+  "scope": "All tests/e2e except compose-stack.spec.ts; one worker; Chromium Desktop Chrome and Pixel 7 projects",
+  "startUtc": "2026-10-30T07:47:05.095Z",
+  "durationSeconds": 263.166,
+  "expected": 64,
+  "unexpected": 0,
+  "skipped": 0,
+  "flaky": 0,
+  "notes": [
+    "The API was built from the working tree containing the changes later committed as 37200bf; backend and frontend source have no diff between 37200bf and 7adffff.",
+    "Runtime metadata records an earlier HEAD because the API was built before those source changes were committed.",
+    "One case checks API health through Playwright request context rather than a rendered browser page.",
+    "This is local evidence and does not replace GitHub CI, manual screen-reader speech, real mobile touch or staging validation."
+  ]
+}
