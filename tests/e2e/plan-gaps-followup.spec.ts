@@ -152,7 +152,7 @@ test("[TC-E2E-19] thanh toán đã ghi nhận nhưng mất phản hồi có th�
   await page.getByTestId("pay-submit").click();
   await expect(page.getByRole("heading", { name: "Hẹn gặp bạn tại rạp." })).toBeVisible();
   await expect.poll(() => orderListRequests).toBe(1);
-  await expect(page.getByText("MÃ VÉ · 00000001", { exact: true })).toBeVisible();
+  await expect(page.getByText("THAM CHIẾU · 00000001", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Xem vé của tôi" })).toBeVisible();
   expect(paymentOrderIds).toEqual([orderId, orderId]);
   expect(idempotentReplayCount).toBe(1);

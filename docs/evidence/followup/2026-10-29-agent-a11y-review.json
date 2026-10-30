@@ -186,5 +186,40 @@
       }
     ],
     "limitations": "Specific focus defects retested; this does not establish the full A11Y-09 workflow or screen reader results."
+  },
+  "discoveryAndFilters20261030": {
+    "build": "ffa530d plus working-tree discovery and filter changes",
+    "manualObservations": [
+      "Before fix: Enter on Xem suất chiếu moved the page to schedule, but Tab focused the next movie poster.",
+      "Before fix: visible labels Ngày xem phim and Rạp chiếu had accessible names Ngày chiếu and Rạp.",
+      "After fix: Enter moves focus to the schedule heading; next Tab reaches Ngày xem phim. Changing the date with Down keeps focus on the selector and updates the empty-result text and status. The selectors expose the visible labels."
+    ],
+    "automated": {
+      "cases": [
+        "TC-E2E-06",
+        "TC-E2E-07",
+        "TC-E2E-09"
+      ],
+      "result": "3 Chromium tests passed in 10.8s",
+      "scope": "Movie/cinema/date filters, status text, keyboard transition and focus.",
+      "crossBrowser": "Firefox/WebKit TC-E2E-06/07/09 passed as part of 8/8 cross-browser executions including TC-E2E-32 in 51.0s."
+    },
+    "limitations": [
+      "Focused observations do not complete all checks in A11Y-01 or A11Y-02.",
+      "The status role was inspected; actual screen-reader speech was not verified."
+    ]
+  },
+  "manualQrAlternative20261030": {
+    "finding": "Ticket view originally showed only the final eight characters of the ticket ID; Staff QR scan requires the full QR token, so the visible reference could not be entered into the scan form.",
+    "fix": "Each ticket has an initially closed disclosure with a labelled read-only selectable QR text field and a reminder to share only with Staff. The short ID is labelled as a reference. No token is included in this evidence.",
+    "automated": {
+      "case": "TC-E2E-32",
+      "result": "Chromium 1/1; Firefox/WebKit 2/2 passed on the current working tree after the TC-E2E-32 rename.",
+      "scope": "Two disposable tickets; keyboard disclosure and full-text selection at 320px; Staff success and duplicate check; no screenshot/video/trace retained."
+    },
+    "limitations": [
+      "Automated testing does not verify real screen-reader speech or touch exploration.",
+      "This focused retest does not complete all checks in A11Y-06."
+    ]
   }
 }

@@ -52,8 +52,8 @@ jobs:
       - run: npm run db:seed
       - run: npm run build
       - run: npx playwright install --with-deps firefox webkit
-      - name: Run booking, discovery, keyboard, Staff scan, payment recovery, and wrong-cinema denial flows in Firefox and WebKit
-        run: npm run test:browser -- --grep 'TC-E2E-01|TC-E2E-02|TC-E2E-03|TC-E2E-09|TC-E2E-19|TC-E2E-31'
+      - name: Run booking, discovery, keyboard, Staff scan, payment recovery, and manual ticket code flows in Firefox and WebKit
+        run: npm run test:browser -- --grep 'TC-E2E-01|TC-E2E-02|TC-E2E-03|TC-E2E-09|TC-E2E-19|TC-E2E-31|TC-E2E-32'
       - uses: actions/upload-artifact@v6
         if: always()
         with:

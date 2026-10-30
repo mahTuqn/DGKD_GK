@@ -9,6 +9,7 @@ button, input, select, textarea { font: inherit; }
 button, a, select { -webkit-tap-highlight-color: transparent; }
 button { color: inherit; }
 button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--orange-2); outline-offset: 3px; }
+.schedule-section h2:focus { outline: 2px solid var(--orange-2); outline-offset: 3px; }
 ::selection { background: rgba(255,112,72,.34); color: #fff; }
 .app-shell { min-height: 100vh; overflow: hidden; }
 .topbar { height: 80px; padding: 0 clamp(20px, 5.6vw, 88px); display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,.06); background: rgba(16,16,15,.96); position: sticky; top: 0; z-index: 10; backdrop-filter: blur(16px); }
@@ -153,8 +154,14 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .ticket-details b { font-size: 11px; }
 .ticket-bottom { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; padding-top: 13px; border-top: 1px dashed rgba(255,255,255,.12); color: #a9a49b; font-size: 9px; }
 .ticket-codes { padding: 18px; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 13px; background: #f5f2ee; border-left: 1px dashed #aaa49b; color: #282522; }
-.ticket-code { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.ticket-code { width: 100%; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 5px; }
 .ticket-code small { font-size: 8px; letter-spacing: 1px; }
+.ticket-manual-code { width: 100%; min-width: 0; font-size: 12px; line-height: 1.45; }
+.ticket-manual-code summary { min-height: 32px; padding: 7px 2px; cursor: pointer; font-weight: 700; }
+.ticket-manual-code summary:focus-visible, .ticket-manual-code textarea:focus-visible { outline: 2px solid #873613; outline-offset: 2px; }
+.ticket-manual-code label { display: flex; flex-direction: column; gap: 6px; font-weight: 600; }
+.ticket-manual-code textarea { display: block; width: 100%; min-height: 64px; padding: 8px; resize: vertical; border: 1px solid #675f55; border-radius: 4px; color: #282522; background: #fff; overflow-wrap: anywhere; font-size: 12px; }
+.ticket-manual-code p { margin: 6px 0 0; font-size: 11px; }
 .overlay { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; overflow: auto; padding: 24px; background: rgba(6,6,6,.78); backdrop-filter: blur(8px); animation: fade-in .18s ease-out; }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 .dialog { width: min(100%, 472px); position: relative; padding: 30px; background: #1b1b19; border: 1px solid rgba(255,255,255,.13); border-radius: 9px; box-shadow: 0 24px 90px rgba(0,0,0,.5); }

@@ -523,7 +523,9 @@ test("[TC-E2E-06] Bộ lọc phim và rạp cập nhật đúng các suất đan
   await page.goto("/");
   await expect(page.getByTestId("movie-card").first()).toBeVisible();
 
-  const date = await page.getByLabel("Ngày chiếu").inputValue();
+  const date = await page.getByLabel("Ngày xem phim").inputValue();
+  await expect(page.getByLabel("Ngày xem phim")).toHaveAccessibleName("Ngày xem phim");
+  await expect(page.getByLabel("Rạp chiếu")).toHaveAccessibleName("Rạp chiếu");
   const [moviesResponse, showtimesResponse] = await Promise.all([
     page.request.get(`${API_URL}/movies`),
     page.request.get(`${API_URL}/showtimes?date=${encodeURIComponent(date)}`),
@@ -545,12 +547,12 @@ test("[TC-E2E-06] Bộ lọc phim và rạp cập nhật đúng các suất đan
   await expect(page.locator(".showtime-card")).toHaveCount(expectedMovieCount);
 
   const selectedCinemaId = dayShowtimes[0]!.cinemaId;
-  await expect(page.getByLabel("Rạp").locator(`option[value="${selectedCinemaId}"]`)).toHaveCount(1);
+  await expect(page.getByLabel("Rạp chiếu").locator(`option[value="${selectedCinemaId}"]`)).toHaveCount(1);
   const filteredResponsePromise = page.waitForResponse((response) => {
     const url = new URL(response.url());
     return url.pathname.endsWith("/api/showtimes") && url.searchParams.get("cinemaId") === selectedCinemaId;
   });
-  await page.getByLabel("Rạp").selectOption(selectedCinemaId);
+  await page.getByLabel("Rạp chiếu").selectOption(selectedCinemaId);
   const filteredResponse = await filteredResponsePromise;
   expect(filteredResponse.ok()).toBeTruthy();
   const filteredShowtimes = await filteredResponse.json() as Array<{ movieId: string; cinemaId: string }>;
@@ -569,7 +571,7 @@ test("[TC-E2E-07] Bộ lọc ngày làm mới lịch chiếu theo ngày đã ch�
   const selectedMovie = movies.find((movie) => movie.title === movieTitle);
   expect(selectedMovie).toBeTruthy();
 
-  const dateSelect = page.getByLabel("Ngày chiếu");
+  const dateSelect = page.getByLabel("Ngày xem phim");
   const laterDate = await dateSelect.locator("option").nth(1).getAttribute("value");
   expect(laterDate).toBeTruthy();
   const expectedResponse = await page.request.get(`${API_URL}/showtimes?date=${encodeURIComponent(laterDate!)}`);
@@ -585,6 +587,9 @@ test("[TC-E2E-07] Bộ lọc ngày làm mới lịch chiếu theo ngày đã ch�
   const refreshed = await refreshPromise;
   expect(refreshed.ok()).toBeTruthy();
   await expect(page.locator(".showtime-card")).toHaveCount(expectedCount);
+  await expect(page.locator("#schedule").getByRole("status")).toHaveText(expectedCount
+    ? `${expectedCount} suất chiếu phù hợp cho ${movieTitle}.`
+    : "Không có suất chiếu phù hợp. Hãy thử ngày hoặc rạp khác.");
 });
 
 test("[TC-E2E-08] Axe không báo lỗi serious hoặc critical ở sơ đồ ghế và checkout", async ({ page }) => {
@@ -651,6 +656,9 @@ test("[TC-E2E-09][TC-PLAN-06] Bàn phím đi từ đăng nhập đến ghế ch�
   await tabUntilFocused(page, movieContinue, 40);
   await expectVisibleKeyboardFocus(movieContinue);
   await page.keyboard.press("Enter");
+  await expect(page.locator("#schedule h2")).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(page.getByLabel("Ngày xem phim")).toBeFocused();
   const showtime = page.getByTestId("showtime-option").first();
   await tabUntilFocused(page, showtime, 80);
   await expectVisibleKeyboardFocus(showtime);
