@@ -68,6 +68,10 @@ type MockOptions = {
   loginError?: { status: number; error: string; message: string };
   registrationError?: { status: number; error: string; message: string };
   movieTitles?: string[];
+  discoveryFilterFixture?: {
+    cinemas: Array<Pick<typeof cinema, "id" | "name" | "city">>;
+    showtimes: Array<typeof showtime>;
+  };
 };
 
 async function fulfillJson(route: Route, status: number, body: unknown) {
@@ -76,6 +80,7 @@ async function fulfillJson(route: Route, status: number, body: unknown) {
 
 async function mockApi(page: Page, options: MockOptions = {}) {
   const requests = { login: 0, registration: 0 };
+  let discoveryFixtureAvailableDate: string | null = null;
 
   await page.route("**/api/**", async (route) => {
     const request = route.request();
@@ -92,7 +97,35 @@ async function mockApi(page: Page, options: MockOptions = {}) {
         : [movie];
       await fulfillJson(route, 200, movies);
     } else if (request.method() === "GET" && pathname === "/api/showtimes") {
-      await fulfillJson(route, 200, [showtime]);
+      const fixture = options.discoveryFilterFixture;
+      if (!fixture) {
+        await fulfillJson(route, 200, [showtime]);
+      } else {
+        const url = new URL(request.url());
+        const date = url.searchParams.get("date");
+        const cinemaId = url.searchParams.get("cinemaId");
+        if (discoveryFixtureAvailableDate === null && date !== null) discoveryFixtureAvailableDate = date;
+        const cinemaById = new Map(fixture.cinemas.map((value) => [value.id, value]));
+        const fixtureShowtimes = fixture.showtimes.map((item, index) => {
+          const fixtureDate = discoveryFixtureAvailableDate ?? item.date;
+          const startAt = new Date(`${fixtureDate}T${18 + index * 2}:00:00+07:00`);
+          return {
+            ...item,
+            date: fixtureDate,
+            startAt: startAt.toISOString(),
+            endAt: new Date(startAt.getTime() + 100 * 60_000).toISOString(),
+          };
+        });
+        const filteredShowtimes = fixtureShowtimes
+          .filter((item) => item.date === date && (!cinemaId || item.cinemaId === cinemaId))
+          .map((item) => {
+            const selectedCinema = cinemaById.get(item.cinemaId);
+            return selectedCinema
+              ? { ...item, cinemaName: selectedCinema.name, city: selectedCinema.city }
+              : item;
+          });
+        await fulfillJson(route, 200, filteredShowtimes);
+      }
     } else if (request.method() === "GET" && pathname === `/api/showtimes/${showtime.id}/seats`) {
       await fulfillJson(route, 200, seatMap);
     } else if (request.method() === "POST" && pathname === "/api/auth/login") {
@@ -491,4 +524,93 @@ test("[TC-E2E-35] discovery text reflows under WCAG text-spacing overrides and f
     scrollWidth: document.documentElement.scrollWidth,
   }));
   expect(pageWidth.scrollWidth).toBeLessThanOrEqual(pageWidth.clientWidth);
+});
+
+test("[TC-E2E-36] discovery date and cinema filters update results by keyboard at 320px", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+
+  const firstCinema = { id: "a11y-filter-cinema-a", name: "Keyboard Cinema A", city: "Test City" };
+  const secondCinema = { id: "a11y-filter-cinema-b", name: "Keyboard Cinema B", city: "Test City" };
+  const filterFixture = {
+    cinemas: [firstCinema, secondCinema],
+    showtimes: [
+      {
+        ...showtime,
+        id: "a11y-filter-showtime-a",
+        cinemaId: firstCinema.id,
+        cinemaName: firstCinema.name,
+        city: firstCinema.city,
+      },
+      {
+        ...showtime,
+        id: "a11y-filter-showtime-b",
+        cinemaId: secondCinema.id,
+        cinemaName: secondCinema.name,
+        city: secondCinema.city,
+      },
+    ],
+  };
+  await mockApi(page, { discoveryFilterFixture: filterFixture });
+  await page.goto("/");
+  await expect(page.getByTestId("movie-card").first()).toBeVisible();
+
+  const dateFilter = page.getByLabel("Ngày xem phim");
+  const cinemaFilter = page.getByLabel("Rạp chiếu");
+  const scheduleStatus = page.locator("#schedule").getByRole("status");
+  const selectedDate = await dateFilter.inputValue();
+  const firstDateOption = await dateFilter.locator("option").nth(0).getAttribute("value");
+  const nextDateOption = await dateFilter.locator("option").nth(1).getAttribute("value");
+  if (!firstDateOption || !nextDateOption) throw new Error("Expected at least two date filter options after the page loads.");
+  const availableDate = firstDateOption;
+  expect(selectedDate).toBe(availableDate);
+  expect(firstDateOption).toBe(selectedDate);
+  await expect(cinemaFilter).toHaveAccessibleName("Rạp chiếu");
+  await expect(scheduleStatus).toHaveText(`2 suất chiếu phù hợp cho ${movie.title}.`);
+  await expect(page.locator(".showtime-card")).toHaveCount(2);
+
+  const waitForShowtimes = (date: string, cinemaId: string | null) => page.waitForResponse((response) => {
+    const url = new URL(response.url());
+    return response.request().method() === "GET"
+      && url.pathname === "/api/showtimes"
+      && url.searchParams.get("date") === date
+      && url.searchParams.get("cinemaId") === cinemaId;
+  });
+
+  await tabUntilFocused(page, dateFilter);
+  const emptyDateResponsePromise = waitForShowtimes(nextDateOption, null);
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
+  const emptyDateResponse = await emptyDateResponsePromise;
+  expect(emptyDateResponse.ok()).toBeTruthy();
+  await expect(dateFilter).toBeFocused();
+  await expect(dateFilter).toHaveValue(nextDateOption);
+  await expect(scheduleStatus).toHaveText("Không có suất chiếu phù hợp. Hãy thử ngày hoặc rạp khác.");
+  await expect(page.locator(".showtime-card")).toHaveCount(0);
+
+  const firstDateResponsePromise = waitForShowtimes(firstDateOption, null);
+  await page.keyboard.press("ArrowUp");
+  await page.keyboard.press("Enter");
+  const firstDateResponse = await firstDateResponsePromise;
+  expect(firstDateResponse.ok()).toBeTruthy();
+  await expect(dateFilter).toBeFocused();
+  await expect(dateFilter).toHaveValue(firstDateOption);
+  await expect(scheduleStatus).toHaveText(`2 suất chiếu phù hợp cho ${movie.title}.`);
+  await expect(page.locator(".showtime-card")).toHaveCount(2);
+
+  await tabUntilFocused(page, cinemaFilter);
+  await expect(cinemaFilter).toBeFocused();
+  await expect(cinemaFilter).toHaveValue("");
+  await expect(cinemaFilter.locator("option")).toHaveCount(3);
+  const lastCinemaOption = await cinemaFilter.locator("option").last().getAttribute("value");
+  expect(lastCinemaOption).toBe(secondCinema.id);
+  const cinemaResponsePromise = waitForShowtimes(firstDateOption, lastCinemaOption);
+  await page.keyboard.press("End");
+  await page.keyboard.press("Enter");
+  const cinemaResponse = await cinemaResponsePromise;
+  expect(cinemaResponse.ok()).toBeTruthy();
+  await expect(cinemaFilter).toBeFocused();
+  await expect(cinemaFilter).toHaveValue(lastCinemaOption!);
+  await expect(scheduleStatus).toHaveText(`1 suất chiếu phù hợp cho ${movie.title}.`);
+  await expect(page.locator(".showtime-card")).toHaveCount(1);
+  await expect(page.locator(".showtime-card").first()).toContainText(secondCinema.name);
 });

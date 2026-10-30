@@ -1,0 +1,47 @@
+{
+  "reviewDate": "2026-10-30",
+  "testId": "TC-E2E-36",
+  "sourceBaseCommit": "cfddb18d8d21054b677f4ef7f277b08e7d72de7c",
+  "workingTreeBlobs": {
+    "tests/e2e/a11y-states.spec.ts": "2911d5828d6a79fac8e5e717fddb5b54daf4dea6",
+    ".github/workflows/cross-browser-smoke.yml": "14e42f52786539d54d8f8b671ac4f67d18e0bb48"
+  },
+  "scope": "At a 320x800 viewport, operate the date and cinema native select filters by keyboard, confirm selected values and focus, wait for matching showtime requests, and verify both result cards and the schedule status region for available and empty states.",
+  "fixtures": {
+    "cinemas": 2,
+    "availableDateSource": "Captured from the app's first /api/showtimes request to avoid a midnight boundary between fixture setup and page initialization.",
+    "showtimesOnAvailableDate": 2,
+    "showtimesOnNextDate": 0,
+    "filteringToSecondCinema": 1
+  },
+  "environment": "Local Vite frontend at http://127.0.0.1:5173; all API requests intercepted by Playwright; no backend, Docker, database or production service used.",
+  "verification": {
+    "firefoxWebkit": {
+      "command": "$env:GITHUB_ACTIONS='true'; $env:E2E_BASE_URL='http://127.0.0.1:5173'; $env:PLAYWRIGHT_CROSS_BROWSER_SMOKE='true'; npx playwright test tests/e2e/a11y-states.spec.ts --grep 'TC-E2E-36'",
+      "passed": 2,
+      "failed": 0,
+      "durationSeconds": 13.0,
+      "projects": {
+        "firefox-desktop": { "passed": 1 },
+        "webkit-desktop": { "passed": 1 }
+      }
+    },
+    "chromiumDesktopMobile": {
+      "command": "$env:GITHUB_ACTIONS='true'; $env:E2E_BASE_URL='http://127.0.0.1:5173'; Remove-Item Env:PLAYWRIGHT_CROSS_BROWSER_SMOKE -ErrorAction SilentlyContinue; npx playwright test tests/e2e/a11y-states.spec.ts --grep 'TC-E2E-36'",
+      "passed": 2,
+      "failed": 0,
+      "durationSeconds": 8.4,
+      "projects": {
+        "chromium-desktop": { "passed": 1 },
+        "chromium-mobile": { "passed": 1 }
+      }
+    },
+    "traceability": "npm run qa:trace passed: 127 test cases / 29 requirements."
+  },
+  "reportNote": "The final JSON report was overwritten by the second Playwright command and contains only Chromium desktop/mobile. Firefox and WebKit each passed in console output; no failing trace or screenshot was produced.",
+  "limitations": [
+    "The role=status assertion verifies DOM/ARIA updates, not that a real screen reader speaks the message.",
+    "This is local mocked-API browser evidence; exact-source GitHub Actions remains pending.",
+    "The manual checklist remains 8 Fail / 5 Pass / 77 Not tested; actual screen-reader speech, browser zoom/text resizing, and physical-device touch remain unverified."
+  ]
+}
