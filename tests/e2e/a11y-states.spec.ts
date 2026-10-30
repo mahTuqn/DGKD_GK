@@ -434,17 +434,23 @@ test("[TC-E2E-33] Seat limit provides feedback and allows changing selection", a
 test("[TC-E2E-35] discovery text reflows under WCAG text-spacing overrides and filters remain keyboard operable", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 800 });
   await mockApi(page, { movieTitles: [movie.title, "SupercalifragilisticexpialidociousCinema"] });
+  const spacingStyles = `
+    *, *::before, *::after {
+      line-height: 1.5 !important;
+      letter-spacing: 0.12em !important;
+      word-spacing: 0.16em !important;
+    }
+    p { margin-block-end: 2em !important; }
+  `;
+  await page.route("**/__test__/tc-e2e-35-text-spacing.css", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "text/css; charset=utf-8",
+      body: spacingStyles,
+    }),
+  );
   await page.goto("/");
-  await page.addStyleTag({
-    content: `
-      *, *::before, *::after {
-        line-height: 1.5 !important;
-        letter-spacing: 0.12em !important;
-        word-spacing: 0.16em !important;
-      }
-      p { margin-block-end: 2em !important; }
-    `,
-  });
+  await page.addStyleTag({ url: "/__test__/tc-e2e-35-text-spacing.css" });
 
   const paragraph = page.locator(".hero-content > p");
   const spacing = await paragraph.evaluate((element) => {

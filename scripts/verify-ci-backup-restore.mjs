@@ -65,11 +65,13 @@ let failure;
 let activePhase = "validate disposable restore configuration";
 
 function runPgTool(tool, args, { input, allowFailure = false } = {}) {
+  const stdinArgs = input === undefined ? [] : ["--interactive"];
   const result = spawnSync(
     "docker",
     [
       "run",
       "--rm",
+      ...stdinArgs,
       "--network",
       "host",
       "--env",
