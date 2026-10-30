@@ -176,3 +176,25 @@ test("[TC-E2E-21] session Admin được giữ sau reload và bị xóa khi đă
   await page.keyboard.press("Enter");
   await expect(page.locator(".mobile-account")).toBeFocused();
 });
+
+test("Auth errors retain keyboard focus on the submit button", async ({ page }) => {
+  await page.goto("/");
+  await openLogin(page);
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Email").fill("customer@cinema.local");
+  await dialog.getByLabel("Mật khẩu").fill("wrong-password");
+  const login = dialog.getByRole("button", { name: "Đăng nhập", exact: true });
+  await login.focus();
+  await page.keyboard.press("Enter");
+  await expect(dialog.getByRole("alert")).toContainText("Email hoặc mật khẩu không chính xác");
+  await expect(login).toBeFocused();
+  await dialog.getByRole("button", { name: "Tạo tài khoản mới" }).click();
+  await dialog.getByLabel("Họ và tên").fill("QA Duplicate");
+  await dialog.getByLabel("Email").fill("customer@cinema.local");
+  await dialog.getByLabel("Mật khẩu").fill("CinemaCustomer123!");
+  const register = dialog.getByRole("button", { name: "Tạo tài khoản", exact: true });
+  await register.focus();
+  await page.keyboard.press("Enter");
+  await expect(dialog.getByRole("alert")).toContainText("Email này đã được đăng ký");
+  await expect(register).toBeFocused();
+});

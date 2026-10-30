@@ -125,9 +125,16 @@ function Poster({ movie, large = false, decorative = false }: { movie: Movie; la
 function AuthDialog({ mode, setMode, onClose, onSuccess, restoreFocusFallback }: { mode: AuthMode; setMode: (mode: AuthMode) => void; onClose: () => void; onSuccess: (session: Session) => void; restoreFocusFallback: { current: HTMLElement | null } }) {
   const [busy, setBusy] = useState(false); const [error, setError] = useState("");
   const dialogRef = useRef<HTMLElement | null>(null);
+  const submitRef = useRef<HTMLButtonElement | null>(null);
+  const restoreSubmitFocusRef = useRef(false);
   useModalKeyboard(dialogRef, onClose, restoreFocusFallback, true);
+  useEffect(() => {
+    if (busy || !error || !restoreSubmitFocusRef.current) return;
+    restoreSubmitFocusRef.current = false;
+    if (document.activeElement === document.body) submitRef.current?.focus();
+  }, [busy, error]);
   async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setBusy(true); setError(""); const form = new FormData(event.currentTarget);
+    event.preventDefault(); restoreSubmitFocusRef.current = document.activeElement === submitRef.current; setBusy(true); setError(""); const form = new FormData(event.currentTarget);
     try {
       const session = mode === "login"
         ? await api.login(String(form.get("email")), String(form.get("password")))
@@ -147,7 +154,7 @@ function AuthDialog({ mode, setMode, onClose, onSuccess, restoreFocusFallback }:
         <label className="field-label">Email<input aria-label="Email" name="email" type="email" autoComplete="email" required placeholder="ban@email.com" data-dialog-autofocus /></label>
         <label className="field-label">Mật khẩu<input aria-label="Mật khẩu" name="password" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} required minLength={8} placeholder="Ít nhất 8 ký tự" /></label>
         {error && <p role="alert" className="alert alert-error">{error}</p>}
-        <button className="button button-primary button-wide" disabled={busy}>{busy ? "Đang xử lý…" : mode === "login" ? "Đăng nhập" : "Tạo tài khoản"}</button>
+        <button ref={submitRef} className="button button-primary button-wide" disabled={busy}>{busy ? "Đang xử lý…" : mode === "login" ? "Đăng nhập" : "Tạo tài khoản"}</button>
       </form>
       <p className="auth-switch">{mode === "login" ? "Bạn chưa có tài khoản?" : "Bạn đã có tài khoản?"} <button className="text-button" onClick={() => { setError(""); setMode(mode === "login" ? "register" : "login"); }}>{mode === "login" ? "Tạo tài khoản mới" : "Đăng nhập"}</button></p>
       {mode === "login" && <div className="demo-note">Demo: customer@cinema.local<br />Mật khẩu: CinemaCustomer123!</div>}

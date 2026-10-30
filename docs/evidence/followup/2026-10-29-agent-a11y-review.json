@@ -221,5 +221,10 @@
       "Automated testing does not verify real screen-reader speech or touch exploration.",
       "This focused retest does not complete all checks in A11Y-06."
     ]
+  },
+  "authDuplicateFocus20261030": {
+    "manual": "Keyboard submit of duplicate demo email displayed the error but left focus on body.",
+    "retest": "Working-tree Chromium test passed for duplicate registration and invalid login; submit focus restored after error.",
+    "limitations": "Does not establish full workflow or real screen-reader speech."
   }
 }

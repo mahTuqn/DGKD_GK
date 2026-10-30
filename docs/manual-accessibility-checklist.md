@@ -71,6 +71,8 @@ Add one row per issue. Do not rewrite a failed result to pass after a code fix; 
 | A11Y-F05 | NAME-01 / A11Y-02 | Inspect filter labels and accessible names | Names contain visible labels | Visible Ngày xem phim / Rạp chiếu exposed as Ngày chiếu / Rạp | P2 accessible names | Agent review JSON, discoveryAndFilters20261030 | Working tree / 2026-10-30: labels match; broad workflow review pending |
 | A11Y-F06 | NAME-01 / A11Y-06 | Try to use the visible short ticket reference for Staff QR entry | A usable non-image alternative is available for the QR | Short reference is not the QR content required by the scan form | P2 non-image alternative | Agent review JSON, manualQrAlternative20261030 | Working tree / 2026-10-30: disclosure and selectable QR text passed targeted browser test; full workflow and actual screen-reader review pending |
 
+| A11Y-F07 | FOCUS-01 / A11Y-03 | Submit a duplicate email using keyboard | Focus remains usable in the dialog after error | Focus fell to body while submit button was disabled | P2 keyboard navigation | Agent review JSON, authDuplicateFocus20261030 | Working tree / 2026-10-30: Chromium regression passed; broader review pending |
+
 ## Decision record
 
 | Decision | Record |
