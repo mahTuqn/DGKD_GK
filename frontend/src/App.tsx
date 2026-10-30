@@ -32,6 +32,7 @@ function useModalKeyboard(
   dialogRef: { current: HTMLElement | null },
   onEscape?: () => void,
   restoreFocusFallback?: { current: HTMLElement | null },
+  preferRestoreFocusFallback = false,
 ) {
   const escapeRef = useRef(onEscape);
   escapeRef.current = onEscape;
@@ -79,9 +80,13 @@ function useModalKeyboard(
     return () => {
       window.cancelAnimationFrame(frame);
       document.removeEventListener("keydown", onKeyDown);
-      const focusTarget = previousFocus && previousFocus !== document.body && previousFocus.isConnected
-        ? previousFocus
-        : restoreFocusFallback?.current;
+      const fallbackTarget = restoreFocusFallback?.current;
+      const hasFallback = fallbackTarget && fallbackTarget !== document.body && fallbackTarget.isConnected;
+      const focusTarget = preferRestoreFocusFallback && hasFallback
+        ? fallbackTarget
+        : previousFocus && previousFocus !== document.body && previousFocus.isConnected
+          ? previousFocus
+          : fallbackTarget;
       if (focusTarget?.isConnected) window.requestAnimationFrame(() => focusTarget.focus());
     };
   }, [restoreFocusFallback]);
@@ -109,10 +114,10 @@ function Poster({ movie, large = false, decorative = false }: { movie: Movie; la
   </div>;
 }
 
-function AuthDialog({ mode, setMode, onClose, onSuccess }: { mode: AuthMode; setMode: (mode: AuthMode) => void; onClose: () => void; onSuccess: (session: Session) => void }) {
+function AuthDialog({ mode, setMode, onClose, onSuccess, restoreFocusFallback }: { mode: AuthMode; setMode: (mode: AuthMode) => void; onClose: () => void; onSuccess: (session: Session) => void; restoreFocusFallback: { current: HTMLElement | null } }) {
   const [busy, setBusy] = useState(false); const [error, setError] = useState("");
   const dialogRef = useRef<HTMLElement | null>(null);
-  useModalKeyboard(dialogRef, onClose);
+  useModalKeyboard(dialogRef, onClose, restoreFocusFallback, true);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setBusy(true); setError(""); const form = new FormData(event.currentTarget);
     try {
@@ -336,9 +341,22 @@ export default function App() {
   const [orders, setOrders] = useState<Order[]>([]); const [ordersNextCursor, setOrdersNextCursor] = useState<string | null>(null); const [ordersLoading, setOrdersLoading] = useState(false); const [checkoutBusy, setCheckoutBusy] = useState(false);
   const checkoutDialogRef = useRef<HTMLElement | null>(null);
   const seatShowtimeOpenerRef = useRef<HTMLElement | null>(null);
+  const discoverNavRef = useRef<HTMLButtonElement | null>(null);
+  const signInButtonRef = useRef<HTMLButtonElement | null>(null);
+  const mobileAccountRef = useRef<HTMLButtonElement | null>(null);
+  const loginFocusReturnRef = useRef<HTMLElement | null>(null);
+  const focusSignInAfterLogoutRef = useRef(false);
   const cinemas = useMemo(() => [...new Map(showtimes.map((showtime) => [showtime.cinemaId, showtime.cinemaName])).entries()].map(([id, name]) => ({ id, name })), [showtimes]);
   const activeMovie = movies.find((movie) => movie.id === activeMovieId) || movies[0];
   const activeShowtimes = showtimes.filter((item) => item.movieId === activeMovie?.id);
+
+  useEffect(() => {
+    if (session || !focusSignInAfterLogoutRef.current) return;
+    focusSignInAfterLogoutRef.current = false;
+    const visibleHeaderControl = [signInButtonRef.current, mobileAccountRef.current]
+      .find((element) => element?.getClientRects().length);
+    visibleHeaderControl?.focus();
+  }, [session]);
 
   useEffect(() => {
     if (!hold || checkoutBusy) return;
@@ -364,9 +382,12 @@ export default function App() {
   }, [hold?.id, hold?.expiresAt, bookingStep]);
 
   function saveSession(value: Session) {
+    const queued = queuedSelection;
+    loginFocusReturnRef.current = queued ? null : discoverNavRef.current;
     localStorage.setItem(SESSION_KEY, JSON.stringify(value)); setSession(value); setAuthOpen(false);
-    if (queuedSelection) { const queued = queuedSelection; setQueuedSelection(null); void reserveSelection(queued.showtimeId, queued.seatIds, value); }
+    if (queued) { setQueuedSelection(null); void reserveSelection(queued.showtimeId, queued.seatIds, value); }
   }
+  function openLogin() { loginFocusReturnRef.current = null; setAuthMode("login"); setAuthOpen(true); }
   async function reserveSelection(showtimeId: string, seatIds: string[], currentSession = session) {
     if (!currentSession) { setQueuedSelection({ showtimeId, seatIds }); setAuthMode("login"); setAuthOpen(true); return; }
     try { const [createdHold, map] = await Promise.all([api.createHold(currentSession.token, showtimeId, seatIds), api.seats(showtimeId)]); setHold(createdHold); setHoldMap(map); setBookingStep("checkout"); setError(""); setOrder(null); setPaidTickets([]); setSeatShowtime(null); }
@@ -399,7 +420,7 @@ export default function App() {
     setHold(null); setHoldMap(null); setOrder(null); setBookingStep("seats");
   }
   async function loadOrders() {
-    if (!session) { setAuthMode("login"); setAuthOpen(true); return; }
+    if (!session) { openLogin(); return; }
     setView("tickets"); setOrdersLoading(true); setError("");
     try { const page = await api.orders(session.token); setOrders(page.items); setOrdersNextCursor(page.nextCursor); } catch (reason) { setError(humanError(reason)); }
     finally { setOrdersLoading(false); }
@@ -411,13 +432,13 @@ export default function App() {
     catch (reason) { setError(humanError(reason)); }
     finally { setOrdersLoading(false); }
   }
-  function logout() { localStorage.removeItem(SESSION_KEY); setSession(null); setView("discover"); setOrders([]); setOrdersNextCursor(null); }
+  function logout() { loginFocusReturnRef.current = null; focusSignInAfterLogoutRef.current = true; localStorage.removeItem(SESSION_KEY); setSession(null); setView("discover"); setOrders([]); setOrdersNextCursor(null); }
   const featured = movies[0];
 
   return <div className="app-shell">
     <header className="topbar"><a href="#top" className="brand" onClick={() => setView("discover")}><span className="brand-icon" aria-hidden="true">C</span><span>Cinema<span className="brand-light">Booking</span></span></a>
-      <nav className="main-nav" aria-label="Điều hướng chính"><button className={view === "discover" ? "nav-link active" : "nav-link"} onClick={() => setView("discover")}>Khám phá</button>{session && <button className={view === "tickets" ? "nav-link active" : "nav-link"} onClick={() => void loadOrders()}>Vé của tôi</button>}{session && (session.user.role === "STAFF" || session.user.role === "ADMIN") && <button className={view === "scan" ? "nav-link active" : "nav-link"} onClick={() => setView("scan")}>Soát vé</button>}{session?.user.role === "ADMIN" && <button className={view === "admin" ? "nav-link active" : "nav-link"} onClick={() => setView("admin")}>Quản trị</button>}</nav>
-    <div className="header-actions">{session ? <><span className="user-greeting">Xin chào, {session.user.name.split(" ").at(-1)}</span><button className="avatar-button" title={session.user.email}>{initials(session.user.name)}</button><button className="button button-outline sign-button" onClick={logout}>Đăng xuất</button><button aria-label="Đăng xuất" title="Đăng xuất" className="mobile-logout" onClick={logout}>↪</button></> : <button className="button button-outline sign-button" onClick={() => { setAuthMode("login"); setAuthOpen(true); }}>Đăng nhập</button>}<button aria-label={session ? `Mở tài khoản ${initials(session.user.name)}` : "↗ Mở tài khoản"} className="mobile-account" onClick={() => session ? void loadOrders() : setAuthOpen(true)}>{session ? initials(session.user.name) : "↗"}</button></div>
+      <nav className="main-nav" aria-label="Điều hướng chính"><button ref={discoverNavRef} className={view === "discover" ? "nav-link active" : "nav-link"} onClick={() => setView("discover")}>Khám phá</button>{session && <button className={view === "tickets" ? "nav-link active" : "nav-link"} onClick={() => void loadOrders()}>Vé của tôi</button>}{session && (session.user.role === "STAFF" || session.user.role === "ADMIN") && <button className={view === "scan" ? "nav-link active" : "nav-link"} onClick={() => setView("scan")}>Soát vé</button>}{session?.user.role === "ADMIN" && <button className={view === "admin" ? "nav-link active" : "nav-link"} onClick={() => setView("admin")}>Quản trị</button>}</nav>
+    <div className="header-actions">{session ? <><span className="user-greeting">Xin chào, {session.user.name.split(" ").at(-1)}</span><span aria-hidden="true" className="avatar-button" style={{ cursor: "default" }}>{initials(session.user.name)}</span><button className="button button-outline sign-button" onClick={logout}>Đăng xuất</button><button aria-label="Đăng xuất" title="Đăng xuất" className="mobile-logout" onClick={logout}>↪</button></> : <button ref={signInButtonRef} className="button button-outline sign-button" onClick={openLogin}>Đăng nhập</button>}<button ref={mobileAccountRef} aria-label={session ? `Mở tài khoản ${initials(session.user.name)}` : "↗ Mở tài khoản"} className="mobile-account" onClick={() => session ? void loadOrders() : openLogin()}>{session ? initials(session.user.name) : "↗"}</button></div>
     </header>
 
     {view === "discover" && <main id="top">
@@ -440,8 +461,8 @@ export default function App() {
 
     <footer className="footer"><a href="#top" className="brand"><span className="brand-icon" aria-hidden="true">C</span><span>Cinema<span className="brand-light">Booking</span></span></a><p>Thêm một chút cảm xúc vào lịch trình của bạn.</p><span>© 2026 CINEMA BOOKING · VÉ DEMO</span></footer>
 
-    {seatShowtime && <SeatDialog showtime={seatShowtime} session={session} isTopModal={!authOpen} onClose={() => setSeatShowtime(null)} onRequireAuth={(showtimeId, seatIds) => { setQueuedSelection({ showtimeId, seatIds }); setAuthMode("login"); setAuthOpen(true); }} onHoldCreated={(created, map) => { setSecondsLeft(Math.max(0, Math.ceil((new Date(created.expiresAt).getTime() - Date.now()) / 1000))); setHold(created); setHoldMap(map); setBookingStep("checkout"); setSeatShowtime(null); setError(""); }} />}
-    {authOpen && <AuthDialog mode={authMode} setMode={setAuthMode} onClose={() => { setAuthOpen(false); setQueuedSelection(null); }} onSuccess={saveSession} />}
+    {seatShowtime && <SeatDialog showtime={seatShowtime} session={session} isTopModal={!authOpen} onClose={() => setSeatShowtime(null)} onRequireAuth={(showtimeId, seatIds) => { loginFocusReturnRef.current = null; setQueuedSelection({ showtimeId, seatIds }); setAuthMode("login"); setAuthOpen(true); }} onHoldCreated={(created, map) => { setSecondsLeft(Math.max(0, Math.ceil((new Date(created.expiresAt).getTime() - Date.now()) / 1000))); setHold(created); setHoldMap(map); setBookingStep("checkout"); setSeatShowtime(null); setError(""); }} />}
+    {authOpen && <AuthDialog mode={authMode} setMode={setAuthMode} restoreFocusFallback={loginFocusReturnRef} onClose={() => { loginFocusReturnRef.current = null; setAuthOpen(false); setQueuedSelection(null); }} onSuccess={saveSession} />}
 
     {hold && <div className="overlay booking-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && bookingStep !== "success") return; }}>
       <section ref={checkoutDialogRef} className="dialog checkout-dialog" role="dialog" aria-modal="true" aria-labelledby="checkout-title" tabIndex={-1}>

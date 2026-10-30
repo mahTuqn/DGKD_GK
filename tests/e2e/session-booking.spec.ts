@@ -82,6 +82,7 @@ test("[TC-E2E-20][TC-E2E-24] dialog đăng nhập lồng trên sơ đồ ghế g
 
   await expect(page.getByTestId("hold-countdown")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Một bước nữa thôi." })).toBeVisible();
+  await expect(page.locator('.checkout-dialog :focus')).toHaveCount(1);
   const checkoutSummary = page.locator(".checkout-summary");
   await expect(checkoutSummary).toContainText(`Ghế: ${seatLabel}`);
   await expect(checkoutSummary).toContainText(`${cinema} · ${auditorium}`);
@@ -96,8 +97,10 @@ test("[TC-E2E-21] session Admin được giữ sau reload và bị xóa khi đă
   await page.getByLabel("Mật khẩu").fill("CinemaAdmin123!");
   await page.getByRole("dialog").getByRole("button", { name: "Đăng nhập", exact: true }).click();
 
+  const discoverNavigation = page.getByRole("button", { name: "Khám phá", exact: true });
   const adminNavigation = page.getByRole("button", { name: "Quản trị", exact: true });
   await expect(adminNavigation).toBeVisible();
+  await expect(discoverNavigation).toBeFocused();
   await expect(page.getByRole("button", { name: "Soát vé", exact: true })).toBeVisible();
   await page.reload();
   await expect(page.getByTestId("movie-card").first()).toBeVisible();
@@ -106,12 +109,69 @@ test("[TC-E2E-21] session Admin được giữ sau reload và bị xóa khi đă
 
   await adminNavigation.click();
   await expect(page.getByRole("heading", { name: "Vận hành rạp phim" })).toBeVisible();
-  await page.getByRole("button", { name: "Đăng xuất", exact: true }).click();
+  const desktopLogout = page.getByRole("button", { name: "Đăng xuất", exact: true });
+  await desktopLogout.focus();
+  await page.keyboard.press("Enter");
 
   await expect.poll(() => page.evaluate(() => localStorage.getItem("cinemabooking.session"))).toBeNull();
   await expect(page.getByRole("button", { name: "Quản trị", exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Soát vé", exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Vé của tôi", exact: true })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Vận hành rạp phim" })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Đăng nhập", exact: true }).or(page.getByRole("button", { name: /Mở tài khoản/ }))).toBeVisible();
+  const desktopSignIn = page.getByRole("button", { name: "Đăng nhập", exact: true });
+  await expect(desktopSignIn).toBeVisible();
+  await expect(desktopSignIn).toBeFocused();
+
+  await openLogin(page);
+  await page.getByLabel("Email").fill("customer@cinema.local");
+  await page.getByLabel("Mật khẩu").fill("CinemaCustomer123!");
+  await page.getByRole("dialog").getByRole("button", { name: "Đăng nhập", exact: true }).click();
+  await expect(discoverNavigation).toBeFocused();
+  const customerTickets = page.getByRole("button", { name: "Vé của tôi", exact: true });
+  await customerTickets.click();
+  await expect(page.getByRole("heading", { name: "Vé của bạn" })).toBeVisible();
+  const customerLogout = page.getByRole("button", { name: "Đăng xuất", exact: true });
+  await page.keyboard.press("Tab");
+  await expect(customerLogout).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("cinemabooking.session"))).toBeNull();
+  await expect(desktopSignIn).toBeFocused();
+
+  await page.setViewportSize({ width: 320, height: 800 });
+  await openLogin(page);
+  await page.getByLabel("Email").fill("staff@cinema.local");
+  await page.getByLabel("Mật khẩu").fill("CinemaStaff123!");
+  await page.getByRole("dialog").getByRole("button", { name: "Đăng nhập", exact: true }).click();
+  await expect(discoverNavigation).toBeFocused();
+  await expect(page.getByRole("button", { name: "Soát vé", exact: true })).toBeVisible();
+
+  const mobileHeaderControls = await page.locator(
+    ".topbar a.brand:visible, .topbar .main-nav button:visible, .topbar .header-actions button:visible",
+  ).evaluateAll((elements) => elements.map((element) => {
+    const bounds = element.getBoundingClientRect();
+    return {
+      name: element.getAttribute("aria-label") || element.textContent?.trim() || element.tagName,
+      x: bounds.x,
+      y: bounds.y,
+      right: bounds.right,
+      bottom: bounds.bottom,
+      width: bounds.width,
+      height: bounds.height,
+    };
+  }));
+  expect(mobileHeaderControls.length).toBeGreaterThan(0);
+  for (const control of mobileHeaderControls) {
+    expect(control.width, `${control.name} should have a 24px minimum target width`).toBeGreaterThanOrEqual(24);
+    expect(control.height, `${control.name} should have a 24px minimum target height`).toBeGreaterThanOrEqual(24);
+  }
+  const overlaps = mobileHeaderControls.flatMap((control, index) => mobileHeaderControls.slice(index + 1)
+    .filter((other) => Math.min(control.right, other.right) > Math.max(control.x, other.x)
+      && Math.min(control.bottom, other.bottom) > Math.max(control.y, other.y))
+    .map((other) => `${control.name} overlaps ${other.name}`));
+  expect(overlaps).toEqual([]);
+
+  const mobileLogout = page.getByRole("button", { name: "Đăng xuất", exact: true });
+  await mobileLogout.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator(".mobile-account")).toBeFocused();
 });
