@@ -353,3 +353,30 @@ test("[TC-E2E-18] Admin details mở rộng có thể truy cập bằng tên sum
 
   await expectNoWcagAxeViolations(page, ".admin-view");
 });
+
+test("Seat limit provides feedback and allows changing selection", async ({ page }) => {
+  await mockApi(page);
+  await page.route(`**/api/showtimes/${showtime.id}/seats`, async (route) => {
+    await fulfillJson(route, 200, { showtime, seats: Array.from({ length: 9 }, (_, index) => ({
+      id: `limit-${index}`, label: `A${index + 1}`, row: "A", column: index + 1,
+      type: "STANDARD", isAccessible: false, status: "AVAILABLE", priceVnd: 85000,
+    })) });
+  });
+  await page.goto("/");
+  await page.getByTestId("movie-card").first().getByRole("button", { name: "Xem suất chiếu" }).click();
+  await page.getByTestId("showtime-option").first().click();
+  const dialog = page.getByRole("dialog", { name: movie.title });
+  const seats = dialog.getByTestId("seat");
+  for (let index = 0; index < 8; index++) { await seats.nth(index).focus(); await page.keyboard.press("Space"); }
+  await seats.nth(8).focus();
+  await page.keyboard.press("Space");
+  await expect(seats.nth(8)).toHaveAttribute("aria-pressed", "false");
+  await expect(dialog.getByRole("status")).toContainText("Mỗi đơn tối đa 8 ghế");
+  await expect(seats.nth(8)).toBeFocused();
+  await seats.nth(0).focus();
+  await page.keyboard.press("Space");
+  await expect(dialog.getByRole("status")).toBeEmpty();
+  await seats.nth(8).focus();
+  await page.keyboard.press("Space");
+  await expect(seats.nth(8)).toHaveAttribute("aria-pressed", "true");
+});

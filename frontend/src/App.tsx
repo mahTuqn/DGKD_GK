@@ -167,9 +167,10 @@ function SeatDialog({ showtime, session, isTopModal, onClose, onRequireAuth, onH
 }) {
   const [seatMap, setSeatMap] = useState<SeatMap | null>(null); const [selected, setSelected] = useState<string[]>([]);
   const [loading, setLoading] = useState(true); const [busy, setBusy] = useState(false); const [error, setError] = useState("");
+  const [limitNotice, setLimitNotice] = useState("");
   const dialogRef = useRef<HTMLElement | null>(null);
   useModalKeyboard(dialogRef, onClose);
-  const refresh = async () => { setLoading(true); setError(""); try { const value = await api.seats(showtime.id); setSeatMap(value); setSelected([]); } catch (reason) { setError(humanError(reason)); } finally { setLoading(false); } };
+  const refresh = async () => { setLoading(true); setError(""); setLimitNotice(""); try { const value = await api.seats(showtime.id); setSeatMap(value); setSelected([]); } catch (reason) { setError(humanError(reason)); } finally { setLoading(false); } };
   useEffect(() => { void refresh(); }, [showtime.id]);
   const rows = useMemo(() => {
     const grouped = new Map<string, Seat[]>();
@@ -179,7 +180,12 @@ function SeatDialog({ showtime, session, isTopModal, onClose, onRequireAuth, onH
   const total = (seatMap?.seats || []).filter((seat) => selected.includes(seat.id)).reduce((sum, seat) => sum + (seat.priceVnd ?? seatMap?.showtime.priceVnd ?? showtime.priceVnd), 0);
   function toggle(seat: Seat) {
     if (seat.status !== "AVAILABLE") return;
-    setSelected((current) => current.includes(seat.id) ? current.filter((id) => id !== seat.id) : current.length >= 8 ? current : [...current, seat.id]);
+    if (!selected.includes(seat.id) && selected.length >= 8) {
+      setLimitNotice("Mỗi đơn tối đa 8 ghế. Hãy bỏ chọn một ghế trước khi chọn ghế khác.");
+      return;
+    }
+    setLimitNotice("");
+    setSelected((current) => current.includes(seat.id) ? current.filter((id) => id !== seat.id) : [...current, seat.id]);
   }
   async function holdSeats() {
     if (!selected.length) return;
@@ -212,6 +218,7 @@ function SeatDialog({ showtime, session, isTopModal, onClose, onRequireAuth, onH
         </div>
         <div className="seat-legend"><span><i className="seat-dot available" /> Còn trống</span><span><i className="seat-dot selected" /> Đang chọn</span><span><i className="seat-dot held" /> Đang giữ</span><span><i className="seat-dot sold" /> Đã bán</span></div>
         {selected.length >= 8 && <p className="muted tiny">Mỗi đơn tối đa 8 ghế.</p>}
+        <p role="status" className={limitNotice ? "alert alert-error" : "sr-only"}>{limitNotice}</p>
         <div className="seat-footer"><div><span className="muted">{selected.length ? `${selected.length} ghế đã chọn` : "Chọn tối đa 8 ghế"}</span><b>{formatVnd(total)}</b></div><button data-testid="hold-submit" className="button button-primary" disabled={!selected.length || busy} onClick={() => void holdSeats()}>{busy ? "Đang giữ ghế…" : "Giữ ghế"}<span aria-hidden="true">→</span></button></div>
       </>}
     </section>
