@@ -1,5 +1,9 @@
 # Báo cáo tổng hợp kiểm thử
 
+## Cross-browser workflow follow-up — `7f8ade4` — 31/10/2026
+
+The application source remains `ad7fc2234423e0d596666f43ffdf83fde659be6a`; this commit changes only QA documentation and the Firefox/WebKit selection. Cross-browser smoke [run #85](https://github.com/mahTuqn/DGKD_GK/actions/runs/41144894921) passed **50/50 Playwright tests** in 4m 58s: 25 on Firefox and 25 on WebKit. The expanded selection passed TC-E2E-15 (Admin catalog CRUD), TC-E2E-28 (Staff assignment and user pagination), and TC-E2E-30 (ticket-history pagination) on both engines. The 401 KB browser artifact is `13021230193` (SHA-256 `0e0598e66cfbeab7a9206c9c167de0f90ce180ece57a61038761a2d2ad852d46`). Existing exact-source quality/API/DAST/Compose run #105 and worker soak #82 remain green for the same application source; see [the workflow evidence manifest](evidence/followup/2026-10-31-cross-browser-7f8ade4.json).
+
 ## Exact-source follow-up — `ad7fc22` — 31/10/2026
 
 Firefox/WebKit smoke [run #84](https://github.com/mahTuqn/DGKD_GK/actions/runs/41141916990) passed **44/44 Playwright executions** in 4m 13s for exact source commit `ad7fc2234423e0d596666f43ffdf83fde659be6a`. The selected suite includes TC-E2E-12 payment-failure recovery, TC-E2E-13 stale-seat conflict, TC-E2E-14 hold-expiry accessibility, and the TC-E2E-03/25 Staff keyboard scan axe check. That run exposed disabled-button contrast at 2.69:1; the Staff scan button was adjusted and its foreground/background pair now measures 4.79:1. The exact-source cross-browser retest passed.

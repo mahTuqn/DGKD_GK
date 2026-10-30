@@ -1,0 +1,43 @@
+{
+  "recordedAt": "2026-10-31",
+  "branch": "codex/cross-browser-smoke",
+  "workflowCommit": "7f8ade4207d7f68b5af99a472c577ea1e1ec4496",
+  "applicationSourceCommit": "ad7fc2234423e0d596666f43ffdf83fde659be6a",
+  "change": "Expanded Firefox/WebKit selection with admin catalog CRUD and pagination regressions.",
+  "crossBrowser": {
+    "name": "Cross-browser smoke",
+    "runId": "41144894921",
+    "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41144894921",
+    "conclusion": "success",
+    "duration": "4m 58s",
+    "testsPassed": 50,
+    "engines": {
+      "firefoxDesktop": 25,
+      "webkitDesktop": 25
+    },
+    "newlyIncludedCases": [
+      "TC-E2E-15",
+      "TC-E2E-28",
+      "TC-E2E-30"
+    ],
+    "artifact": {
+      "id": "13021230193",
+      "size": "401 KB",
+      "sha256": "0e0598e66cfbeab7a9206c9c167de0f90ce180ece57a61038761a2d2ad852d46"
+    }
+  },
+  "priorExactApplicationSourceGates": {
+    "qualityRun": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41141916919",
+    "qualityConclusion": "success",
+    "apiTestsPassed": 79,
+    "chromiumTestsPassed": 74,
+    "workerSoakRun": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41141917026",
+    "workerSoakConclusion": "success"
+  },
+  "limitations": [
+    "DAST Low alert ZAP rule 40014 remains untriaged.",
+    "The manual 90-item accessibility checklist remains 8 Fail / 5 Pass / 77 Not tested.",
+    "Real screen-reader speech, actual browser zoom/text resizing, and physical-device touch remain unverified.",
+    "No staging environment is available for named-staging performance validation."
+  ]
+}
