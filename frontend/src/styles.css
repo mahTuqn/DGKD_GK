@@ -169,8 +169,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .auth-dialog h2, .dialog-top h2 { max-width: 400px; font: 700 25px/1.2 Manrope,sans-serif; letter-spacing: -.8px; margin: 10px 0 7px; }
 .auth-dialog > .muted { margin: 0 0 23px; font-size: 11px; }
 .form-stack { display: flex; flex-direction: column; gap: 14px; }
-.field-label { display: flex; flex-direction: column; gap: 6px; color: #c9c4bc; font-size: 10px; font-weight: 600; }
-.field-label input, .field-label select, .field-label textarea { width: 100%; min-height: 42px; font-size: 11px; }
+.field-label { display: flex; flex-direction: column; gap: 6px; min-width: 0; color: #c9c4bc; font-size: 10px; font-weight: 600; }
+.field-label input, .field-label select, .field-label textarea { width: 100%; min-width: 0; min-height: 42px; font-size: 11px; }
 .field-label textarea { padding-top: 10px; resize: vertical; }
 .field-label input::placeholder { color: #a39f98; opacity: 1; }
 .auth-switch { color: #9d9991; text-align: center; font-size: 10px; margin: 18px 0 0; }
@@ -240,17 +240,17 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .mini-ticket span { font-size: 7px; letter-spacing: 1px; }
 .admin-view { max-width: 1050px; margin: 0 auto; }
 .role-badge { padding: 7px 10px; border: 1px solid rgba(255,112,72,.25); color: var(--orange-2); background: rgba(255,112,72,.07); border-radius: 99px; font-size: 8px; letter-spacing: 1px; }
-.admin-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 28px 0; }
-.metric-card { min-height: 82px; display: flex; flex-direction: column; justify-content: center; gap: 8px; padding: 14px; background: #1b1b19; border: 1px solid var(--line); border-radius: 6px; }
+.admin-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 28px 0; }
+.metric-card { min-width: 0; min-height: 82px; display: flex; flex-direction: column; justify-content: center; gap: 8px; padding: 14px; background: #1b1b19; border: 1px solid var(--line); border-radius: 6px; }
 .metric-card span { color: #9e9990; font-size: 9px; }
 .metric-card b { font: 700 20px Manrope,sans-serif; }
 .metric-revenue { grid-column: span 2; }
 .metric-revenue b { color: var(--orange-2); font-size: 16px; }
-.admin-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.admin-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .panel { padding: 21px; background: #1b1b19; border: 1px solid var(--line); border-radius: 7px; }
 .panel-title { margin-bottom: 18px; }
 .panel-title h2 { margin: 7px 0 0; font: 700 17px Manrope; }
-.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .occupancy-panel { margin-bottom: 16px; }
 .occupancy-summary { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; color: var(--cream); font-size: 11px; }
 .occupancy-summary span { color: var(--muted); font-size: 10px; }
@@ -382,12 +382,12 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .checkout-dialog { padding: 21px 16px; }
   .hold-countdown { grid-template-columns: 24px 1fr; }
   .hold-countdown small { grid-column: 2; text-align: left; max-width: none; }
-  .admin-metrics { grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 20px 0; }
+  .admin-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 20px 0; }
   .metric-card { min-height: 69px; padding: 10px; }
   .metric-card b { font-size: 16px; }
   .metric-revenue { grid-column: span 2; }
-  .admin-grid { grid-template-columns: 1fr; }
-  .admin-showtime-row { grid-template-columns: 1fr 1fr; }
+  .admin-grid { grid-template-columns: minmax(0, 1fr); }
+  .admin-showtime-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .admin-showtime-title { grid-column: 1 / -1; }
   .admin-showtime-row > .button { grid-column: 1 / -1; }
   .admin-seat-form { grid-template-columns: 1fr 1fr; }
@@ -395,7 +395,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .admin-record-row { align-items: flex-start; }
   .admin-record-row .button { max-width: 145px; white-space: normal; }
   .panel { padding: 16px; }
-  .form-grid { grid-template-columns: 1fr; }
+  .form-grid { grid-template-columns: minmax(0, 1fr); }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
