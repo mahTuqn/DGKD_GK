@@ -1,0 +1,94 @@
+{
+  "recordedAt": "2026-10-31",
+  "branch": "codex/cross-browser-smoke",
+  "applicationSourceCommit": "ad7fc2234423e0d596666f43ffdf83fde659be6a",
+  "workflows": {
+    "quality": {
+      "name": "Quality, API, DAST, domain and Compose",
+      "runId": "41141916919",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41141916919",
+      "conclusion": "success",
+      "duration": "16m 31s",
+      "api": {"filesPassed": 21, "testsPassed": 79},
+      "playwright": {
+        "testsPassed": 74,
+        "duration": "3m 36s",
+        "projects": ["Chromium desktop", "Chromium mobile"]
+      },
+      "additionalChecks": [
+        "60-second two-worker test passed",
+        "100-customer two-process booking race passed",
+        "Live five-minute hold expiry passed",
+        "Five-minute worker soak and restart passed",
+        "OpenAPI lint passed",
+        "Backend and test type-check passed",
+        "Traceability passed: 133 test cases / 29 requirements",
+        "Compose runtime and browser smoke passed"
+      ],
+      "mutation": {"scorePercent": 82.89, "killed": 155, "survived": 32, "thresholdPercent": 70},
+      "dast": {
+        "reportsParsed": "3/3",
+        "alertRecords": {"high": 0, "medium": 0, "low": 1, "informational": 5, "unknown": 0},
+        "alertInstances": {"low": 3, "informational": 11},
+        "lowRuleIds": ["40014"],
+        "exploitability": "undetermined; detailed report triage is still required",
+        "artifact": {
+          "id": "13019411364",
+          "size": "6.33 KB",
+          "sha256": "b7e1c3a714a9017fd34bdf5862c3ff4e097e09abd1bab1955a950fde6e5816f6",
+          "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41141916919/artifacts/13019411364"
+        }
+      },
+      "artifacts": [
+        {
+          "name": "Chromium browser results",
+          "id": "13019357571",
+          "size": "459 KB",
+          "sha256": "cdc9a00fa0f9f2e9d83ab84268a4efcbc16bf5a28ff33672cfa637854e738f6c"
+        },
+        {
+          "name": "Compose browser results",
+          "id": "13020040273",
+          "size": "195 KB",
+          "sha256": "9336ea4db77867b85b710e89f32c6bc229257d9bd5be766481ebb6d3be4c9417"
+        },
+        {
+          "name": "Domain quality results",
+          "id": "13019595968",
+          "size": "141 KB",
+          "sha256": "012c513d8ec66153d72a6102f72036d4232e881dda6d1f58cae1ca30ed2db3c8"
+        }
+      ]
+    },
+    "crossBrowser": {
+      "name": "Firefox/WebKit smoke",
+      "runId": "41141916990",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41141916990",
+      "conclusion": "success",
+      "duration": "4m 13s",
+      "testDuration": "2m 48s",
+      "testsPassed": 44,
+      "engines": ["Firefox desktop", "WebKit desktop"],
+      "includes": ["TC-E2E-12", "TC-E2E-13", "TC-E2E-14", "TC-E2E-03", "TC-E2E-25"],
+      "findingAndRetest": "The initial run exposed disabled Staff scan button contrast at 2.69:1; after the scoped CSS fix, the foreground/background pair measured 4.79:1 and the exact-source cross-browser retest passed."
+    },
+    "workerSoak": {
+      "name": "Worker Reliability Soak (15 minutes)",
+      "runId": "41141917026",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41141917026",
+      "conclusion": "success",
+      "duration": "16m",
+      "outcome": "Two-worker soak and graceful restart passed; this is worker reliability evidence, not HTTP throughput evidence."
+    }
+  },
+  "localChecks": {
+    "traceability": "133 test cases / 29 requirements passed",
+    "diffCheck": "git diff --check passed"
+  },
+  "limitations": [
+    "The manual 90-item accessibility checklist remains 8 Fail / 5 Pass / 77 Not tested.",
+    "Real screen-reader speech, actual zoom/text resizing and physical-device touch remain unverified.",
+    "No staging environment is available, so named-staging performance remains unmeasured.",
+    "DAST Low alert rule 40014 is not triaged; the sanitized summary does not expose its name, route or payload."
+  ]
+}
