@@ -157,7 +157,8 @@
       "Tab from Quản trị advances through Đăng xuất to Tên phim field",
       "Submitting empty Thêm vào danh mục invokes native required-field validation and moves focus to Tên phim",
       "Enter on movie summary expands Thành Phố Lúc Nửa Đêm and exposes named edit controls; next Tab focuses the nested Tên phim field",
-      "At 320x800 CSS px the document clientWidth and scrollWidth are both 305; Admin header brand 25px high, navigation 40px high, account and logout 33x33; screenshot admin-narrow.jpg is local generated evidence"
+      "At 320x800 CSS px the document clientWidth and scrollWidth are both 305; Admin header brand 25px high, navigation 40px high, account and logout 33x33; screenshot admin-narrow.jpg is local generated evidence",
+      "Created a disposable demo movie with Enter; status Đã thêm phim mới appears and movie count changes from 3 to 4, but focus falls to document body after busy submit. Finding A11Y-F03 requires a fix and retest."
     ],
     "limitations": [
       "No screen-reader speech was observed",
