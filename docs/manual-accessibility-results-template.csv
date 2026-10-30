@@ -4,7 +4,7 @@ A11Y-01,FOCUS-01,Fail,Codex agent,2026-10-30,docs/evidence/followup/2026-10-29-a
 A11Y-01,FOCUS-02,Not tested,,,,
 A11Y-01,NAME-01,Not tested,,,,
 A11Y-01,COLOR-01,Not tested,,,,
-A11Y-01,REFLOW-01,Not tested,,,,
+A11Y-01,REFLOW-01,Fail,Codex agent,2026-10-30,docs/evidence/followup/2026-10-30-agent-a11y-320px-reflow.json,A11Y-F08: third movie title was visibly truncated at 320 CSS px before the CSS fix; visual retest passed after wrapping fix, original failure retained
 A11Y-01,TARGET-01,Not tested,,,,
 A11Y-01,SR-01,Not tested,,,,
 A11Y-01,SR-02,Not tested,,,,

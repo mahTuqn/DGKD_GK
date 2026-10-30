@@ -8,14 +8,14 @@
 |---|---|
 | Overall status | In progress |
 | Reviewer(s) | Codex agent operating the browser UI |
-| Review date and timezone | — |
-| Application commit/build reviewed | — |
-| Environment/base URL | Dedicated disposable PostgreSQL database; http://127.0.0.1:5173 |
-| Desktop browser / OS | — |
+| Review date and timezone | 2026-10-30; Asia/Saigon |
+| Application commit/build reviewed | Application source baseline `7adffff`; local working-tree CSS reflow fix and browser-test updates are recorded separately |
+| Environment/base URL | Dedicated disposable PostgreSQL database; http://127.0.0.1:5173; Codex in-app Chromium viewport override for 320×800 |
+| Desktop browser / OS | Google Chrome 156.0.8078.49 / Windows 11 Pro for keyboard observation |
 | Desktop screen reader and version | — |
 | Mobile device / browser / screen reader | — |
-| Zoom, viewport, and display settings | — |
-| Evidence folder or links | — |
+| Zoom, viewport, and display settings | 320×800, 640×800 and 800×320 CSS-pixel viewport emulation; actual 200%/400% zoom and text resizing not tested |
+| Evidence folder or links | [Agent accessibility evidence](evidence/followup/2026-10-30-agent-a11y-320px-reflow.json); [320px retest screenshot](evidence/followup/2026-10-30-a11y-320px-after.png); [landscape-size screenshot](evidence/followup/2026-10-30-a11y-800x320-landscape.png) |
 | Findings / issue IDs | — |
 | Sign-off | — |
 
@@ -47,7 +47,7 @@ Record granular results in the [manual accessibility results template](manual-ac
 
 | ID / screen or workflow | Manual checks to perform | Status | Reviewer / date | Evidence link(s) | Finding / issue ID or N/A reason |
 |---|---|---|---|---|---|
-| A11Y-01 — App shell and discover movies | **Keyboard/focus:** traverse header, sign-in, view navigation, movie cards and primary actions; confirm focus follows order and remains visible after changing view. **Names/announcements:** confirm current page heading and movie title/details/actions are understandable; decorative poster artwork does not create noisy duplicate announcements, while meaningful poster content has an appropriate alternative. **Zoom/contrast:** repeat at 320 CSS px, 200% text and 400% zoom; verify header/cards/actions reflow, no horizontal page scroll, text and focus contrast. **SR:** navigate by landmarks/headings and verify that a view change or return from another view leaves a useful heading/location. | Fail | Codex agent / 2026-10-30 | Agent review evidence | A11Y-F04 retested; full workflow review pending |
+| A11Y-01 — App shell and discover movies | **Keyboard/focus:** traverse header, sign-in, view navigation, movie cards and primary actions; confirm focus follows order and remains visible after changing view. **Names/announcements:** confirm current page heading and movie title/details/actions are understandable; decorative poster artwork does not create noisy duplicate announcements, while meaningful poster content has an appropriate alternative. **Zoom/contrast:** repeat at 320 CSS px, 200% text and 400% zoom; verify header/cards/actions reflow, no horizontal page scroll, text and focus contrast. **SR:** navigate by landmarks/headings and verify that a view change or return from another view leaves a useful heading/location. | Fail | Codex agent / 2026-10-30 | Agent review evidence; [320px reflow retest](evidence/followup/2026-10-30-agent-a11y-320px-reflow.json) | A11Y-F04 retested; A11Y-F08 title-wrap fix visually retested; full workflow review pending |
 | A11Y-02 — Movie, cinema, and date filters | **Keyboard/focus:** operate each filter with native select keys; verify filter order and that changing a filter does not unexpectedly move focus. **Labels:** each select announces its purpose and selected value. **Announcements:** updated result count/empty result and errors are announced; availability is not conveyed only by the colored dot/legend. **Zoom/contrast/target:** labels and controls stay associated and tappable at narrow width; focus and selected states remain distinct. **SR:** verify filter labels, selected options, result heading and movie/showtime context. | Fail | Codex agent / 2026-10-30 | Agent review evidence | A11Y-F05 retested; full workflow review pending |
 | A11Y-03 — Login and registration dialog | **Keyboard/focus:** open from each responsive header entry point; focus enters the dialog, Tab/Shift+Tab wrap within it, Escape/close returns focus to the opener, and background controls cannot be operated while modal. **Labels/errors:** name, email, password, required state and input errors are announced; invalid email/short password and duplicate-email/invalid-login feedback identify what to correct. **Announcements:** registration and login errors are announced once and remain available. **Zoom/contrast/target:** dialog fits at 320 CSS px and 200%/400% zoom; close, switch-mode, and submit controls remain visible and operable. **SR:** dialog title/purpose is announced; password manager/autofill and paste are usable. | Fail | Codex agent / 2026-10-29 | Agent review evidence | A11Y-F01 retested; full workflow review pending |
 | A11Y-04 — Seat-map dialog and hold selection | **Keyboard/focus:** open a showtime, reach each seat, select/deselect with keyboard, reach legend/hold/close; dialog traps focus and returns it to its opener. **Names/state:** each seat announces row/number, available/held/sold and selected state; accessible seats and blocked seats have understandable non-color distinctions; selected-seat count and total are understandable. **Announcements:** unavailable-seat conflict, hold created, and selection-limit feedback are announced. **Zoom/contrast/target:** seat map and controls work at mobile widths; selected/disabled/focus seat states are distinguishable and targets are not crowded. **SR:** traverse map without hearing an unstructured wall of repeated controls; confirm spatial labels provide enough context to choose safely. | Not tested | — | — | — |
@@ -72,6 +72,7 @@ Add one row per issue. Do not rewrite a failed result to pass after a code fix; 
 | A11Y-F06 | NAME-01 / A11Y-06 | Try to use the visible short ticket reference for Staff QR entry | A usable non-image alternative is available for the QR | Short reference is not the QR content required by the scan form | P2 non-image alternative | Agent review JSON, manualQrAlternative20261030 | Working tree / 2026-10-30: disclosure and selectable QR text passed targeted browser test; full workflow and actual screen-reader review pending |
 
 | A11Y-F07 | FOCUS-01 / A11Y-03 | Submit a duplicate email using keyboard | Focus remains usable in the dialog after error | Focus fell to body while submit button was disabled | P2 keyboard navigation | Agent review JSON, authDuplicateFocus20261030 | Working tree / 2026-10-30: Chromium regression passed; broader review pending |
+| A11Y-F08 | REFLOW-01 / A11Y-01 | At 320 CSS px, inspect the title in the third movie card | Movie title remains fully visible without clipping | “Thành Phố Lúc Nửa Đêm” was ellipsized; heading scroll width was 127px in a 119px box | P2 important content visually truncated | [320px reflow evidence](evidence/followup/2026-10-30-agent-a11y-320px-reflow.json) | Working tree / 2026-10-30: CSS changed to wrap the heading; full title visible in 320×800 retest; page width has no horizontal overflow at 320, 640 and 800 CSS px; TC-E2E-27 passed in Chromium, Firefox and WebKit; original Fail retained |
 
 ## Decision record
 

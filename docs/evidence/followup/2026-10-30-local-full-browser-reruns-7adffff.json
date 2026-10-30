@@ -1,0 +1,54 @@
+{
+  "date": "2026-10-30",
+  "baseCommit": "20eb554c1ac8b850a36b2b70a5fcb1dd43a8354a",
+  "applicationSourceCommit": "7adffff71b4e79206b9f2e4c99114e14aa1f2f93",
+  "method": "Local Playwright against the dedicated disposable PostgreSQL database, backend and Vite/preview servers",
+  "database": {
+    "name": "cinema_a11y_test_33e8d7ae23",
+    "containerLabel": "com.cinemabooking.qa.purpose=manual-a11y",
+    "state": "reset, migrated and seeded before each full run"
+  },
+  "suite": {
+    "scope": "All tests/e2e except compose-stack.spec.ts",
+    "workers": 1,
+    "timeoutMs": 30000,
+    "workingTreeTestChange": "tests/e2e/session-booking.spec.ts waits for page DOM content and overlay animations before the axe scan; application source was unchanged during these runs"
+  },
+  "runs": [
+    {
+      "config": "reports/generated/manual-a11y/full-browser.config.mjs",
+      "projects": ["chromium-desktop", "chromium-mobile (Pixel 7)"],
+      "startUtc": "2026-10-30T10:46:29.362Z",
+      "durationSeconds": 234.609,
+      "expected": 64,
+      "unexpected": 0,
+      "skipped": 0,
+      "flaky": 0
+    },
+    {
+      "config": "reports/generated/manual-a11y/full-cross-browser.config.mjs",
+      "projects": ["firefox (Desktop Firefox)", "webkit (Desktop Safari)"],
+      "startUtc": "2026-10-30T10:38:59.576Z",
+      "durationSeconds": 372.323,
+      "expected": 64,
+      "unexpected": 0,
+      "skipped": 0,
+      "flaky": 0
+    }
+  ],
+  "companionChecks": {
+    "command": "npm run typecheck:tests",
+    "result": "passed"
+  },
+  "traceability": {
+    "command": "npm run qa:trace",
+    "result": "passed: 122 test cases, 28 requirements, all sources and links resolved"
+  },
+  "scopeLimitations": [
+    "Local evidence only; this does not update or replace GitHub Actions evidence.",
+    "Compose browser tests were excluded from both local runs.",
+    "Pixel 7 is browser emulation and does not establish real mobile touch or screen-reader behavior.",
+    "The full runs preceded the 2026-10-30 mobile movie-title wrapping change; that change has its own targeted test and manual reflow evidence.",
+    "Playwright JSON files are generated and ignored; their shared output paths were overwritten by the targeted follow-up. This manifest preserves the full-run totals captured at completion."
+  ]
+}

@@ -1,0 +1,91 @@
+{
+  "date": "2026-10-30",
+  "reviewer": "Codex agent operating the local browser UI",
+  "applicationSourceCommit": "7adffff71b4e79206b9f2e4c99114e14aa1f2f93",
+  "baseCommit": "20eb554c1ac8b850a36b2b70a5fcb1dd43a8354a",
+  "environment": {
+    "url": "http://127.0.0.1:5173/",
+    "browserSurface": "Codex in-app Chromium tab",
+    "desktopEnvironment": "Windows 11 Pro; Google Chrome 156.0.8078.49 was used for a separate keyboard observation",
+    "viewportCssPixels": {
+      "width": 320,
+      "height": 800
+    },
+    "database": "Dedicated disposable cinema_a11y_test_33e8d7ae23"
+  },
+  "manualKeyboardObservation": {
+    "workflow": "A11Y-01 movie discovery",
+    "action": "After opening the movie section, press Tab once",
+    "result": "Focus moved to the first movie poster button and an orange focus outline was visible.",
+    "scope": "Partial observation only; the full keyboard workflow was not completed."
+  },
+  "reflowFinding": {
+    "id": "A11Y-F08",
+    "workflow": "A11Y-01 movie discovery",
+    "check": "REFLOW-01 at 320 CSS px",
+    "before": {
+      "element": "Third movie card heading: Thành Phố Lúc Nửa Đêm",
+      "boxWidth": 119,
+      "scrollWidth": 127,
+      "whiteSpace": "nowrap",
+      "overflow": "hidden",
+      "textOverflow": "ellipsis",
+      "result": "The visible title was truncated."
+    },
+    "change": "At the mobile breakpoint, movie-card headings now wrap and expose overflow instead of clipping the title with an ellipsis.",
+    "after": {
+      "documentClientWidth": 305,
+      "documentScrollWidth": 305,
+      "horizontalPageOverflow": false,
+      "title": "Thành Phố Lúc Nửa Đêm",
+      "box": {
+        "width": 111,
+        "height": 30
+      },
+      "scrollSize": {
+        "width": 111,
+        "height": 30
+      },
+      "whiteSpace": "normal",
+      "result": "Full title visible across two lines; page remains within the viewport."
+    },
+    "visualRetestScreenshot": "docs/evidence/followup/2026-10-30-a11y-320px-after.png",
+    "automatedRegression": {
+      "test": "TC-E2E-27",
+      "command": "npx playwright test --config=reports/generated/manual-a11y/full-browser.config.mjs tests/e2e/a11y-states.spec.ts --grep \"TC-E2E-27\" --project=chromium-desktop",
+      "result": "1 passed",
+      "crossBrowserRetest": {
+        "projects": ["firefox", "webkit"],
+        "result": "2 passed"
+      }
+    }
+  },
+  "additionalViewportObservations": [
+    {
+      "viewportCssPixels": {
+        "width": 640,
+        "height": 800
+      },
+      "documentClientWidth": 625,
+      "documentScrollWidth": 625,
+      "horizontalPageOverflow": false,
+      "note": "Responsive viewport observation only; not a 200% browser zoom or text-resize test."
+    },
+    {
+      "viewportCssPixels": {
+        "width": 800,
+        "height": 320
+      },
+      "documentClientWidth": 800,
+      "documentScrollWidth": 800,
+      "horizontalPageOverflow": false,
+      "visualRetestScreenshot": "docs/evidence/followup/2026-10-30-a11y-800x320-landscape.png",
+      "note": "Landscape-size browser emulation only; not a physical device or touch-screen-reader test."
+    }
+  ],
+  "limitations": [
+    "The 320 CSS pixel observation is a browser viewport review, not testing on a physical phone.",
+    "This did not test 200% or 400% zoom, portrait/landscape touch, keyboard completion, or actual screen-reader speech.",
+    "The original failed result remains recorded as Fail; the visual retest is recorded separately as passed."
+  ]
+}

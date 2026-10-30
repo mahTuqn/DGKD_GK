@@ -67,6 +67,7 @@ const seatMap = {
 type MockOptions = {
   loginError?: { status: number; error: string; message: string };
   registrationError?: { status: number; error: string; message: string };
+  movieTitle?: string;
 };
 
 async function fulfillJson(route: Route, status: number, body: unknown) {
@@ -81,7 +82,7 @@ async function mockApi(page: Page, options: MockOptions = {}) {
     const { pathname } = new URL(request.url());
 
     if (request.method() === "GET" && pathname === "/api/movies") {
-      await fulfillJson(route, 200, [movie]);
+      await fulfillJson(route, 200, [{ ...movie, title: options.movieTitle ?? movie.title }]);
     } else if (request.method() === "GET" && pathname === "/api/showtimes") {
       await fulfillJson(route, 200, [showtime]);
     } else if (request.method() === "GET" && pathname === `/api/showtimes/${showtime.id}/seats`) {
@@ -166,9 +167,16 @@ function contrastRatioOver(foregroundColor: string, backgroundColor: string, for
 
 test("[TC-E2E-27] nhãn sơ đồ ghế mô tả trạng thái và loại ghế tiếp cận", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 800 });
-  await mockApi(page);
+  const longMovieTitle = "Thành Phố Lúc Nửa Đêm";
+  await mockApi(page, { movieTitle: longMovieTitle });
   await page.goto("/");
   await expect(page.getByTestId("movie-card").first()).toBeVisible();
+  const movieTitleHeading = page.getByRole("heading", { name: longMovieTitle, level: 3 });
+  await expect(movieTitleHeading).toBeVisible();
+  const movieTitleIsClipped = await movieTitleHeading.evaluate((element) => {
+    return element.scrollWidth > element.clientWidth || element.scrollHeight > element.clientHeight;
+  });
+  expect(movieTitleIsClipped).toBe(false);
   await page.getByTestId("movie-card").first().getByRole("button", { name: "Xem suất chiếu" }).click();
   await page.getByTestId("showtime-option").first().click();
 

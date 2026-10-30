@@ -17,7 +17,7 @@ test("[TC-E2E-20][TC-E2E-24] dialog đăng nhập lồng trên sơ đồ ghế g
   });
   expect(registration.status()).toBe(201);
 
-  await page.goto("/");
+  await page.goto("/", { waitUntil: "domcontentloaded" });
   await expect(page.getByTestId("movie-card").first()).toBeVisible();
   const seatMapRequestPromise = page.waitForRequest((candidate) => {
     const path = new URL(candidate.url()).pathname;
@@ -47,6 +47,9 @@ test("[TC-E2E-20][TC-E2E-24] dialog đăng nhập lồng trên sơ đồ ghế g
   await expect(seatDialog).toHaveAttribute("aria-modal", "false");
   await expect(page.locator(".booking-overlay")).toHaveAttribute("inert", "");
   await expect(page.locator('[role="dialog"][aria-modal="true"]')).toHaveCount(1);
+  await page.locator(".overlay").evaluateAll(async (elements) => {
+    await Promise.all(elements.flatMap((element) => element.getAnimations().map((animation) => animation.finished)));
+  });
 
   const stackedDialogViolations = (await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).include(".overlay").analyze()).violations
     .map(({ id, impact, nodes }) => ({ id, impact, targets: nodes.map((node) => node.target), failureSummaries: nodes.map((node) => node.failureSummary) }));
