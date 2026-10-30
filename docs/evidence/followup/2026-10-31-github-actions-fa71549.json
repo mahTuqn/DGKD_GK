@@ -112,8 +112,30 @@
   },
   "localChecks": {
     "traceability": "133 test cases / 29 requirements passed",
+    "databaseIndependentBackendSubset": {
+      "command": "npm run test --workspace backend -- tests/domain.test.ts tests/configuration.test.ts tests/safe-logger.test.ts tests/worker-health.test.ts",
+      "filesPassed": 4,
+      "testsPassed": 26,
+      "testsFailed": 0,
+      "duration": "3.59s"
+    },
     "frontendBuild": "npm run build --workspace frontend passed",
     "diffCheck": "git diff --check passed"
+  },
+  "localBrowserAttempt": {
+    "checkoutCommit": "34ef48517bacd716800bae894a8e32bd8924511e",
+    "applicationSourceCommit": "fa715497a39184b0c80f91990f93c98a3830ef6a",
+    "command": "npm run test:browser:isolated",
+    "status": "aborted_due_to_host_memory_pressure",
+    "testsPassedBeforeAbort": 10,
+    "assertionFailuresObservedBeforeAbort": 0,
+    "remainingFreeMemoryAtInterruption": "80 MiB",
+    "durationObservedBeforeInterruption": "about 48s; no final suite duration emitted",
+    "cleanup": "The generated PostgreSQL container and volume were verified as runner-owned and removed; pre-existing frontend on port 5173 was left running."
+  },
+  "automationTriggers": {
+    "qualityWorkflow": "On push and pull_request; runs Chromium browser suite.",
+    "crossBrowserWorkflow": "On push to main/codex/**, pull_request, manual workflow_dispatch, and weekly schedule; runs Firefox/WebKit smoke."
   },
   "limitations": [
     "The DAST summary exposes rule ID 40014 and severity counts but omits alert names, routes and payloads; inspect the artifact to triage the Low alert.",
