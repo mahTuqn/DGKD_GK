@@ -2,12 +2,6 @@
   "reviewDate": "2026-10-30",
   "testId": "TC-E2E-37",
   "sourceBaseCommit": "c2d21f90966ec48cf11bdd3a7b6adb5c41f2c13f",
-  "workingTreeBlobs": {
-    "tests/e2e/a11y-states.spec.ts": "04b7cc662967719502ed26293a333d3a66bfc21e",
-    ".github/workflows/cross-browser-smoke.yml": "27dbd9eb60524544ff67537db1bef098ac7ca1d0",
-    "docs/03-rtm.csv": "d9553ea528e19081b3cd55deafe1df54028572b1",
-    "docs/04-test-cases.csv": "24637f4957e98ab3b55ea0d14644ef4db850055e"
-  },
   "scope": "At the rendered 320x800 discovery page, hold every /api/showtimes response for the initial date, change to the next date, then select the second cinema and wait for both newer query responses. Release an old-date response last and assert the selected date/cinema, current showtime card and role=status count remain for the latest filters.",
   "fixtures": {
     "staleInitialDateResponsesHeld": true,

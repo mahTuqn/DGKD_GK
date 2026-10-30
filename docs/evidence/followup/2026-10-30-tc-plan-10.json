@@ -3,9 +3,6 @@
   "testId": "TC-PLAN-10",
   "requirement": "REQ-BOOK-04",
   "sourceBaseCommit": "c2d21f90966ec48cf11bdd3a7b6adb5c41f2c13f",
-  "workingTreeBlobs": {
-    "backend/tests/api.integration.test.ts": "8912df44f23a0e3ab98186fd8aa6a003aeb27e35"
-  },
   "scope": "Send two concurrent authenticated POST /api/orders requests for the same active hold; prove both request handlers reach the Prisma transaction boundary before releasing either into the real transaction, then verify state convergence.",
   "environment": {
     "database": "PostgreSQL 17 disposable test database cinema_test",
