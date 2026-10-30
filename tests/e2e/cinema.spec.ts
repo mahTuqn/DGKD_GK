@@ -666,6 +666,79 @@ test("[TC-E2E-08] Axe không báo lỗi serious hoặc critical ở sơ đồ gh
   expect(axeViolations((await wcagAxe(page).analyze()).violations)).toEqual([]);
 });
 
+test("[TC-E2E-39] Checkout reflows and keeps keyboard focus visible at narrow portrait and landscape sizes", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  await page.goto("/");
+  await signIn(page, "customer@cinema.local", "CinemaCustomer123!");
+  await page.getByTestId("movie-card").first().getByRole("button", { name: "Xem suất chiếu" }).click();
+  await page.getByTestId("showtime-option").first().click();
+
+  const seatDialog = page.getByRole("dialog");
+  const availableSeat = seatDialog.locator('[data-testid="seat"][aria-label*="trống"]:not([disabled])').first();
+  await expect(availableSeat).toBeVisible();
+  await page.route("**/api/holds", async (route) => {
+    const input = route.request().postDataJSON() as { showtimeId: string; seatIds: string[] };
+    await route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({
+      id: `a11y-reflow-hold-${Date.now()}`,
+      showtimeId: input.showtimeId,
+      seatIds: input.seatIds,
+      expiresAt: new Date(Date.now() + 5 * 60_000).toISOString(),
+      totalVnd: 85_000,
+      status: "HELD",
+    }) });
+  });
+  await availableSeat.click();
+  await seatDialog.getByTestId("hold-submit").click();
+
+  const checkoutDialog = page.getByRole("dialog", { name: "Một bước nữa thôi." });
+  const closeButton = checkoutDialog.getByRole("button", { name: "Đóng" });
+  const checkoutButton = checkoutDialog.getByTestId("checkout-submit");
+  const summary = checkoutDialog.locator(".checkout-summary");
+  await expect(checkoutDialog).toBeVisible();
+  await expect(summary).toContainText("Ghế:");
+  await expect(summary).toContainText("Tạm tính");
+  await expect(summary).toContainText("Tổng thanh toán");
+  await expect(checkoutButton).toBeEnabled();
+
+  const expectNoHorizontalOverflow = async () => {
+    const dimensions = await page.evaluate(() => {
+      const dialog = document.querySelector<HTMLElement>(".checkout-dialog");
+      return {
+        viewportWidth: document.documentElement.clientWidth,
+        pageScrollWidth: document.documentElement.scrollWidth,
+        dialogClientWidth: dialog?.clientWidth ?? 0,
+        dialogScrollWidth: dialog?.scrollWidth ?? 0,
+      };
+    });
+    expect(dimensions.pageScrollWidth).toBeLessThanOrEqual(dimensions.viewportWidth);
+    expect(dimensions.dialogClientWidth).toBeGreaterThan(0);
+    expect(dimensions.dialogScrollWidth).toBeLessThanOrEqual(dimensions.dialogClientWidth);
+  };
+
+  await expect(closeButton).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expectVisibleKeyboardFocus(checkoutButton);
+  await expect(checkoutButton).toBeInViewport({ ratio: 1 });
+  await page.keyboard.press("Shift+Tab");
+  await expectVisibleKeyboardFocus(closeButton);
+  await expect(closeButton).toBeInViewport({ ratio: 1 });
+  await page.keyboard.press("Tab");
+  await expectVisibleKeyboardFocus(checkoutButton);
+  await expect(checkoutButton).toBeInViewport({ ratio: 1 });
+  await expectNoHorizontalOverflow();
+
+  await page.setViewportSize({ width: 800, height: 320 });
+  await page.keyboard.press("Shift+Tab");
+  await expectVisibleKeyboardFocus(closeButton);
+  await expect(closeButton).toBeInViewport({ ratio: 1 });
+  await page.keyboard.press("Tab");
+  await expectVisibleKeyboardFocus(checkoutButton);
+  await expect(checkoutButton).toBeInViewport({ ratio: 1 });
+  await expectNoHorizontalOverflow();
+
+  // Stop before order creation or payment; this regression is limited to checkout reflow and focus.
+});
+
 test("[TC-E2E-09][TC-PLAN-06] Bàn phím đi từ đăng nhập đến ghế chọn và nút checkout", async ({ page }) => {
   const keyboardEmail = uniqueEmail();
   const registration = await page.request.post(`${API_URL}/auth/register`, { data: { name: "Keyboard QA Customer", email: keyboardEmail, password: "CinemaQa123!" } });

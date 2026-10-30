@@ -1,0 +1,20 @@
+{
+  "recordedAt": "2026-10-31",
+  "testId": "TC-E2E-39",
+  "command": "npm run test:browser:isolated -- --project=chromium-desktop --grep TC-E2E-39",
+  "result": "1/1 passed; test duration 5.8 seconds; isolated runner duration 16.1 seconds.",
+  "browser": "Chromium desktop",
+  "viewports": ["320x800", "800x320"],
+  "assertions": [
+    "Checkout summary and controls remain available.",
+    "The document and checkout dialog have no horizontal overflow.",
+    "At 320x800, keyboard Tab/Shift+Tab reaches close and continue with visible focus in the viewport.",
+    "At 800x320, keyboard focus remains visible and the focused close/continue controls remain in the viewport."
+  ],
+  "isolation": {
+    "hold": "POST /api/holds was mocked.",
+    "orderOrPayment": "Neither was created; the test stops before order creation/payment.",
+    "database": "Disposable PostgreSQL container and volume removed after the run."
+  },
+  "crossBrowser": "Added to the Firefox/WebKit smoke workflow filter; exact-source CI is pending for this new test."
+}

@@ -131,3 +131,7 @@ console.log(`- Parsed alert-record total: ${severityNames.map((severity) => `${s
 console.log(`- Parsed instance total: ${severityNames.map((severity) => `${severity} ${instanceTotals[severity]}`).join(", ")}`);
 if (errors.length) for (const error of errors) console.warn(`DAST summary note: ${error}`);
 appendSummary(markdown);
+if (incomplete) {
+  console.error("DAST summary gate failed: all three current-run reports must be present and valid JSON before the scan can pass.");
+  process.exitCode = 1;
+}

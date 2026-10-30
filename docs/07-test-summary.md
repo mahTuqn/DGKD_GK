@@ -1,5 +1,11 @@
 # Báo cáo tổng hợp kiểm thử
 
+## Local testing follow-up — based on `c028998` — 31/10/2026
+
+The working tree adds **TC-E2E-39** for checkout reflow/focus at 320×800 and 800×320; isolated Chromium desktop passed **1/1**. Its hold request is mocked and it stops before order/payment. Firefox/WebKit CI selection is updated; exact-source CI is pending. **TC-SEC-50** passed **1/1** on disposable PostgreSQL 17, covering a foreign cursor at the equal-timestamp ID tie-break and checking that no foreign order, ticket, or QR is returned; backend test typecheck passed. See [TC-E2E-39 evidence](evidence/followup/2026-10-31-tc-e2e-39.json) and [TC-SEC-50 evidence](evidence/followup/2026-10-31-tc-sec-50.json).
+
+The DAST summary gate now fails for missing or invalid current-run reports; its focused tooling suite passed **4/4**. Traceability passes **133 cases / 29 requirements**. Exact-source CI for these working-tree changes is pending; see [DAST gate evidence](evidence/followup/2026-10-31-dast-summary-gate.json). The 90-row manual accessibility checklist remains **8 Fail / 5 Pass / 77 Not tested**; real screen-reader speech, actual zoom/text resizing, and physical-device touch remain unverified.
+
 ## Exact-source verification — `c028998` — 31/10/2026
 
 All three GitHub Actions workflows completed successfully for source commit `c0289988bb3e7ca66ebfe380a47fb252632c4f96`: [quality/API/DAST/domain/Compose 41119419570](https://github.com/mahTuqn/DGKD_GK/actions/runs/41119419570), [Firefox/WebKit smoke 41119419623](https://github.com/mahTuqn/DGKD_GK/actions/runs/41119419623), and [15-minute worker soak 41119419490](https://github.com/mahTuqn/DGKD_GK/actions/runs/41119419490). API, typecheck, traceability, Playwright, configured DAST/severity-summary, domain/mutation, and Compose runtime/browser steps passed. Mutation score was **82.89%** (155 killed / 32 survived; 70% threshold). Cross-browser smoke passed **34 tests**; TC-E2E-03/25 passed **1/1 Firefox and 1/1 WebKit**. Worker soak/restart took **15m 17s**; the worker job completed in **15m 47s** and container cleanup passed.

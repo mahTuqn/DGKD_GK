@@ -1,0 +1,23 @@
+{
+  "recordedAt": "2026-10-31",
+  "testId": "TC-SEC-50",
+  "command": "npm run test --workspace backend -- tests/order-cursor-authorization.integration.test.ts",
+  "result": "1/1 passed.",
+  "typecheck": "npm run typecheck:tests passed.",
+  "database": {
+    "engine": "PostgreSQL 17",
+    "name": "cursor_test",
+    "binding": "Loopback, dynamically allocated port 54935.",
+    "migrations": "Applied before the focused test.",
+    "cleanup": "AfterAll fixture cleanup completed; disposable container stopped and removed."
+  },
+  "scenario": {
+    "ownerBOrders": 21,
+    "createdAt": "All 21 orders share the same timestamp.",
+    "ids": "Deterministically ordered ...00 through ...20.",
+    "boundary": "The lowest-ID order with a ticket is immediately after the first-page cursor, forcing the equal-timestamp id < cursor.id branch.",
+    "foreignCursor": "Customer A requests history using Customer B's cursor while A's own order is older.",
+    "assertions": "B receives the ticket-bearing boundary order; A receives only A's order and no foreign order ID, ticket ID, or QR token."
+  },
+  "scope": "Targeted cross-customer cursor/BOLA regression. Comprehensive ASVS/API Top 10 and adversarial BOLA review remain broader open work. Exact-source CI is pending."
+}

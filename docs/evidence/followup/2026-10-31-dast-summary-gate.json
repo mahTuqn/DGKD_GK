@@ -1,0 +1,14 @@
+{
+  "recordedAt": "2026-10-31",
+  "command": "node --test tests/tooling/dast-summary.test.mjs",
+  "result": "4/4 passed.",
+  "coverage": [
+    "All three valid current-run DAST reports are parsed and summarized.",
+    "Missing report fails the summary gate while remaining valid reports are still represented as parsed.",
+    "Invalid JSON structure fails the summary gate while the two valid reports remain parsed.",
+    "Arbitrary report fields and malicious plugin identifiers are not exposed in the summary."
+  ],
+  "syntax": "node --check passed for scripts/summarize-dast.mjs and tests/tooling/dast-summary.test.mjs.",
+  "wiring": "The CI DAST summary step runs with if: always(); a nonzero result fails the job while artifact upload still runs.",
+  "scope": "Local tooling verification only; new exact-source DAST workflow execution is pending."
+}
