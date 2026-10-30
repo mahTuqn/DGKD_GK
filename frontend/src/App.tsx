@@ -220,16 +220,32 @@ function AdminPanel({ session }: { session: Session }) {
   const [auditoriums, setAuditoriums] = useState<AdminAuditorium[]>([]); const [adminShowtimes, setAdminShowtimes] = useState<Showtime[]>([]);
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]); const [usersNextCursor, setUsersNextCursor] = useState<string | null>(null); const [usersLoading, setUsersLoading] = useState(false);
   const [notice, setNotice] = useState(""); const [error, setError] = useState(""); const [busy, setBusy] = useState(false);
+  const adminViewRef = useRef<HTMLDivElement | null>(null);
+  const pendingFocusRef = useRef<{ target: HTMLElement; fallback: HTMLElement | null } | null>(null);
+  function rememberActionFocus() {
+    const target = document.activeElement;
+    if (!(target instanceof HTMLElement) || !adminViewRef.current?.contains(target)) return;
+    pendingFocusRef.current = { target, fallback: target.closest("section")?.querySelector<HTMLElement>("h2") || adminViewRef.current };
+  }
+  useEffect(() => {
+    if (busy || usersLoading || !pendingFocusRef.current) return;
+    const { target, fallback } = pendingFocusRef.current;
+    pendingFocusRef.current = null;
+    // Do not take focus away if the user moved elsewhere during the request.
+    if (document.activeElement !== document.body) return;
+    if (target.isConnected && target.getClientRects().length && !target.matches(":disabled")) target.focus();
+    else if (fallback?.isConnected && fallback.getClientRects().length) { fallback.tabIndex = -1; fallback.focus(); }
+  }, [busy, usersLoading]);
   const load = async () => { try { const [s, m, c, a, st, users] = await Promise.all([api.adminSummary(session.token), api.adminMovies(session.token), api.adminCinemas(session.token), api.auditoriums(session.token), api.adminShowtimes(session.token), api.adminUsers(session.token)]); setSummary(s); setMovies(m); setCinemas(c); setAuditoriums(a); setAdminShowtimes(st); setAdminUsers(users.items); setUsersNextCursor(users.nextCursor); } catch (reason) { setError(humanError(reason)); } };
   useEffect(() => { void load(); }, []);
   async function runAdminAction(action: () => Promise<unknown>, successMessage: string): Promise<boolean> {
-    setBusy(true); setNotice(""); setError("");
+    rememberActionFocus(); setBusy(true); setNotice(""); setError("");
     try { await action(); setNotice(successMessage); await load(); return true; }
     catch (reason) { setError(humanError(reason)); return false; }
     finally { setBusy(false); }
   }
   async function createMovie(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); const formElement = event.currentTarget; setBusy(true); setNotice(""); setError(""); const form = new FormData(formElement); const title = String(form.get("title")); const releaseDate = String(form.get("releaseDate"));
+    event.preventDefault(); const formElement = event.currentTarget; rememberActionFocus(); setBusy(true); setNotice(""); setError(""); const form = new FormData(formElement); const title = String(form.get("title")); const releaseDate = String(form.get("releaseDate"));
     try { await api.createMovie(session.token, { title, slug: slugify(title), genre: String(form.get("genre")), synopsis: String(form.get("synopsis")), runtimeMinutes: Number(form.get("runtimeMinutes")), ageRating: String(form.get("ageRating")), ...(releaseDate ? { releaseDate } : {}) }); setNotice("Đã thêm phim mới."); formElement.reset(); await load(); }
     catch (reason) { setError(humanError(reason)); } finally { setBusy(false); }
   }
@@ -257,7 +273,7 @@ function AdminPanel({ session }: { session: Session }) {
     if (await runAdminAction(() => api.createAuditorium(session.token, { cinemaId: String(form.get("cinemaId")), name: String(form.get("name")), screenType: String(form.get("screenType")), seats }), "Đã tạo phòng và sơ đồ ghế.")) formElement.reset();
   }
   async function createShowtime(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); const formElement = event.currentTarget; setBusy(true); setNotice(""); setError(""); const form = new FormData(formElement);
+    event.preventDefault(); const formElement = event.currentTarget; rememberActionFocus(); setBusy(true); setNotice(""); setError(""); const form = new FormData(formElement);
     try { await api.createShowtime(session.token, { movieId: String(form.get("movieId")), auditoriumId: String(form.get("auditoriumId")), startAt: new Date(String(form.get("startAt"))).toISOString(), priceVnd: Number(form.get("priceVnd")) }); setNotice("Đã tạo suất chiếu."); formElement.reset(); await load(); }
     catch (reason) { setError(humanError(reason)); } finally { setBusy(false); }
   }
@@ -296,6 +312,7 @@ function AdminPanel({ session }: { session: Session }) {
   }
   async function loadMoreAdminUsers() {
     if (!usersNextCursor || usersLoading) return;
+    rememberActionFocus();
     setUsersLoading(true);
     try {
       const page = await api.adminUsers(session.token, usersNextCursor);
@@ -306,7 +323,7 @@ function AdminPanel({ session }: { session: Session }) {
   }
   const occupancy = summary?.occupancy;
   const fillRate = occupancy?.fillRatePercent ?? 0;
-  return <div className="admin-view">
+  return <div ref={adminViewRef} className="admin-view" tabIndex={-1}>
     <div className="section-heading"><div><span className="eyebrow">STUDIO CONTROL</span><h1>Vận hành rạp phim</h1><p className="muted">Quản lý lịch chiếu và theo dõi hoạt động đặt vé.</p></div><span className="role-badge">ADMIN</span></div>
     {error && <p role="alert" className="alert alert-error">{error}</p>}{notice && <p role="status" className="alert alert-success">{notice}</p>}
     <div className="admin-metrics">{[["Phim đang chiếu", summary?.movies ?? "—"], ["Suất chiếu", summary?.showtimes ?? "—"], ["Đơn đặt vé", summary?.orders ?? "—"], ["Vé đã phát", summary?.tickets ?? "—"]].map(([label, value]) => <div className="metric-card" key={label}><span>{label}</span><b>{value}</b></div>)}<div className="metric-card"><span>Tỉ lệ lấp đầy</span><b>{occupancy ? `${fillRate.toFixed(1)}%` : "—"}</b></div><div className="metric-card metric-revenue"><span>Doanh thu xác nhận</span><b>{summary ? formatVnd(summary.confirmedRevenueVnd) : "—"}</b></div></div>

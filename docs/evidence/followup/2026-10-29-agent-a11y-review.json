@@ -164,5 +164,27 @@
       "No screen-reader speech was observed",
       "This is partial coverage, not a full A11Y-08 or A11Y-09 pass."
     ]
+  },
+  "adminFocusRetest20261030": {
+    "source": "f25e267 plus working-tree Admin focus fix",
+    "manual": "Agent entered a new movie in a disposable local database, focused Thêm vào danh mục and pressed Enter. Success message appeared, movie count increased and focus returned to Thêm vào danh mục.",
+    "automated": [
+      {
+        "cases": [
+          "TC-E2E-15",
+          "TC-E2E-22"
+        ],
+        "result": "2 passed in 22.1s",
+        "coverage": "Create movie and room by keyboard, preserve an intentionally moved focus during a delayed edit, and restore focus after conflicting showtime error."
+      },
+      {
+        "cases": [
+          "TC-E2E-28"
+        ],
+        "result": "1 passed in 18.0s",
+        "coverage": "User pagination by keyboard; focus returns to load-more button or user-management heading when button disappears."
+      }
+    ],
+    "limitations": "Specific focus defects retested; this does not establish the full A11Y-09 workflow or screen reader results."
   }
 }

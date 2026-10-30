@@ -66,7 +66,7 @@ Add one row per issue. Do not rewrite a failed result to pass after a code fix; 
 |---|---|---|---|---|---|---|---|
 | A11Y-F01 | FOCUS-01 / A11Y-03 and A11Y-07 | Sign in as Staff; also logout using keyboard | Focus reaches a useful surviving control | Focus falls to body when the opener/logout button is removed | P2 keyboard navigation | Agent review JSON, staffReview | Working tree / 2026-10-30: reported focus paths passed manual and browser retests; broader workflow review pending |
 | A11Y-F02 | TARGET-01 / A11Y-07 | Staff header at 320 CSS px | Targets at least 24px with no overlap | Logout shrank to 23.1px and overlapped Soát vé | P2 target/layout | Agent review JSON, narrowHeaderFinding | Working-tree two-row header: 33px actions and 40px navigation; direct measurement passed |
-| A11Y-F03 | FOCUS-01 / A11Y-09 | Create a movie with Enter in the isolated test database | Focus remains in a useful location after save | Saving succeeds but focus falls to document body | P2 keyboard navigation | Agent review JSON, adminReview20261030 | Fix and retest pending |
+| A11Y-F03 | FOCUS-01 / A11Y-09 | Create a movie with Enter in the isolated test database | Focus remains in a useful location after save | Saving succeeds but focus falls to document body | P2 keyboard navigation | Agent review JSON, adminReview20261030 | Working tree / 2026-10-30: create-movie focus retest passed manually; success, error, focus movement and pagination covered by browser tests; broader workflow review pending |
 
 ## Decision record
 

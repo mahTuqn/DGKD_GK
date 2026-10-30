@@ -72,7 +72,7 @@ A11Y-08,TARGET-01,Not tested,,,,
 A11Y-08,SR-01,Not tested,,,,
 A11Y-08,SR-02,Not tested,,,,
 A11Y-09,KBD-01,Not tested,,,,
-A11Y-09,FOCUS-01,Fail,Codex agent,2026-10-30,docs/evidence/followup/2026-10-29-agent-a11y-review.json,A11Y-F03 create movie with Enter saves successfully but loses focus to body; fix and retest pending
+A11Y-09,FOCUS-01,Fail,Codex agent,2026-10-30,docs/evidence/followup/2026-10-29-agent-a11y-review.json,A11Y-F03 create movie with Enter lost focus to body; fix retested 2026-10-30; full criterion review pending
 A11Y-09,FOCUS-02,Not tested,,,,
 A11Y-09,NAME-01,Not tested,,,,
 A11Y-09,COLOR-01,Not tested,,,,

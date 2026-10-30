@@ -30,8 +30,11 @@ test("[TC-E2E-15] Admin tạo phim, phòng ghế, suất chiếu và lưu giá m
   await moviePanel.getByLabel("Thể loại").fill("Kiểm thử tự động");
   await moviePanel.getByLabel("Thời lượng (phút)").fill("100");
   await moviePanel.getByLabel("Tóm tắt").fill("Phim fixture để kiểm tra luồng quản trị danh mục.");
-  await moviePanel.getByRole("button", { name: "Thêm vào danh mục" }).click();
+  const createMovieButton = moviePanel.getByRole("button", { name: "Thêm vào danh mục" });
+  await createMovieButton.focus();
+  await page.keyboard.press("Enter");
   await expect(page.getByRole("status")).toContainText("Đã thêm phim mới.");
+  await expect(createMovieButton).toBeFocused();
 
   const showtimePanel = page.locator(".panel").filter({ has: page.getByRole("heading", { name: "Tạo suất chiếu" }) });
   const movieSelect = showtimePanel.getByLabel("Phim");
@@ -46,8 +49,22 @@ test("[TC-E2E-15] Admin tạo phim, phòng ghế, suất chiếu và lưu giá m
   await movieDetails.locator("summary").click();
   await expect(movieEditForm).toBeVisible();
   await movieEditForm.getByLabel("Tóm tắt").fill(updatedSynopsis);
-  await movieEditForm.getByRole("button", { name: "Lưu phim" }).click();
+  let releaseUpdate!: () => void;
+  const updateGate = new Promise<void>((resolve) => { releaseUpdate = resolve; });
+  await page.route(`**/api/admin/movies/${movieId}`, async (route) => {
+    if (route.request().method() !== "PATCH") return route.continue();
+    await updateGate;
+    await route.continue();
+  });
+  const updateRequest = page.waitForRequest((request) => request.method() === "PATCH" && new URL(request.url()).pathname === `/api/admin/movies/${movieId}`);
+  await movieEditForm.getByRole("button", { name: "Lưu phim" }).focus();
+  await page.keyboard.press("Enter");
+  await updateRequest;
+  await movieEditForm.getByLabel("Tóm tắt").focus();
+  releaseUpdate();
   await expect(page.getByRole("status")).toContainText("Đã cập nhật phim.");
+  await expect(movieEditForm.getByLabel("Tóm tắt")).toBeFocused();
+  await page.unroute(`**/api/admin/movies/${movieId}`);
 
   const auditoriumPanel = page.locator(".panel").filter({ has: page.getByRole("heading", { name: "Tạo phòng và sơ đồ ghế" }) });
   const auditoriumCreateForm = auditoriumPanel.locator("form.admin-create-form");
@@ -58,8 +75,11 @@ test("[TC-E2E-15] Admin tạo phim, phòng ghế, suất chiếu và lưu giá m
   await auditoriumCreateForm.getByLabel("Định dạng").fill("STANDARD");
   await auditoriumCreateForm.getByLabel("Số hàng").fill("2");
   await auditoriumCreateForm.getByLabel("Số ghế mỗi hàng").fill("3");
-  await auditoriumCreateForm.getByRole("button", { name: "Tạo phòng" }).click();
+  const createRoomButton = auditoriumCreateForm.getByRole("button", { name: "Tạo phòng" });
+  await createRoomButton.focus();
+  await page.keyboard.press("Enter");
   await expect(page.getByRole("status")).toContainText("Đã tạo phòng và sơ đồ ghế.");
+  await expect(createRoomButton).toBeFocused();
 
   const roomDetails = auditoriumPanel.locator(".admin-record-detail").filter({ hasText: auditoriumName });
   await expect(roomDetails).toBeVisible();
@@ -194,8 +214,11 @@ test("[TC-E2E-22] Admin nhận lỗi khi thiếu buffer lịch chiếu và tạo
   await movieSelect.selectOption(movieId!);
   await showtimePanel.getByLabel("Phòng").selectOption(auditoriumId!);
   await showtimePanel.getByLabel("Thời gian bắt đầu").fill(await atOffset(90));
-  await showtimePanel.getByRole("button", { name: "Tạo suất chiếu" }).click();
+  const createShowtimeButton = showtimePanel.getByRole("button", { name: "Tạo suất chiếu" });
+  await createShowtimeButton.focus();
+  await page.keyboard.press("Enter");
   await expect(page.getByRole("alert")).toContainText("Suất chiếu bị chồng thời gian với lịch đang có.");
+  await expect(createShowtimeButton).toBeFocused();
   await expect(createdShowtimes).toHaveCount(1);
 
   await showtimePanel.getByLabel("Thời gian bắt đầu").fill(await atOffset(120));
@@ -311,7 +334,13 @@ test("[TC-E2E-28] Admin cập nhật role, rạp Staff và phân trang danh sác
     const loadMore = page.getByRole("button", { name: "Tải thêm người dùng" });
     let pageCount = 0;
     while (await loadMore.isVisible()) {
-      await loadMore.click();
+      const nextPage = page.waitForResponse((response) => response.request().method() === "GET" && new URL(response.url()).pathname === "/api/admin/users" && new URL(response.url()).searchParams.has("cursor"));
+      await loadMore.focus();
+      await page.keyboard.press("Enter");
+      await nextPage;
+      await expect.poll(async () => (await loadMore.isHidden()) || (await loadMore.isEnabled())).toBe(true);
+      if (await loadMore.isVisible()) await expect(loadMore).toBeFocused();
+      else await expect(page.getByRole("heading", { name: "Quản lý người dùng" })).toBeFocused();
       pageCount += 1;
       if (pageCount > 5) throw new Error("Admin user pagination exceeded the expected fixture pages.");
     }
