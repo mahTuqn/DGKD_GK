@@ -1,0 +1,104 @@
+{
+  "reviewDate": "2026-10-31",
+  "repository": "https://github.com/mahTuqn/DGKD_GK",
+  "branch": "codex/cross-browser-smoke",
+  "sourceCommit": "6d9239405cb90e8028bd13075e9f225c0f952d84",
+  "workflows": [
+    {
+      "name": "CinemaBooking quality",
+      "runId": "41095194755",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41095194755",
+      "status": "success",
+      "durationSeconds": 929,
+      "checks": {
+        "gitleaks": "passed; no leaks detected",
+        "apiTests": "passed, including TC-PLAN-10",
+        "backendAndTestTypecheck": "passed",
+        "traceability": "129 test cases / 29 requirements; all source links resolved",
+        "openapiLint": "passed",
+        "postgresBackupRestore": "passed",
+        "liveHoldExpiry": "passed",
+        "fiveMinuteWorkerSoakAndRestart": "passed",
+        "productionBuild": "passed",
+        "playwright": "70 passed",
+        "composeBrowserSmoke": "passed",
+        "dast": "passed configured gate; 3/3 reports parsed",
+        "domainAndMutation": "passed; mutation score 82.89% (155 killed, 32 survived; 70% threshold)"
+      },
+      "dast": {
+        "scans": [
+          {
+            "name": "unauthenticated-api",
+            "authentication": "none",
+            "scope": "OpenAPI import and target /api/.* in isolated Docker Compose"
+          },
+          {
+            "name": "authenticated-api",
+            "authentication": "one-time Admin test account",
+            "scope": "OpenAPI import and target /api/.* in isolated Docker Compose"
+          },
+          {
+            "name": "preview",
+            "authentication": "none",
+            "scope": "Production frontend preview; API excluded; bounded crawl and active scan"
+          }
+        ],
+        "alertRecords": {
+          "high": 0,
+          "medium": 0,
+          "low": 1,
+          "informational": 5,
+          "unknown": 0
+        },
+        "alertInstances": {
+          "high": 0,
+          "medium": 0,
+          "low": 3,
+          "informational": 11,
+          "unknown": 0
+        },
+        "pluginIdsForTriage": [
+          { "id": 10104, "severity": "Informational" },
+          { "id": 10111, "severity": "Informational" },
+          { "id": 40014, "severity": "Low", "scan": "authenticated-api" },
+          { "id": 10109, "severity": "Informational", "scan": "preview" }
+        ],
+        "artifact": {
+          "id": "12996107401",
+          "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41095194755/artifacts/12996107401",
+          "sizeBytes": 6482
+        },
+        "limitation": "The artifact ZIP could not be opened in the browser session; alert names, URLs, payloads, and Low-alert triage remain unreviewed. Counts and plugin IDs do not establish exploitability or acceptance."
+      }
+    },
+    {
+      "name": "Cross-browser smoke",
+      "runId": "41095194792",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41095194792",
+      "status": "success",
+      "coverage": "Firefox and WebKit desktop smoke includes TC-E2E-37"
+    },
+    {
+      "name": "Worker Reliability Soak (15 minutes)",
+      "runId": "41095194991",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41095194991",
+      "status": "success",
+      "durationSeconds": 949,
+      "coverage": "Two-worker 15-minute soak, graceful restart, and catch-up"
+    }
+  ],
+  "localVerification": {
+    "tcE2e37": "4/4 passed across Chromium desktop/mobile, Firefox, and WebKit using mocked APIs",
+    "tcPlan10": "Full backend/tests/api.integration.test.ts passed 5/5 against disposable PostgreSQL 17 after four migrations and demo seed; same-hold concurrent requests converged to one pending order",
+    "testTypecheck": "passed",
+    "openapiLint": "passed",
+    "secretScan": "passed across 129 commits with no leaks; exact-source Gitleaks also passed in run 41095194755",
+    "traceability": "129 test cases / 29 requirements"
+  },
+  "remainingWork": [
+    "Manual accessibility checklist: 8 Fail, 5 Pass, 77 Not tested; real screen-reader speech, actual zoom/text resizing, and physical-device touch are unverified.",
+    "Review detailed DAST alert instances and triage the Low finding.",
+    "No named staging performance run; production backup/PITR/RPO/RTO and restore evidence remain unavailable.",
+    "Exhaustive ASVS/API Top 10 and adversarial BOLA review remain out of scope for this test run."
+  ]
+}

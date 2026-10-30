@@ -38,7 +38,7 @@
     "traceability": "129 test cases / 29 requirements; all source links resolved."
   },
   "limitations": [
-    "This is local test-database evidence, not exact-source GitHub CI; CI will run after the test commit is pushed.",
+    "Local test-database evidence is corroborated by the passing exact-source API step in quality run 41095194755.",
     "No production code change was required; the test initially exposed a shared-fixture leak, which was fixed by giving TC-PLAN-10 its own showtime and cleanup."
   ]
 }

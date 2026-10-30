@@ -38,6 +38,6 @@
   "limitations": [
     "This covers stale successful showtime responses while changing date and cinema filters; stale network errors are not separately tested.",
     "The fixture validates front-end response ordering and rendered DOM/status behavior, not backend query correctness or real screen-reader speech.",
-    "Exact-source CI for TC-E2E-37 is pending."
+    "Exact-source CI passed in quality run 41095194755 and Firefox/WebKit smoke run 41095194792."
   ]
 }

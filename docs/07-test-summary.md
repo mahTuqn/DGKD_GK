@@ -1,10 +1,14 @@
 # Báo cáo tổng hợp kiểm thử
 
-## Local follow-up — working tree based on `c2d21f9` — 30/10/2026
+## Exact-source test run — `6d92394` — 31/10/2026
 
-TC-E2E-37 passed **4/4** locally across Chromium desktop/mobile, Firefox and WebKit using mocked API responses to release stale showtime results after newer date/cinema responses. TC-PLAN-10 passed in the full PostgreSQL integration file, **5/5**, on a disposable PostgreSQL 17 database. A transaction-boundary barrier released both same-hold order requests only after both arrived; they converged on one `PAYMENT_PENDING` order and audit, linked hold/claim, and no payment or tickets. `npm run typecheck:tests` passed and traceability resolves **129 test cases / 29 requirements**. Local secret scan passed across 127 commits with no leaks. See [TC-E2E-37 evidence](evidence/followup/2026-10-30-tc-e2e-37.json) and [TC-PLAN-10 evidence](evidence/followup/2026-10-30-tc-plan-10.json).
+All three workflows passed for commit `6d9239405cb90e8028bd13075e9f225c0f952d84`: [quality/API/DAST/domain/Compose 41095194755](https://github.com/mahTuqn/DGKD_GK/actions/runs/41095194755), [Firefox/WebKit smoke 41095194792](https://github.com/mahTuqn/DGKD_GK/actions/runs/41095194792), and [15-minute worker soak 41095194991](https://github.com/mahTuqn/DGKD_GK/actions/runs/41095194991). Quality reported **70 Playwright passes** and passed Gitleaks, API/typecheck, database setup/restore, live hold expiry, five-minute worker soak, build, Compose/browser smoke, DAST, domain coverage, and mutation. Mutation was **82.89%** (155 killed / 32 survived against 70% threshold); the independent worker soak/restart passed in **15m 49s**.
 
-Exact-source CI for this working tree is pending; existing exact-source CI below passed on `cb5a29a` and does not cover these additions. The 90-row manual accessibility checklist remains **8 Fail / 5 Pass / 77 Not tested**. Screen-reader speech, actual browser zoom/text resizing, physical-device touch, DAST alert detail/Low triage, staging performance, production recovery/PITR/RPO/RTO, and exhaustive ASVS/BOLA review remain open.
+TC-E2E-37 passed locally **4/4** across Chromium desktop/mobile, Firefox and WebKit; its Firefox/WebKit exact-source smoke passed. TC-PLAN-10 passed within the full PostgreSQL integration file **5/5** locally and within the passing CI API step. Test typecheck, OpenAPI lint, secret scan, and traceability (**129 test cases / 29 requirements**) passed. See the [exact-source evidence manifest](evidence/followup/2026-10-31-github-actions-6d92394.json), [TC-E2E-37 evidence](evidence/followup/2026-10-30-tc-e2e-37.json), and [TC-PLAN-10 evidence](evidence/followup/2026-10-30-tc-plan-10.json).
+
+DAST parsed 3/3 isolated Compose reports: unauthenticated API, Admin-authenticated API, and production frontend preview. The API scans import OpenAPI and target `/api/.*`; preview excludes the API and uses bounded crawl/active scan. It found **0 High, 0 Medium, 1 Low, 5 Informational and 0 Unknown alert records** (3 Low, 11 Informational and 0 Unknown instances). Artifact [12996107401](https://github.com/mahTuqn/DGKD_GK/actions/runs/41095194755/artifacts/12996107401) is 6.33 KB; its alert names, URLs, payloads and Low triage remain unreviewed.
+
+The 90-row manual accessibility checklist remains **8 Fail / 5 Pass / 77 Not tested**. Screen-reader speech, actual zoom/text resizing, physical-device touch, staging performance, production backup/PITR/RPO/RTO, and exhaustive ASVS/BOLA review remain open.
 
 ## Exact-source test run — `cb5a29a` — 30/10/2026
 
