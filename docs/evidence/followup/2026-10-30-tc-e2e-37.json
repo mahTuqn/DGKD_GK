@@ -1,0 +1,49 @@
+{
+  "reviewDate": "2026-10-30",
+  "testId": "TC-E2E-37",
+  "sourceBaseCommit": "c2d21f90966ec48cf11bdd3a7b6adb5c41f2c13f",
+  "workingTreeBlobs": {
+    "tests/e2e/a11y-states.spec.ts": "04b7cc662967719502ed26293a333d3a66bfc21e",
+    ".github/workflows/cross-browser-smoke.yml": "27dbd9eb60524544ff67537db1bef098ac7ca1d0",
+    "docs/03-rtm.csv": "d9553ea528e19081b3cd55deafe1df54028572b1",
+    "docs/04-test-cases.csv": "24637f4957e98ab3b55ea0d14644ef4db850055e"
+  },
+  "scope": "At the rendered 320x800 discovery page, hold every /api/showtimes response for the initial date, change to the next date, then select the second cinema and wait for both newer query responses. Release an old-date response last and assert the selected date/cinema, current showtime card and role=status count remain for the latest filters.",
+  "fixtures": {
+    "staleInitialDateResponsesHeld": true,
+    "staleShowtimes": 2,
+    "latestDateShowtimesBeforeCinemaFilter": 2,
+    "latestDateAndCinemaShowtimes": 1,
+    "initialDateSource": "Captured from the first showtime request; all requests for that date are held to tolerate React StrictMode's development effect replay."
+  },
+  "guardInspected": "frontend/src/App.tsx showtime effect cleanup sets alive=false. Its then, catch and finally handlers update React state only while alive, preventing a response from a prior filter effect from replacing current state.",
+  "environment": "Existing local Vite frontend at http://127.0.0.1:5173; Playwright route mocks intercept all API requests; no backend, Docker, database or external service used.",
+  "verification": {
+    "chromiumDesktopMobile": {
+      "command": "$env:GITHUB_ACTIONS='true'; $env:E2E_BASE_URL='http://127.0.0.1:5173'; Remove-Item Env:PLAYWRIGHT_CROSS_BROWSER_SMOKE -ErrorAction SilentlyContinue; npx playwright test tests/e2e/a11y-states.spec.ts --grep 'TC-E2E-37'",
+      "passed": 2,
+      "failed": 0,
+      "durationSeconds": 9.2,
+      "projects": {
+        "chromium-desktop": { "passed": 1, "durationSeconds": 2.7 },
+        "chromium-mobile": { "passed": 1, "durationSeconds": 2.3 }
+      }
+    },
+    "firefoxWebkit": {
+      "command": "$env:GITHUB_ACTIONS='true'; $env:E2E_BASE_URL='http://127.0.0.1:5173'; $env:PLAYWRIGHT_CROSS_BROWSER_SMOKE='true'; npx playwright test tests/e2e/a11y-states.spec.ts --grep 'TC-E2E-37'",
+      "passed": 2,
+      "failed": 0,
+      "durationSeconds": 14.3,
+      "projects": {
+        "firefox-desktop": { "passed": 1, "durationSeconds": 6.0 },
+        "webkit-desktop": { "passed": 1, "durationSeconds": 4.2 }
+      }
+    }
+  },
+  "reportNote": "A final local rerun passed Chromium desktop/mobile 2/2 in 9.2 seconds and Firefox/WebKit 2/2 in 14.3 seconds. Each Playwright command printed its per-project console result. The JSON and HTML reporter outputs were overwritten by the final Firefox/WebKit command and therefore contain only that project group; successful runs produced no failure trace or screenshot.",
+  "limitations": [
+    "This covers stale successful showtime responses while changing date and cinema filters; stale network errors are not separately tested.",
+    "The fixture validates front-end response ordering and rendered DOM/status behavior, not backend query correctness or real screen-reader speech.",
+    "Exact-source CI for TC-E2E-37 is pending."
+  ]
+}

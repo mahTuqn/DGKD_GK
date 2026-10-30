@@ -1,0 +1,47 @@
+{
+  "reviewDate": "2026-10-30",
+  "testId": "TC-PLAN-10",
+  "requirement": "REQ-BOOK-04",
+  "sourceBaseCommit": "c2d21f90966ec48cf11bdd3a7b6adb5c41f2c13f",
+  "workingTreeBlobs": {
+    "backend/tests/api.integration.test.ts": "8912df44f23a0e3ab98186fd8aa6a003aeb27e35"
+  },
+  "scope": "Send two concurrent authenticated POST /api/orders requests for the same active hold; prove both request handlers reach the Prisma transaction boundary before releasing either into the real transaction, then verify state convergence.",
+  "environment": {
+    "database": "PostgreSQL 17 disposable test database cinema_test",
+    "container": "cinema-qa-regression-current",
+    "hostPort": "127.0.0.1:55439",
+    "storage": "tmpfs; no persistent Docker volume",
+    "schema": "4 Prisma migrations applied",
+    "seed": "Demo seed applied after migration; test fixture uses unique customer, auditorium showtime, and hold"
+  },
+  "testMechanism": "A test-scoped spy wraps callback transactions and holds the first two order transactions at a barrier. Both Supertest requests must reach this boundary within 10 seconds; the test then releases both to the real Prisma transaction. The spy is restored and pending requests are settled in finally.",
+  "commands": [
+    "npm run db:deploy",
+    "npm run db:seed",
+    "npm run test --workspace backend -- tests/api.integration.test.ts"
+  ],
+  "result": {
+    "file": "backend/tests/api.integration.test.ts",
+    "passed": 5,
+    "failed": 0,
+    "skipped": 0,
+    "durationSeconds": 8.72,
+    "tcPlan10Included": true,
+    "assertions": [
+      "Both requests returned 201 with the same order ID, total, and PAYMENT_PENDING status.",
+      "Exactly one order and one ORDER_CREATED audit were persisted.",
+      "The hold became PAYMENT_PENDING and the seat claim links to the order.",
+      "No payment or tickets were created."
+    ]
+  },
+  "additionalChecks": {
+    "typecheckTests": "Passed after adding the transaction barrier.",
+    "gitDiffCheck": "Passed.",
+    "traceability": "129 test cases / 29 requirements; all source links resolved."
+  },
+  "limitations": [
+    "This is local test-database evidence, not exact-source GitHub CI; CI will run after the test commit is pushed.",
+    "No production code change was required; the test initially exposed a shared-fixture leak, which was fixed by giving TC-PLAN-10 its own showtime and cleanup."
+  ]
+}

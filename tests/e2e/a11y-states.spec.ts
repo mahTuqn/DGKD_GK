@@ -614,3 +614,118 @@ test("[TC-E2E-36] discovery date and cinema filters update results by keyboard a
   await expect(page.locator(".showtime-card")).toHaveCount(1);
   await expect(page.locator(".showtime-card").first()).toContainText(secondCinema.name);
 });
+
+test("[TC-E2E-37] stale showtime responses cannot replace the latest date and cinema filters", async ({ page }) => {
+  const staleCinemaA = { id: "a11y-stale-cinema-a", name: "Stale Cinema A", city: "Test City" };
+  const staleCinemaB = { id: "a11y-stale-cinema-b", name: "Stale Cinema B", city: "Test City" };
+  const latestCinemaA = { id: "a11y-latest-cinema-a", name: "Latest Cinema A", city: "Test City" };
+  const latestCinemaB = { id: "a11y-latest-cinema-b", name: "Latest Cinema B", city: "Test City" };
+  const makeShowtime = (id: string, venue: typeof latestCinemaA, date: string, hour: number) => {
+    const start = new Date(`${date}T${hour}:00:00+07:00`);
+    return {
+      ...showtime,
+      id,
+      cinemaId: venue.id,
+      cinemaName: venue.name,
+      city: venue.city,
+      date,
+      startAt: start.toISOString(),
+      endAt: new Date(start.getTime() + 100 * 60_000).toISOString(),
+    };
+  };
+
+  let releaseInitialResponse!: () => void;
+  const initialResponseGate = new Promise<void>((resolve) => { releaseInitialResponse = resolve; });
+  let signalInitialRequest!: (date: string) => void;
+  const initialRequestStarted = new Promise<string>((resolve) => { signalInitialRequest = resolve; });
+  let initialDate: string | null = null;
+
+  await mockApi(page);
+  await page.route("**/api/showtimes*", async (route) => {
+    const url = new URL(route.request().url());
+    const requestedDate = url.searchParams.get("date");
+    if (!requestedDate) throw new Error("Expected showtime requests to include a date.");
+
+    if (initialDate === null) {
+      initialDate = requestedDate;
+      signalInitialRequest(requestedDate);
+    }
+    const isInitialDateResponse = requestedDate === initialDate;
+    if (isInitialDateResponse) await initialResponseGate;
+
+    const responseShowtimes = requestedDate === initialDate
+      ? [
+        makeShowtime("a11y-stale-showtime-a", staleCinemaA, requestedDate, 18),
+        makeShowtime("a11y-stale-showtime-b", staleCinemaB, requestedDate, 20),
+      ]
+      : [
+        makeShowtime("a11y-latest-showtime-a", latestCinemaA, requestedDate, 18),
+        makeShowtime("a11y-latest-showtime-b", latestCinemaB, requestedDate, 20),
+      ].filter((item) => !url.searchParams.get("cinemaId") || item.cinemaId === url.searchParams.get("cinemaId"));
+    await fulfillJson(route, 200, responseShowtimes);
+  });
+
+  try {
+    await page.goto("/");
+    await expect(page.getByTestId("movie-card").first()).toBeVisible();
+    const dateFilter = page.getByLabel("Ngày xem phim");
+    const scheduleStatus = page.locator("#schedule").getByRole("status");
+    const selectedDate = await dateFilter.inputValue();
+    const firstDateOption = await dateFilter.locator("option").nth(0).getAttribute("value");
+    const latestDateOption = await dateFilter.locator("option").nth(1).getAttribute("value");
+    if (!firstDateOption || !latestDateOption) throw new Error("Expected at least two date options.");
+    expect(latestDateOption).not.toBe(firstDateOption);
+    expect(selectedDate).toBe(firstDateOption);
+    expect(await initialRequestStarted).toBe(selectedDate);
+
+    const waitForShowtimes = (date: string, cinemaId: string | null) => page.waitForResponse((response) => {
+      const responseUrl = new URL(response.url());
+      return response.request().method() === "GET"
+        && responseUrl.pathname === "/api/showtimes"
+        && responseUrl.searchParams.get("date") === date
+        && responseUrl.searchParams.get("cinemaId") === cinemaId;
+    });
+    const staleResponsePromise = waitForShowtimes(selectedDate, null);
+
+    await tabUntilFocused(page, dateFilter);
+    const latestDateResponsePromise = waitForShowtimes(latestDateOption, null);
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("Enter");
+    const latestDateResponse = await latestDateResponsePromise;
+    expect(latestDateResponse.ok()).toBeTruthy();
+    await expect(dateFilter).toBeFocused();
+    await expect(dateFilter).toHaveValue(latestDateOption);
+    await expect(scheduleStatus).toHaveText(`2 suất chiếu phù hợp cho ${movie.title}.`);
+    await expect(page.locator(".showtime-card")).toHaveCount(2);
+
+    const cinemaFilter = page.getByLabel("Rạp chiếu");
+    await tabUntilFocused(page, cinemaFilter);
+    await expect(cinemaFilter.locator("option")).toHaveCount(3);
+    const lastCinemaOption = await cinemaFilter.locator("option").last().getAttribute("value");
+    expect(lastCinemaOption).toBe(latestCinemaB.id);
+    const latestCinemaResponsePromise = waitForShowtimes(latestDateOption, latestCinemaB.id);
+    await page.keyboard.press("End");
+    await page.keyboard.press("Enter");
+    const latestCinemaResponse = await latestCinemaResponsePromise;
+    expect(latestCinemaResponse.ok()).toBeTruthy();
+    await expect(cinemaFilter).toBeFocused();
+    await expect(cinemaFilter).toHaveValue(latestCinemaB.id);
+    await expect(scheduleStatus).toHaveText(`1 suất chiếu phù hợp cho ${movie.title}.`);
+    await expect(page.locator(".showtime-card")).toHaveCount(1);
+    await expect(page.locator(".showtime-card").first()).toContainText(latestCinemaB.name);
+
+    releaseInitialResponse();
+    const staleResponse = await staleResponsePromise;
+    expect(staleResponse.ok()).toBeTruthy();
+    await expect(dateFilter).toHaveValue(latestDateOption);
+    await expect(cinemaFilter).toHaveValue(latestCinemaB.id);
+    await expect(cinemaFilter).toBeFocused();
+    await expect(scheduleStatus).toHaveText(`1 suất chiếu phù hợp cho ${movie.title}.`);
+    await expect(page.locator(".showtime-card")).toHaveCount(1);
+    await expect(page.locator(".showtime-card").first()).toContainText(latestCinemaB.name);
+    await expect(page.locator(".showtime-card")).not.toContainText(staleCinemaA.name);
+    await expect(page.locator(".showtime-card")).not.toContainText(staleCinemaB.name);
+  } finally {
+    releaseInitialResponse();
+  }
+});

@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { ClaimStatus, HoldStatus, OrderStatus, RecordStatus, Role, SeatType } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 import request from "supertest";
@@ -31,6 +31,7 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
   let foreignAuditoriumId: string | undefined;
   let movieId: string | undefined;
   let showtimeId: string | undefined;
+  let concurrentOrderShowtimeId: string | undefined;
   let inactiveShowtimeId: string | undefined;
   let occupancyBoundaryShowtimeId: string | undefined;
   let occupancyCrossCinemaShowtimeId: string | undefined;
@@ -76,6 +77,23 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
       await prisma.seatHold.deleteMany({ where: { showtimeId } });
       await prisma.showtime.deleteMany({ where: { id: showtimeId } });
     }
+    if (concurrentOrderShowtimeId) {
+      const orders = await prisma.cinemaOrder.findMany({ where: { showtimeId: concurrentOrderShowtimeId }, select: { id: true } });
+      const orderIds = orders.map((order) => order.id);
+      if (orderIds.length) {
+        await prisma.auditLog.deleteMany({ where: { entityId: { in: orderIds } } });
+        await prisma.ticket.deleteMany({ where: { orderId: { in: orderIds } } });
+        await prisma.reconciliationCase.deleteMany({ where: { orderId: { in: orderIds } } });
+        await prisma.outboxEvent.deleteMany({ where: { aggregateId: { in: orderIds } } });
+        await prisma.paymentEvent.deleteMany({ where: { orderId: { in: orderIds } } });
+        await prisma.payment.deleteMany({ where: { orderId: { in: orderIds } } });
+        await prisma.seatClaim.deleteMany({ where: { orderId: { in: orderIds } } });
+        await prisma.cinemaOrder.deleteMany({ where: { id: { in: orderIds } } });
+      }
+      await prisma.seatClaim.deleteMany({ where: { showtimeId: concurrentOrderShowtimeId } });
+      await prisma.seatHold.deleteMany({ where: { showtimeId: concurrentOrderShowtimeId } });
+      await prisma.showtime.deleteMany({ where: { id: concurrentOrderShowtimeId } });
+    }
     if (inactiveShowtimeId) await prisma.showtime.deleteMany({ where: { id: inactiveShowtimeId } });
     if (occupancyBoundaryShowtimeId) await prisma.showtime.deleteMany({ where: { id: occupancyBoundaryShowtimeId } });
     if (occupancyCrossCinemaShowtimeId) await prisma.showtime.deleteMany({ where: { id: occupancyCrossCinemaShowtimeId } });
@@ -94,6 +112,113 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
     if (auditoriumId) await prisma.auditorium.deleteMany({ where: { id: auditoriumId } });
     if (cinemaId) await prisma.cinema.deleteMany({ where: { id: cinemaId } });
     await prisma.$disconnect();
+  }, 30_000);
+
+  it("[TC-PLAN-10] converges concurrent order requests for the same held booking", async () => {
+    const customer = await prisma.user.create({
+      data: {
+        name: "Concurrent Order Customer",
+        email: `concurrent-order-${fixture}@test.local`,
+        passwordHash: "unused-in-concurrent-order-test",
+        role: Role.CUSTOMER
+      }
+    });
+    userIds.push(customer.id);
+    const auth = { Authorization: `Bearer ${createToken({ id: customer.id, authVersion: customer.authVersion })}` };
+    const seat = await prisma.seat.findFirstOrThrow({ where: { auditoriumId: foreignAuditoriumId }, select: { id: true } });
+    const isolatedStartAt = new Date(Date.now() + 368 * 86_400_000);
+    const isolatedShowtime = await prisma.showtime.create({
+      data: {
+        movieId: movieId!,
+        auditoriumId: foreignAuditoriumId!,
+        startAt: isolatedStartAt,
+        endAt: new Date(isolatedStartAt.getTime() + 90 * 60_000),
+        priceVnd: 90_000
+      }
+    });
+    concurrentOrderShowtimeId = isolatedShowtime.id;
+
+    const hold = await request(app).post("/api/holds").set(auth).send({ showtimeId: isolatedShowtime.id, seatIds: [seat.id] });
+    expect(hold.status).toBe(201);
+    const holdId = hold.body.id as string;
+
+    let transactionArrivals = 0;
+    let releaseTransactions!: () => void;
+    const transactionBarrier = new Promise<void>((resolve) => { releaseTransactions = resolve; });
+    let resolveBothTransactions!: () => void;
+    const bothTransactionsReached = new Promise<void>((resolve) => { resolveBothTransactions = resolve; });
+    const originalTransaction = prisma.$transaction.bind(prisma);
+    const transactionSpy = vi.spyOn(prisma, "$transaction");
+    transactionSpy.mockImplementation((async (...args: unknown[]) => {
+      const operation = args[0];
+      if (typeof operation === "function" && transactionArrivals < 2) {
+        transactionArrivals += 1;
+        if (transactionArrivals === 2) resolveBothTransactions();
+        await transactionBarrier;
+      }
+      return Reflect.apply(originalTransaction, prisma, args);
+    }) as typeof prisma.$transaction);
+
+    let requestTimeout: ReturnType<typeof setTimeout> | undefined;
+    let responsesPromise: Promise<Array<{ status: number; body: unknown }>> | undefined;
+    try {
+      const pendingResponses = Promise.all([1, 2].map(() => request(app)
+        .post("/api/orders")
+        .set(auth)
+        .send({ holdId })
+        .timeout({ response: 15_000, deadline: 20_000 })));
+      responsesPromise = pendingResponses;
+      await Promise.race([
+        bothTransactionsReached,
+        pendingResponses.then(() => {
+          throw new Error(`Both order requests completed before reaching the transaction barrier (${transactionArrivals}/2).`);
+        }),
+        new Promise<never>((_resolve, reject) => {
+          requestTimeout = setTimeout(() => reject(new Error(`Timed out waiting for both order transactions (${transactionArrivals}/2).`)), 10_000);
+        })
+      ]);
+      clearTimeout(requestTimeout);
+      requestTimeout = undefined;
+      expect(transactionArrivals).toBe(2);
+      releaseTransactions();
+
+      const responses = await pendingResponses;
+
+      expect(responses.map((response) => response.status)).toEqual([201, 201]);
+      const firstResponse = responses[0];
+      const secondResponse = responses[1];
+      if (!firstResponse || !secondResponse) throw new Error("Expected two order responses.");
+      const firstOrder = firstResponse.body as {
+        id: string;
+        totalVnd: number;
+        status: OrderStatus;
+      };
+      const secondOrder = secondResponse.body as typeof firstOrder;
+      expect(firstOrder).toMatchObject({ status: OrderStatus.PAYMENT_PENDING });
+      expect(secondOrder).toMatchObject({
+        id: firstOrder.id,
+        totalVnd: firstOrder.totalVnd,
+        status: OrderStatus.PAYMENT_PENDING
+      });
+
+      const orders = await prisma.cinemaOrder.findMany({ where: { holdId } });
+      expect(orders).toHaveLength(1);
+      expect(orders[0]).toMatchObject({ id: firstOrder.id, userId: customer.id, totalVnd: firstOrder.totalVnd, status: OrderStatus.PAYMENT_PENDING });
+      expect(await prisma.auditLog.count({ where: { action: "ORDER_CREATED", entityId: firstOrder.id } })).toBe(1);
+
+      const persistedHold = await prisma.seatHold.findUniqueOrThrow({ where: { id: holdId } });
+      expect(persistedHold.status).toBe(HoldStatus.PAYMENT_PENDING);
+      const claims = await prisma.seatClaim.findMany({ where: { holdId } });
+      expect(claims).toHaveLength(1);
+      expect(claims[0]).toMatchObject({ orderId: firstOrder.id, status: ClaimStatus.HELD });
+      expect(await prisma.payment.count({ where: { orderId: firstOrder.id } })).toBe(0);
+      expect(await prisma.ticket.count({ where: { orderId: firstOrder.id } })).toBe(0);
+    } finally {
+      if (requestTimeout) clearTimeout(requestTimeout);
+      releaseTransactions();
+      transactionSpy.mockRestore();
+      if (responsesPromise) await responsesPromise.catch(() => undefined);
+    }
   }, 30_000);
 
   it("[TC-API-01][TC-SEC-15][TC-SEC-16][TC-SEC-19][TC-SEC-34][TC-PLAN-01][TC-PLAN-02][TC-PLAN-03][TC-PLAN-04][TC-PLAN-05][TC-PLAN-09] enforces auth, booking boundaries, payment/report rules, concurrency, and one-use staff check-in", async () => {

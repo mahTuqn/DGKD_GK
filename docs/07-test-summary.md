@@ -1,5 +1,11 @@
 # Báo cáo tổng hợp kiểm thử
 
+## Local follow-up — working tree based on `c2d21f9` — 30/10/2026
+
+TC-E2E-37 passed **4/4** locally across Chromium desktop/mobile, Firefox and WebKit using mocked API responses to release stale showtime results after newer date/cinema responses. TC-PLAN-10 passed in the full PostgreSQL integration file, **5/5**, on a disposable PostgreSQL 17 database. A transaction-boundary barrier released both same-hold order requests only after both arrived; they converged on one `PAYMENT_PENDING` order and audit, linked hold/claim, and no payment or tickets. `npm run typecheck:tests` passed and traceability resolves **129 test cases / 29 requirements**. Local secret scan passed across 127 commits with no leaks. See [TC-E2E-37 evidence](evidence/followup/2026-10-30-tc-e2e-37.json) and [TC-PLAN-10 evidence](evidence/followup/2026-10-30-tc-plan-10.json).
+
+Exact-source CI for this working tree is pending; existing exact-source CI below passed on `cb5a29a` and does not cover these additions. The 90-row manual accessibility checklist remains **8 Fail / 5 Pass / 77 Not tested**. Screen-reader speech, actual browser zoom/text resizing, physical-device touch, DAST alert detail/Low triage, staging performance, production recovery/PITR/RPO/RTO, and exhaustive ASVS/BOLA review remain open.
+
 ## Exact-source test run — `cb5a29a` — 30/10/2026
 
 All three workflows passed on source `cb5a29ab953abb5d30acf6c33d119be4a0e043ca`: [quality/API/DAST/domain/Compose 41085713853](https://github.com/mahTuqn/DGKD_GK/actions/runs/41085713853), [Firefox/WebKit smoke 41085714107](https://github.com/mahTuqn/DGKD_GK/actions/runs/41085714107), and [15-minute worker soak 41085714209](https://github.com/mahTuqn/DGKD_GK/actions/runs/41085714209). The quality run's browser summary reports **68 passed**; all quality, DAST, domain/mutation, and Compose/browser jobs completed successfully. Mutation score was **82.89%** (155 killed / 32 survived; 70% threshold).

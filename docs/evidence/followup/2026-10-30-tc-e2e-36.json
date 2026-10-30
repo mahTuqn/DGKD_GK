@@ -48,7 +48,7 @@
   "reportNote": "The final JSON report was overwritten by the second Playwright command and contains only Chromium desktop/mobile. Firefox and WebKit each passed in console output; no failing trace or screenshot was produced.",
   "limitations": [
     "The role=status assertion verifies DOM/ARIA updates, not that a real screen reader speaks the message.",
-    "This is local mocked-API browser evidence; exact-source GitHub Actions remains pending.",
+    "This is local mocked-API browser evidence; exact-source Firefox/WebKit and quality CI also passed on cb5a29a.",
     "The manual checklist remains 8 Fail / 5 Pass / 77 Not tested; actual screen-reader speech, browser zoom/text resizing, and physical-device touch remain unverified."
   ]
 }
