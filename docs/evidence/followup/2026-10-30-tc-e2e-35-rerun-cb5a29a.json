@@ -1,0 +1,31 @@
+{
+  "reviewDate": "2026-10-30",
+  "sourceCommit": "cb5a29ab953abb5d30acf6c33d119be4a0e043ca",
+  "testId": "TC-E2E-35",
+  "scope": "At 320x800, apply WCAG text-spacing overrides, check long-content overflow and use the discovery date filter by keyboard.",
+  "environment": "Local Vite frontend at http://127.0.0.1:5173; API intercepted by Playwright; no backend, Docker, or database.",
+  "results": {
+    "firefoxWebkit": {
+      "projects": ["firefox-desktop", "webkit-desktop"],
+      "passed": 2,
+      "failed": 0,
+      "durationSeconds": 11.6
+    },
+    "chromiumDesktopMobile": {
+      "projects": ["chromium-desktop", "chromium-mobile"],
+      "passed": 2,
+      "failed": 0,
+      "durationSeconds": 7.5
+    },
+    "totalPassed": 4,
+    "totalFailed": 0
+  },
+  "commands": [
+    "$env:GITHUB_ACTIONS='true'; $env:E2E_BASE_URL='http://127.0.0.1:5173'; $env:PLAYWRIGHT_CROSS_BROWSER_SMOKE='true'; npx playwright test tests/e2e/a11y-states.spec.ts --grep 'TC-E2E-35'",
+    "$env:GITHUB_ACTIONS='true'; $env:E2E_BASE_URL='http://127.0.0.1:5173'; Remove-Item Env:PLAYWRIGHT_CROSS_BROWSER_SMOKE -ErrorAction SilentlyContinue; npx playwright test tests/e2e/a11y-states.spec.ts --grep 'TC-E2E-35'"
+  ],
+  "limitations": [
+    "The rerun verifies browser layout and text-spacing overrides, not real browser zoom or text-resize settings.",
+    "The generated Playwright JSON report was overwritten by the second command; the result and timing are recorded from the console output."
+  ]
+}

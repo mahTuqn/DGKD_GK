@@ -1,0 +1,94 @@
+{
+  "reviewDate": "2026-10-30",
+  "sourceCommit": "cb5a29ab953abb5d30acf6c33d119be4a0e043ca",
+  "repository": "https://github.com/mahTuqn/DGKD_GK",
+  "workflows": [
+    {
+      "name": "CinemaBooking quality",
+      "runId": 41085713853,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41085713853",
+      "conclusion": "success",
+      "duration": "16m 8s",
+      "jobs": [
+        "quality",
+        "DAST (isolated Docker Compose)",
+        "Domain coverage and mutation thresholds",
+        "Compose runtime and browser smoke"
+      ],
+      "browserTests": "68 passed (3.3m)",
+      "mutation": {
+        "scorePercent": 82.89,
+        "breakThresholdPercent": 70,
+        "killed": 155,
+        "survived": 32
+      }
+    },
+    {
+      "name": "Cross-browser smoke",
+      "runId": 41085714107,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41085714107",
+      "conclusion": "success",
+      "duration": "3m 32s",
+      "job": "cross-browser-smoke",
+      "includes": "TC-E2E-36"
+    },
+    {
+      "name": "Worker Reliability Soak (15 minutes)",
+      "runId": 41085714209,
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41085714209",
+      "conclusion": "success",
+      "duration": "15m 53s",
+      "job": "worker-long-soak"
+    }
+  ],
+  "dastSummary": {
+    "runId": 41085713853,
+    "reportsParsed": "3/3",
+    "alertRecords": {
+      "high": 0,
+      "medium": 0,
+      "low": 1,
+      "informational": 5,
+      "unknown": 0
+    },
+    "alertInstances": {
+      "high": 0,
+      "medium": 0,
+      "low": 3,
+      "informational": 11,
+      "unknown": 0
+    },
+    "ruleIdsForTriage": [
+      { "scan": "unauthenticated-api", "pluginId": 10104, "severity": "Informational", "records": 1, "instances": 3 },
+      { "scan": "unauthenticated-api", "pluginId": 10111, "severity": "Informational", "records": 1, "instances": 1 },
+      { "scan": "authenticated-api", "pluginId": 10104, "severity": "Informational", "records": 1, "instances": 3 },
+      { "scan": "authenticated-api", "pluginId": 10111, "severity": "Informational", "records": 1, "instances": 1 },
+      { "scan": "authenticated-api", "pluginId": 40014, "severity": "Low", "records": 1, "instances": 3 },
+      { "scan": "preview", "pluginId": 10109, "severity": "Informational", "records": 1, "instances": 3 }
+    ],
+    "artifact": {
+      "id": 12992327062,
+      "name": "cinema-booking-dast-reports-cb5a29ab953abb5d30acf6c33d119be4a0e043ca",
+      "size": "6.33 KB",
+      "digest": "sha256:db1c8a9cc2c9cd2dcf9c9e458be752efc543c6c06848974897b7324824a3ec1e",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41085713853/artifacts/12992327062",
+      "reviewStatus": "summary-visible; ZIP contents could not be opened in this browser session"
+    },
+    "limitations": [
+      "The run summary deliberately omits alert names, request URLs, and payloads.",
+      "Plugin IDs identify scan rules and do not establish exploitability or acceptance.",
+      "The Low alert remains untriaged until individual report instances can be reviewed."
+    ]
+  },
+  "localVerification": {
+    "TC-E2E-35": "4/4 across Chromium desktop/mobile, Firefox, and WebKit on local Vite frontend with mocked APIs",
+    "TC-E2E-36": "4/4 across Chromium desktop/mobile, Firefox, and WebKit on local Vite frontend with mocked APIs",
+    "TC-SEC-49": "10/10 in focused database-independent configuration suite",
+    "traceability": "127 test cases / 29 requirements"
+  },
+  "accessibilityLimitations": [
+    "Manual checklist remains 8 Fail / 5 Pass / 77 Not tested.",
+    "Role=status assertions verify DOM/ARIA and do not verify spoken output from a real screen reader.",
+    "Real browser zoom/text resizing and physical-device touch remain unverified."
+  ]
+}

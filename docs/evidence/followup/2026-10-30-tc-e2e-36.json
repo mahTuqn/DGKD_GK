@@ -1,6 +1,7 @@
 {
   "reviewDate": "2026-10-30",
   "testId": "TC-E2E-36",
+  "sourceCommit": "cb5a29ab953abb5d30acf6c33d119be4a0e043ca",
   "sourceBaseCommit": "cfddb18d8d21054b677f4ef7f277b08e7d72de7c",
   "workingTreeBlobs": {
     "tests/e2e/a11y-states.spec.ts": "2911d5828d6a79fac8e5e717fddb5b54daf4dea6",
@@ -20,7 +21,7 @@
       "command": "$env:GITHUB_ACTIONS='true'; $env:E2E_BASE_URL='http://127.0.0.1:5173'; $env:PLAYWRIGHT_CROSS_BROWSER_SMOKE='true'; npx playwright test tests/e2e/a11y-states.spec.ts --grep 'TC-E2E-36'",
       "passed": 2,
       "failed": 0,
-      "durationSeconds": 13.0,
+      "durationSeconds": 13.4,
       "projects": {
         "firefox-desktop": { "passed": 1 },
         "webkit-desktop": { "passed": 1 }
@@ -37,6 +38,12 @@
       }
     },
     "traceability": "npm run qa:trace passed: 127 test cases / 29 requirements."
+  },
+  "exactSourceCi": {
+    "sourceCommit": "cb5a29ab953abb5d30acf6c33d119be4a0e043ca",
+    "crossBrowserRun": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41085714107",
+    "qualityRun": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41085713853",
+    "result": "Both workflows passed; TC-E2E-36 is included in the Firefox/WebKit smoke workflow."
   },
   "reportNote": "The final JSON report was overwritten by the second Playwright command and contains only Chromium desktop/mobile. Firefox and WebKit each passed in console output; no failing trace or screenshot was produced.",
   "limitations": [
