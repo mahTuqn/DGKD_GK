@@ -38,7 +38,8 @@ test("[TC-E2E-20][TC-E2E-24] dialog đăng nhập lồng trên sơ đồ ghế g
   const [cinema, auditorium, date, time] = (await seatDialog.locator(".dialog-top p").innerText()).split(" · ");
   await availableSeat.click();
   await expect(availableSeat).toHaveAttribute("aria-pressed", "true");
-  await seatDialog.getByTestId("hold-submit").click();
+  await seatDialog.getByTestId("hold-submit").focus();
+  await page.keyboard.press("Enter");
 
   const authDialog = page.locator(".auth-dialog");
   await expect(authDialog).toBeVisible();

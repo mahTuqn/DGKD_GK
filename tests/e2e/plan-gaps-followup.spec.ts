@@ -63,6 +63,7 @@ test("[TC-E2E-19] thanh toán đã ghi nhận nhưng mất phản hồi có th�
   let ticketCreationCount = 0;
   let idempotentReplayCount = 0;
   let lostResponseAlertText = "";
+  let orderListRequests = 0;
 
   await page.addInitScript(() => {
     localStorage.setItem("cinemabooking.session", JSON.stringify({
@@ -114,7 +115,13 @@ test("[TC-E2E-19] thanh toán đã ghi nhận nhưng mất phản hồi có th�
         tickets: [ticket],
       });
     } else if (request.method() === "GET" && pathname === "/api/orders/me") {
-      await fulfillJson(route, 200, { items: [{ ...orderBase, status: paymentCommitted ? "CONFIRMED" : "PAYMENT_PENDING", tickets: paymentCommitted ? [ticket] : [] }], nextCursor: null });
+      orderListRequests += 1;
+      if (orderListRequests <= 2) {
+        // Payment is confirmed, but both the initial list fetch and automatic retry fail.
+        await fulfillJson(route, 503, { error: "SERVICE_UNAVAILABLE", message: "Ticket list temporarily unavailable" });
+      } else {
+        await fulfillJson(route, 200, { items: [{ ...orderBase, status: paymentCommitted ? "CONFIRMED" : "PAYMENT_PENDING", tickets: paymentCommitted ? [ticket] : [] }], nextCursor: null });
+      }
     } else {
       await fulfillJson(route, 404, { error: "NOT_FOUND", message: `Unexpected mock request: ${request.method()} ${pathname}` });
     }
@@ -144,6 +151,7 @@ test("[TC-E2E-19] thanh toán đã ghi nhận nhưng mất phản hồi có th�
 
   await page.getByTestId("pay-submit").click();
   await expect(page.getByRole("heading", { name: "Hẹn gặp bạn tại rạp." })).toBeVisible();
+  await expect.poll(() => orderListRequests).toBe(1);
   await expect(page.getByText("MÃ VÉ · 00000001", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Xem vé của tôi" })).toBeVisible();
   expect(paymentOrderIds).toEqual([orderId, orderId]);
@@ -151,7 +159,15 @@ test("[TC-E2E-19] thanh toán đã ghi nhận nhưng mất phản hồi có th�
   expect(ticketCreationCount).toBe(1);
 
   await page.getByRole("button", { name: "Xem vé của tôi" }).click();
-  await expect(page.getByRole("heading", { name: "Vé của bạn" })).toBeVisible();
+  const ticketHeading = page.getByRole("heading", { name: "Vé của bạn" });
+  await expect(ticketHeading).toBeVisible();
+  await expect(ticketHeading).toBeFocused();
+  await expect.poll(() => orderListRequests).toBeGreaterThanOrEqual(2);
+  await expect(page.getByRole("alert")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Chưa có chiếc vé nào" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Cập nhật vé" }).click();
+  await expect.poll(() => orderListRequests).toBeGreaterThanOrEqual(3);
+  await expect(page.getByRole("alert")).toHaveCount(0);
   await expect(page.getByTestId("ticket-card")).toHaveCount(1);
   await expect(page.getByTestId("ticket-card").first().locator("[aria-label=\"Mã vé QR\"]")).toBeVisible();
 

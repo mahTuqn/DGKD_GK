@@ -82,10 +82,12 @@ async function buyOneTicket(page: Page) {
   const hold = await holdResponse.json() as { totalVnd: number };
   expect(Number.isSafeInteger(hold.totalVnd)).toBe(true);
   await expect(page.getByTestId("hold-countdown")).toBeVisible();
+  await expect(page.locator(".checkout-dialog").getByRole("button", { name: "Đóng" })).toBeFocused();
   const displayedTotal = page.locator(".summary-total b");
   await expect.poll(async () => amountFromCurrencyText(await displayedTotal.innerText())).toBe(hold.totalVnd);
   const orderResponsePromise = page.waitForResponse((response) => response.request().method() === "POST" && new URL(response.url()).pathname.endsWith("/api/orders"));
   await page.getByTestId("checkout-submit").focus();
+  await expect(page.getByTestId("checkout-submit")).toBeFocused();
   await page.keyboard.press("Enter");
   const orderResponse = await orderResponsePromise;
   expect(orderResponse.ok()).toBeTruthy();
@@ -698,8 +700,24 @@ test("[TC-E2E-09][TC-PLAN-06] Bàn phím đi từ đăng nhập đến ghế ch�
   await page.keyboard.press("Tab");
   await expectVisibleKeyboardFocus(checkoutButton);
   await expect(checkoutButton).toHaveAccessibleName("Tiếp tục thanh toán");
+
+  let releaseOrder!: () => void;
+  const orderGate = new Promise<void>((resolve) => { releaseOrder = resolve; });
+  await page.route("**/api/orders", async (route) => {
+    if (route.request().method() !== "POST") return route.continue();
+    await orderGate;
+    await route.continue();
+  });
+  const orderRequest = page.waitForRequest((request) => request.method() === "POST" && new URL(request.url()).pathname.endsWith("/api/orders"));
+  await page.keyboard.press("Enter");
+  await orderRequest;
+  await closeCheckout.focus();
+  releaseOrder();
+  await expect(checkoutDialog.getByTestId("pay-submit")).toBeVisible();
+  await expect(closeCheckout).toBeFocused();
+  await page.unroute("**/api/orders");
   await page.keyboard.press("Escape");
   await expect(checkoutDialog).toBeHidden();
   await expect(showtime).toBeFocused();
-  // The test stops without creating an order or payment.
+  // The test creates an order but stops without making a payment.
 });

@@ -48,7 +48,10 @@ function useModalKeyboard(
     const focusableItems = () => Array.from(dialog.querySelectorAll<HTMLElement>(focusableSelector))
       .filter((item) => item.getAttribute("aria-hidden") !== "true" && item.getClientRects().length > 0);
     const initialTarget = dialog.querySelector<HTMLElement>("[data-dialog-autofocus]") || focusableItems()[0] || dialog;
-    const frame = window.requestAnimationFrame(() => initialTarget.focus());
+    const frame = window.requestAnimationFrame(() => {
+      // The user may already have moved focus into the dialog before this frame.
+      if (!dialog.contains(document.activeElement)) initialTarget.focus();
+    });
     const onKeyDown = (event: KeyboardEvent) => {
       if (!isTopDialog()) return;
       if (event.key === "Escape" && escapeRef.current) {
@@ -87,7 +90,12 @@ function useModalKeyboard(
         : previousFocus && previousFocus !== document.body && previousFocus.isConnected
           ? previousFocus
           : fallbackTarget;
-      if (focusTarget?.isConnected) window.requestAnimationFrame(() => focusTarget.focus());
+      if (focusTarget?.isConnected) window.requestAnimationFrame(() => {
+        const dialogs = document.querySelectorAll<HTMLElement>('[role="dialog"][aria-modal="true"]');
+        const topDialog = dialogs.item(dialogs.length - 1);
+        if (topDialog && !topDialog.contains(focusTarget)) return;
+        if (document.activeElement === document.body && focusTarget.isConnected) focusTarget.focus();
+      });
     };
   }, [restoreFocusFallback]);
 }
@@ -357,6 +365,9 @@ export default function App() {
   const [bookingStep, setBookingStep] = useState<BookingStep>("seats"); const [order, setOrder] = useState<Order | null>(null); const [paidTickets, setPaidTickets] = useState<Ticket[]>([]);
   const [orders, setOrders] = useState<Order[]>([]); const [ordersNextCursor, setOrdersNextCursor] = useState<string | null>(null); const [ordersLoading, setOrdersLoading] = useState(false); const [checkoutBusy, setCheckoutBusy] = useState(false);
   const checkoutDialogRef = useRef<HTMLElement | null>(null);
+  const ticketsHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const focusTicketsAfterCheckoutRef = useRef(false);
+  const checkoutActionFocusRef = useRef<HTMLElement | null>(null);
   const seatShowtimeOpenerRef = useRef<HTMLElement | null>(null);
   const discoverNavRef = useRef<HTMLButtonElement | null>(null);
   const signInButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -376,11 +387,19 @@ export default function App() {
   }, [session]);
 
   useEffect(() => {
-    if (!hold || checkoutBusy) return;
+    if (view !== "tickets" || !focusTicketsAfterCheckoutRef.current) return;
+    focusTicketsAfterCheckoutRef.current = false;
+    ticketsHeadingRef.current?.focus();
+  }, [view]);
+
+  useEffect(() => {
+    if (!hold || checkoutBusy || !checkoutActionFocusRef.current) return;
     const dialog = checkoutDialogRef.current;
-    // Replacing the checkout/payment button can leave focus on the body.
-    // Preserve focus already inside the dialog; recover it after a step change.
-    if (dialog && !dialog.contains(document.activeElement)) {
+    const previousAction = checkoutActionFocusRef.current;
+    checkoutActionFocusRef.current = null;
+    // Disabling or replacing the action can lose focus or leave it on the old
+    // control in different browsers. Do not override a user's later movement.
+    if (dialog && (document.activeElement === document.body || document.activeElement === previousAction)) {
       dialog.querySelector<HTMLElement>('[data-testid="pay-submit"], [data-testid="checkout-submit"], .success-content button')?.focus();
     }
   }, [hold?.id, order?.id, bookingStep, checkoutBusy]);
@@ -404,20 +423,24 @@ export default function App() {
     localStorage.setItem(SESSION_KEY, JSON.stringify(value)); setSession(value); setAuthOpen(false);
     if (queued) { setQueuedSelection(null); void reserveSelection(queued.showtimeId, queued.seatIds, value); }
   }
-  function openLogin() { loginFocusReturnRef.current = null; setAuthMode("login"); setAuthOpen(true); }
+  function openLogin(opener?: HTMLElement) { loginFocusReturnRef.current = opener || null; setAuthMode("login"); setAuthOpen(true); }
   async function reserveSelection(showtimeId: string, seatIds: string[], currentSession = session) {
     if (!currentSession) { setQueuedSelection({ showtimeId, seatIds }); setAuthMode("login"); setAuthOpen(true); return; }
     try { const [createdHold, map] = await Promise.all([api.createHold(currentSession.token, showtimeId, seatIds), api.seats(showtimeId)]); setHold(createdHold); setHoldMap(map); setBookingStep("checkout"); setError(""); setOrder(null); setPaidTickets([]); setSeatShowtime(null); }
     catch (reason) { setError(humanError(reason)); if (reason instanceof ApiError && reason.status === 409) { setSeatShowtime(showtimes.find((item) => item.id === showtimeId) || null); } }
   }
   async function continueCheckout() {
-    if (!hold || !session) return; setCheckoutBusy(true); setError("");
+    if (!hold || !session) return;
+    checkoutActionFocusRef.current = document.activeElement === checkoutDialogRef.current?.querySelector('[data-testid="checkout-submit"]') ? document.activeElement as HTMLElement : null;
+    setCheckoutBusy(true); setError("");
     try { const value = await api.createOrder(session.token, hold.id); setOrder(value); setBookingStep("checkout"); }
     catch (reason) { setError(humanError(reason)); }
     finally { setCheckoutBusy(false); }
   }
   async function payDemo() {
-    if (!order || !session) return; setCheckoutBusy(true); setError("");
+    if (!order || !session) return;
+    checkoutActionFocusRef.current = document.activeElement === checkoutDialogRef.current?.querySelector('[data-testid="pay-submit"]') ? document.activeElement as HTMLElement : null;
+    setCheckoutBusy(true); setError("");
     try {
       const result = await api.payDemo(session.token, order.id);
       setPaidTickets(result.tickets);
@@ -455,7 +478,7 @@ export default function App() {
   return <div className="app-shell">
     <header className="topbar"><a href="#top" className="brand" onClick={() => setView("discover")}><span className="brand-icon" aria-hidden="true">C</span><span>Cinema<span className="brand-light">Booking</span></span></a>
       <nav className="main-nav" aria-label="Điều hướng chính"><button ref={discoverNavRef} className={view === "discover" ? "nav-link active" : "nav-link"} onClick={() => setView("discover")}>Khám phá</button>{session && <button className={view === "tickets" ? "nav-link active" : "nav-link"} onClick={() => void loadOrders()}>Vé của tôi</button>}{session && (session.user.role === "STAFF" || session.user.role === "ADMIN") && <button className={view === "scan" ? "nav-link active" : "nav-link"} onClick={() => setView("scan")}>Soát vé</button>}{session?.user.role === "ADMIN" && <button className={view === "admin" ? "nav-link active" : "nav-link"} onClick={() => setView("admin")}>Quản trị</button>}</nav>
-    <div className="header-actions">{session ? <><span className="user-greeting">Xin chào, {session.user.name.split(" ").at(-1)}</span><span aria-hidden="true" className="avatar-button" style={{ cursor: "default" }}>{initials(session.user.name)}</span><button className="button button-outline sign-button" onClick={logout}>Đăng xuất</button><button aria-label="Đăng xuất" title="Đăng xuất" className="mobile-logout" onClick={logout}>↪</button></> : <button ref={signInButtonRef} className="button button-outline sign-button" onClick={openLogin}>Đăng nhập</button>}<button ref={mobileAccountRef} aria-label={session ? `Mở tài khoản ${initials(session.user.name)}` : "↗ Mở tài khoản"} className="mobile-account" onClick={() => session ? void loadOrders() : openLogin()}>{session ? initials(session.user.name) : "↗"}</button></div>
+    <div className="header-actions">{session ? <><span className="user-greeting">Xin chào, {session.user.name.split(" ").at(-1)}</span><span aria-hidden="true" className="avatar-button" style={{ cursor: "default" }}>{initials(session.user.name)}</span><button className="button button-outline sign-button" onClick={logout}>Đăng xuất</button><button aria-label="Đăng xuất" title="Đăng xuất" className="mobile-logout" onClick={logout}>↪</button></> : <button ref={signInButtonRef} className="button button-outline sign-button" onClick={(event) => openLogin(event.currentTarget)}>Đăng nhập</button>}<button ref={mobileAccountRef} aria-label={session ? `Mở tài khoản ${initials(session.user.name)}` : "↗ Mở tài khoản"} className="mobile-account" onClick={(event) => session ? void loadOrders() : openLogin(event.currentTarget)}>{session ? initials(session.user.name) : "↗"}</button></div>
     </header>
 
     {view === "discover" && <main id="top">
@@ -472,20 +495,20 @@ export default function App() {
       <section className="promise-strip"><div><span>01</span><b>Chọn chỗ dễ dàng</b><small>Sơ đồ ghế trực quan</small></div><div><span>02</span><b>Thanh toán an tâm</b><small>Giao dịch bảo mật</small></div><div><span>03</span><b>Vé về tay ngay</b><small>QR sẵn sàng vào rạp</small></div></section>
     </main>}
 
-    {view === "tickets" && <main className="content-page"><div className="section-heading"><div><span className="eyebrow">CINEMA CLUB</span><h1>Vé của bạn</h1><p className="muted">Lưu lại những buổi tối đáng nhớ.</p></div><button className="button button-outline" onClick={() => void loadOrders()}>↻ Cập nhật vé</button></div>{error && <p role="alert" className="alert alert-error">{error}</p>}{ordersLoading && !orders.length ? <div className="schedule-loading"><span className="spinner" />Đang tải vé…</div> : orders.length ? <><div className="ticket-list">{orders.map((item) => <TicketCard order={item} key={item.id} />)}</div>{ordersNextCursor && <button className="button button-outline admin-load-more" disabled={ordersLoading} onClick={() => void loadMoreOrders()}>{ordersLoading ? "Đang tải…" : "Tải thêm vé"}</button>}</> : <div className="empty-state"><span className="empty-icon">▱</span><h3>Chưa có chiếc vé nào</h3><p>Chọn một bộ phim và giữ chỗ để bắt đầu hành trình.</p><button className="button button-primary" onClick={() => setView("discover")}>Khám phá phim</button></div>}</main>}
+    {view === "tickets" && <main className="content-page"><div className="section-heading"><div><span className="eyebrow">CINEMA CLUB</span><h1 ref={ticketsHeadingRef} tabIndex={-1}>Vé của bạn</h1><p className="muted">Lưu lại những buổi tối đáng nhớ.</p></div><button className="button button-outline" onClick={() => void loadOrders()}>↻ Cập nhật vé</button></div>{error && <p role="alert" className="alert alert-error">{error}</p>}{ordersLoading && !orders.length ? <div className="schedule-loading"><span className="spinner" />Đang tải vé…</div> : orders.length ? <><div className="ticket-list">{orders.map((item) => <TicketCard order={item} key={item.id} />)}</div>{ordersNextCursor && <button className="button button-outline admin-load-more" disabled={ordersLoading} onClick={() => void loadMoreOrders()}>{ordersLoading ? "Đang tải…" : "Tải thêm vé"}</button>}</> : error ? null : <div className="empty-state"><span className="empty-icon">▱</span><h3>Chưa có chiếc vé nào</h3><p>Chọn một bộ phim và giữ chỗ để bắt đầu hành trình.</p><button className="button button-primary" onClick={() => setView("discover")}>Khám phá phim</button></div>}</main>}
     {view === "scan" && session && <main className="content-page"><ScanPanel session={session} /></main>}
     {view === "admin" && session?.user.role === "ADMIN" && <main className="content-page"><AdminPanel session={session} /></main>}
 
     <footer className="footer"><a href="#top" className="brand"><span className="brand-icon" aria-hidden="true">C</span><span>Cinema<span className="brand-light">Booking</span></span></a><p>Thêm một chút cảm xúc vào lịch trình của bạn.</p><span>© 2026 CINEMA BOOKING · VÉ DEMO</span></footer>
 
     {seatShowtime && <SeatDialog showtime={seatShowtime} session={session} isTopModal={!authOpen} onClose={() => setSeatShowtime(null)} onRequireAuth={(showtimeId, seatIds) => { loginFocusReturnRef.current = null; setQueuedSelection({ showtimeId, seatIds }); setAuthMode("login"); setAuthOpen(true); }} onHoldCreated={(created, map) => { setSecondsLeft(Math.max(0, Math.ceil((new Date(created.expiresAt).getTime() - Date.now()) / 1000))); setHold(created); setHoldMap(map); setBookingStep("checkout"); setSeatShowtime(null); setError(""); }} />}
-    {authOpen && <AuthDialog mode={authMode} setMode={setAuthMode} restoreFocusFallback={loginFocusReturnRef} onClose={() => { loginFocusReturnRef.current = null; setAuthOpen(false); setQueuedSelection(null); }} onSuccess={saveSession} />}
+    {authOpen && <AuthDialog mode={authMode} setMode={setAuthMode} restoreFocusFallback={loginFocusReturnRef} onClose={() => { setAuthOpen(false); setQueuedSelection(null); }} onSuccess={saveSession} />}
 
     {hold && <div className="overlay booking-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && bookingStep !== "success") return; }}>
       <section ref={checkoutDialogRef} className="dialog checkout-dialog" role="dialog" aria-modal="true" aria-labelledby="checkout-title" tabIndex={-1}>
         <ModalKeyboardSupport dialogRef={checkoutDialogRef} onEscape={bookingStep !== "success" ? closeCheckout : undefined} restoreFocusFallback={seatShowtimeOpenerRef} />
         <div className="dialog-top"><div><span className="eyebrow">{bookingStep === "success" ? "VÉ ĐÃ SẴN SÀNG" : "HOÀN TẤT ĐẶT VÉ"}</span><h2 id="checkout-title">{bookingStep === "success" ? "Hẹn gặp bạn tại rạp." : "Một bước nữa thôi."}</h2></div>{bookingStep !== "success" && <button className="icon-button" aria-label="Đóng" onClick={closeCheckout}>×</button>}</div>
-        {bookingStep === "success" ? <div className="success-content"><div className="success-check">✓</div><p>Thanh toán demo thành công. Vé điện tử đã được gửi vào mục <b>Vé của tôi</b>.</p><div className="success-tickets">{paidTickets.map((ticket) => <div className="mini-ticket" key={ticket.id}><QRCodeSVG value={ticket.qrToken} title={`Mã QR vé ${ticket.id.slice(-8).toUpperCase()}`} size={92} /><span>MÃ VÉ · {ticket.id.slice(-8).toUpperCase()}</span></div>)}</div><button className="button button-primary button-wide" onClick={() => { setHold(null); setHoldMap(null); setBookingStep("seats"); setView("tickets"); }}>Xem vé của tôi</button></div> : <>
+        {bookingStep === "success" ? <div className="success-content"><div className="success-check">✓</div><p>Thanh toán demo thành công. Vé điện tử đã được gửi vào mục <b>Vé của tôi</b>.</p><div className="success-tickets">{paidTickets.map((ticket) => <div className="mini-ticket" key={ticket.id}><QRCodeSVG value={ticket.qrToken} title={`Mã QR vé ${ticket.id.slice(-8).toUpperCase()}`} size={92} /><span>MÃ VÉ · {ticket.id.slice(-8).toUpperCase()}</span></div>)}</div><button className="button button-primary button-wide" onClick={() => { setHold(null); setHoldMap(null); setBookingStep("seats"); focusTicketsAfterCheckoutRef.current = true; void loadOrders(); }}>Xem vé của tôi</button></div> : <>
           <p className="sr-only" role="status" data-testid="hold-created-announcement">Ghế đang được giữ. Vui lòng hoàn tất thanh toán trước khi hết giờ.</p>
           <div className="hold-countdown" data-testid="hold-countdown" role="timer" aria-live="off" aria-label={`Thời gian giữ ghế còn lại ${String(Math.floor(secondsLeft / 60)).padStart(2, "0")} phút ${String(secondsLeft % 60).padStart(2, "0")} giây`}><span className="timer-icon" aria-hidden="true">◷</span><div><span>GHẾ ĐANG ĐƯỢC GIỮ CHO BẠN</span><b>{String(Math.floor(secondsLeft / 60)).padStart(2, "0")}:{String(secondsLeft % 60).padStart(2, "0")}</b></div><small>Vui lòng hoàn tất trước khi hết giờ.</small></div>
           <div className="checkout-summary"><div className="checkout-movie"><Poster movie={movies.find((item) => item.id === holdMap?.showtime.movieId) || { id: "ticket", title: holdMap?.showtime.movieTitle || "Cinema", genre: "Điện ảnh", synopsis: "", runtimeMinutes: 0, ageRating: "P" }} /><div><b>{holdMap?.showtime.movieTitle || "Phim đang chọn"}</b><span>{holdMap?.showtime.cinemaName} · {holdMap?.showtime.auditoriumName}</span><span>{holdMap?.showtime.date ? shortDate(holdMap.showtime.date) : ""} · {holdMap?.showtime.startAt ? timeOf(holdMap.showtime.startAt) : ""}</span><span>Ghế: {holdMap?.seats.filter((seat) => hold.seatIds.includes(seat.id)).map((seat) => seat.label).join(", ")}</span></div></div><div className="summary-line"><span>Tạm tính ({hold.seatIds.length} vé)</span><b>{formatVnd(hold.totalVnd)}</b></div><div className="summary-line summary-total"><span>Tổng thanh toán</span><b>{formatVnd(order?.totalVnd ?? hold.totalVnd)}</b></div></div>
