@@ -39,6 +39,18 @@
         "The page has no horizontal overflow at 320 and 800 CSS px."
       ]
     },
+    "additionalAccessibilitySmoke": {
+      "project": "chromium-desktop",
+      "tests": ["TC-E2E-16", "TC-E2E-17", "TC-E2E-18", "TC-E2E-33"],
+      "result": "4 passed",
+      "api": "Mocked by the tests"
+    },
+    "crossBrowserWorkflowExpansion": {
+      "workflow": ".github/workflows/cross-browser-smoke.yml",
+      "cases": ["TC-E2E-01", "TC-E2E-02", "TC-E2E-03", "TC-E2E-09", "TC-E2E-16", "TC-E2E-17", "TC-E2E-18", "TC-E2E-19", "TC-E2E-27", "TC-E2E-31", "TC-E2E-32", "TC-E2E-33", "TC-E2E-34"],
+      "playwrightListResult": "26 tests discovered across Firefox and WebKit",
+      "executionStatus": "Pending CI after pushing the workflow update"
+    },
     "responsiveCatalogFinding": {
       "id": "A11Y-F10",
       "before": "At widths below 1000px, CSS hid movie cards from the fourth onward.",
