@@ -2,7 +2,8 @@
   "recordedAt": "2026-10-31",
   "repository": {
     "branch": "codex/cross-browser-smoke",
-    "head": "8b4245e12dc12660230ebf03dea1c21e0750aadc",
+    "composeAndFocusedChecksCheckout": "8b4245e12dc12660230ebf03dea1c21e0750aadc",
+    "fullPlaywrightSuiteCheckout": "7058fd17e13aa835fe1bb5d849e3d2a118946c3f",
     "applicationSource": "fcdd0fb6195fad2270e5ed8f062caf8c1e33fa2d",
     "testRunnerSource": "f4ce0e8d23c301c12a05c20c8cf565f8a65e173c"
   },
@@ -35,6 +36,15 @@
         "chromium-mobile"
       ],
       "scope": "Three seat-dialog/booking accessibility flows per project; migrations and seed applied only to the temporary test database."
+    },
+    {
+      "command": "npm run test:browser:isolated",
+      "result": "88 passed; 0 skipped, 0 unexpected and 0 flaky in 294.5 seconds.",
+      "projects": [
+        "chromium-desktop",
+        "chromium-mobile"
+      ],
+      "scope": "Full current Playwright suite (44 cases per project) against local API/frontend servers and a disposable PostgreSQL database, which the runner removed after completion."
     },
     {
       "command": "npx playwright test --config=reports/generated/playwright-mock-only.config.ts tests/e2e/a11y-states.spec.ts tests/e2e/cinema.spec.ts --grep 'TC-E2E-17|TC-E2E-36|TC-E2E-45'",
@@ -71,7 +81,6 @@
     "The npm install audit notice during image build referred to the same reviewed moderate development dependency advisory accepted by the repository audit gate."
   ],
   "not_run": [
-    "A local DAST scan was not run; exact-source CI DAST evidence is recorded separately.",
-    "The full Playwright suite was not run locally."
+    "A local DAST scan was not run; exact-source CI DAST evidence is recorded separately."
   ]
 }

@@ -9,7 +9,7 @@
 | Overall status | In progress |
 | Reviewer(s) | Codex agent operating the browser UI |
 | Review date and timezone | Initial review 2026-10-30; targeted follow-ups through 2026-10-31; Asia/Saigon |
-| Application commit/build reviewed | Initial baseline `7adffff`; latest frontend source `fcdd0fb` at repository HEAD `8b4245e` (documentation-only commit after test source `f4ce0e8`); see per-run evidence below |
+| Application commit/build reviewed | Initial baseline `7adffff`; application source `fcdd0fb` and test/runner source `f4ce0e8`; live keyboard evidence was captured at documentation-only checkout `8b4245e`; see per-run evidence below |
 | Environment/base URL | Latest direct keyboard review used the rebuilt QA Compose stack at http://127.0.0.1:8081; earlier narrow-viewport preview at http://127.0.0.1:5174 had API offline |
 | Desktop browser / OS | Google Chrome 156.0.8078.49 / Windows 11 Pro for direct keyboard observation; Playwright Chromium 156.0.8078.4 headless for the latest 320px viewport screenshots |
 | Desktop screen reader and version | — |
