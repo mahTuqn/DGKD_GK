@@ -1,0 +1,41 @@
+{
+  "recordedAt": "2026-10-31",
+  "sourceCommit": "6c86cda463d3885a6ebd7dd0bd16ef1eb2a9b854",
+  "runs": {
+    "quality": {
+      "runId": "41177769275",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41177769275",
+      "conclusion": "failure",
+      "failure": "The API suite reached cleanup for TC-SEC-52; deleting its test cinema failed with Prisma P2003 because the fixture Staff user still referenced that cinema. The test assertions' result is not established by the check page.",
+      "fix": "Delete fixture users after their audit rows and before deleting the assigned cinema. Exact-source rerun pending."
+    },
+    "crossBrowser": {
+      "runId": "41177769223",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41177769223",
+      "runNumber": 109,
+      "conclusion": "failure",
+      "result": "57 passed; one failure in TC-E2E-42 on WebKit.",
+      "failure": "Axe reported checkout text contrast while the .booking-overlay fade-in was still below opacity 1. The failed annotation named .dialog-top .eyebrow and #checkout-title.",
+      "fix": "Wait for the overlay opacity to reach 1 before the axe scan. Built-preview local retests passed; exact-source CI rerun pending."
+    },
+    "workerSoak": {
+      "runId": "41177769244",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41177769244",
+      "conclusion": "success",
+      "duration": "15m53s"
+    }
+  },
+  "dast": {
+    "jobConclusion": "success",
+    "artifact": {
+      "name": "cinema-booking-dast-reports-6c86cda463d3885a6ebd7dd0bd16ef1eb2a9b854",
+      "sizeBytes": 6666,
+      "sha256": "cb49bc09eeb30f73ed64972c3b270ecd55d138f6348268f4f05b1d128720c485"
+    },
+    "reportsParsed": true,
+    "alertCounts": null,
+    "rule40014Disposition": "open",
+    "scope": "The required reports passed the summary gate, but artifact details were not read; do not infer finding counts or carry forward dispositions from older runs."
+  },
+  "scope": "This record preserves the initial CI failures and corrective actions; it does not mark either failed gate as passed."
+}

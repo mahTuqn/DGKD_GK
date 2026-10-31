@@ -1,0 +1,34 @@
+{
+  "recordedAt": "2026-10-31",
+  "baseCommit": "6c86cda",
+  "testedWorkingTreeChanges": [
+    "frontend/src/App.tsx: pass the showtime opener as the seat-dialog focus fallback",
+    "tests/e2e/a11y-booking-flows.spec.ts: open dialogs by Enter, wait for overlay fade-in completion before axe, focus the selected seat, and verify focus restoration after keyboard and pointer entry",
+    "backend/tests/ticket-checkin-race.integration.test.ts: delete Staff fixture users before their assigned cinema"
+  ],
+  "checks": {
+    "frontendBuild": "npm run build --workspace frontend passed.",
+    "backendTestTypecheck": "npm run typecheck:tests passed.",
+    "traceability": "139 test cases / 29 requirements passed; final qa:trace rerun recorded separately after documentation updates.",
+    "gitDiffCheck": "passed"
+  },
+  "browserRuns": [
+    {
+      "command": "GITHUB_ACTIONS=true E2E_BASE_URL=http://127.0.0.1:5174 PLAYWRIGHT_CROSS_BROWSER_SMOKE=true npm run test:browser -- --reporter=line --project=firefox-desktop --project=webkit-desktop tests/e2e/a11y-booking-flows.spec.ts",
+      "browser": "Local built Vite preview with Firefox and WebKit",
+      "result": { "passed": 4, "failed": 0, "skipped": 0, "durationSeconds": 19.9 },
+      "api": "Page-level mocked routes; no backend or database"
+    },
+    {
+      "command": "GITHUB_ACTIONS=true E2E_BASE_URL=http://127.0.0.1:5174 npm run test:browser -- --reporter=line --project=chromium-desktop --project=chromium-mobile tests/e2e/a11y-states.spec.ts tests/e2e/a11y-booking-flows.spec.ts",
+      "browser": "Local built Vite preview with Chromium desktop and mobile emulation",
+      "result": { "passed": 22, "failed": 0, "skipped": 0, "durationSeconds": 45.5 },
+      "api": "Page-level mocked routes; no backend or database"
+    }
+  ],
+  "limitations": [
+    "The exact-source CI rerun is pending.",
+    "The TC-SEC-52 database-backed race test has not run locally because DATABASE_URL_TEST is not configured and Docker is stopped.",
+    "These automated tests do not establish real screen-reader speech, physical-device touch, actual browser zoom, or full manual WCAG conformance."
+  ]
+}

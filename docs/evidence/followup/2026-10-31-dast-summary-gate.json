@@ -10,5 +10,5 @@
   ],
   "syntax": "node --check passed for scripts/summarize-dast.mjs and tests/tooling/dast-summary.test.mjs.",
   "wiring": "The CI DAST summary step runs with if: always(); a nonzero result fails the job while artifact upload still runs.",
-  "scope": "Local tooling verification only; new exact-source DAST workflow execution is pending."
+  "scope": "This manifest records local tooling verification only. Quality #130 subsequently passed its configured current-run DAST report-summary gate, but the uploaded reports have not been inspected; see 2026-10-31-github-actions-6c86cda-followup.json."
 }

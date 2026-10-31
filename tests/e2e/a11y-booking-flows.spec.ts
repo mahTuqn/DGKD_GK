@@ -128,12 +128,17 @@ async function expectNoWcagAxeViolations(page: Page, selector: string) {
 }
 
 async function openSeatDialog(page: Page) {
-  await page.getByTestId("movie-card").first().getByRole("button", { name: "Xem suất chiếu" }).click();
+  const movieAction = page.getByTestId("movie-card").first().getByRole("button", { name: "Xem suất chiếu" });
+  await movieAction.focus();
+  await page.keyboard.press("Enter");
   await expect(page.getByTestId("showtime-option").first()).toBeVisible();
-  await page.getByTestId("showtime-option").first().click();
+  const opener = page.getByTestId("showtime-option").first();
+  await opener.focus();
+  await page.keyboard.press("Enter");
   const dialog = page.getByRole("dialog", { name: movie.title });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByRole("button", { name: "Đóng" })).toBeFocused();
+  await expect(page.locator(".booking-overlay").last()).toHaveCSS("opacity", "1");
   return dialog;
 }
 
@@ -177,6 +182,14 @@ test("[TC-E2E-41] seat dialog keyboard boundaries and focus restoration", async 
   await page.keyboard.press("Escape");
   await expect(dialog).toBeHidden();
   await expect(opener).toBeFocused();
+
+  // Pointer activation must also restore focus when WebKit leaves focus on body.
+  await opener.click();
+  const pointerOpenedDialog = page.getByRole("dialog", { name: movie.title });
+  await expect(pointerOpenedDialog).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(pointerOpenedDialog).toBeHidden();
+  await expect(opener).toBeFocused();
 });
 
 test("[TC-E2E-42] hold announcement, quiet timer, checkout focus and payment error", async ({ page }) => {
@@ -187,7 +200,8 @@ test("[TC-E2E-42] hold announcement, quiet timer, checkout focus and payment err
 
   const seatDialog = await openSeatDialog(page);
   const firstSeat = seatDialog.getByRole("button", { name: "Ghế A 1 — trống — ghế tiêu chuẩn" });
-  await page.keyboard.press("Tab");
+  await firstSeat.focus();
+  await expect(firstSeat).toBeFocused();
   await page.keyboard.press("Space");
   const holdButton = seatDialog.getByTestId("hold-submit");
   await expect(holdButton).toBeEnabled();
@@ -198,6 +212,7 @@ test("[TC-E2E-42] hold announcement, quiet timer, checkout focus and payment err
 
   const checkout = page.getByRole("dialog", { name: "Một bước nữa thôi." });
   await expect(checkout).toBeVisible();
+  await expect(page.locator(".booking-overlay").last()).toHaveCSS("opacity", "1");
   await expect(checkout.getByRole("status")).toHaveText("Ghế đang được giữ. Vui lòng hoàn tất thanh toán trước khi hết giờ.");
   const timer = checkout.getByRole("timer");
   await expect(timer).toHaveAttribute("aria-live", "off");

@@ -1,0 +1,36 @@
+{
+  "recordedAt": "2026-10-31",
+  "baseCommit": "6c86cda463d3885a6ebd7dd0bd16ef1eb2a9b854",
+  "scope": "Local automated validation of the working tree before exact-source CI rerun.",
+  "checks": {
+    "build": { "command": "npm run build", "result": "passed", "details": "Backend TypeScript build and frontend production build succeeded." },
+    "backendTestTypecheck": { "command": "npm run typecheck:tests", "result": "passed" },
+    "openapi": { "command": "npm run lint:openapi", "result": "passed" },
+    "traceability": { "command": "npm run qa:trace", "result": "passed", "details": "139 test cases, 29 requirements; all sources and links resolved." },
+    "diffCheck": { "command": "git diff --check", "result": "passed" },
+    "browserCrossBrowser": {
+      "command": "GITHUB_ACTIONS=true E2E_BASE_URL=http://127.0.0.1:5174 PLAYWRIGHT_CROSS_BROWSER_SMOKE=true npm run test:browser -- --reporter=line --project=firefox-desktop --project=webkit-desktop tests/e2e/a11y-booking-flows.spec.ts",
+      "result": { "passed": 4, "failed": 0, "skipped": 0, "durationSeconds": 19.9 },
+      "target": "Built Vite preview; mocked API routes; TC-E2E-41/42"
+    },
+    "browserChromium": {
+      "command": "GITHUB_ACTIONS=true E2E_BASE_URL=http://127.0.0.1:5174 npm run test:browser -- --reporter=line --project=chromium-desktop --project=chromium-mobile tests/e2e/a11y-states.spec.ts tests/e2e/a11y-booking-flows.spec.ts",
+      "result": { "passed": 22, "failed": 0, "skipped": 0, "durationSeconds": 45.5 },
+      "target": "Built Vite preview; mocked API routes; keyboard and pointer focus-return regression included"
+    },
+    "secretScan": {
+      "command": "npm run scan:secrets",
+      "result": "not_run_docker_unavailable",
+      "details": "The Docker Desktop Linux Engine named pipe was missing; no scan result is claimed."
+    },
+    "ticketCheckinRace": {
+      "result": "not_run_database_unavailable",
+      "details": "DATABASE_URL_TEST is unset and local Docker is unavailable. The test must run against CI's isolated PostgreSQL service, not the app database."
+    }
+  },
+  "limitations": [
+    "Exact-source Quality and Cross-browser CI reruns are pending.",
+    "Local mocked-API browser runs do not establish backend integration behavior, manual screen-reader conformance, actual zoom, or physical-device accessibility.",
+    "The DAST report artifact from Quality #130 remains unreviewed."
+  ]
+}

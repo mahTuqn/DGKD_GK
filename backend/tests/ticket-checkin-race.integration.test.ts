@@ -101,11 +101,11 @@ databaseDescribe("ticket check-in mixed-route race", () => {
       await prisma.showtime.deleteMany({ where: { id: showtimeId } });
     }
     if (userIds.length) await prisma.auditLog.deleteMany({ where: { actorId: { in: userIds } } });
+    if (userIds.length) await prisma.user.deleteMany({ where: { id: { in: userIds } } });
     if (seatId) await prisma.seat.deleteMany({ where: { id: seatId } });
     if (movieId) await prisma.movie.deleteMany({ where: { id: movieId } });
     if (auditoriumId) await prisma.auditorium.deleteMany({ where: { id: auditoriumId } });
     if (cinemaId) await prisma.cinema.deleteMany({ where: { id: cinemaId } });
-    if (userIds.length) await prisma.user.deleteMany({ where: { id: { in: userIds } } });
     await prisma.$disconnect();
   }, 30_000);
 

@@ -94,7 +94,8 @@ function useModalKeyboard(
         const dialogs = document.querySelectorAll<HTMLElement>('[role="dialog"][aria-modal="true"]');
         const topDialog = dialogs.item(dialogs.length - 1);
         if (topDialog && !topDialog.contains(focusTarget)) return;
-        if (document.activeElement === document.body && focusTarget.isConnected) focusTarget.focus();
+        const activeElement = document.activeElement;
+        if ((activeElement === document.body || activeElement === null || !activeElement.isConnected) && focusTarget.isConnected) focusTarget.focus();
       });
     };
   }, [restoreFocusFallback]);
@@ -162,14 +163,14 @@ function AuthDialog({ mode, setMode, onClose, onSuccess, restoreFocusFallback }:
   </div>;
 }
 
-function SeatDialog({ showtime, session, isTopModal, onClose, onRequireAuth, onHoldCreated }: {
-  showtime: Showtime; session: Session | null; isTopModal: boolean; onClose: () => void; onRequireAuth: (showtimeId: string, seatIds: string[]) => void; onHoldCreated: (hold: Hold, seatMap: SeatMap) => void;
+function SeatDialog({ showtime, session, isTopModal, onClose, onRequireAuth, onHoldCreated, restoreFocusFallback }: {
+  showtime: Showtime; session: Session | null; isTopModal: boolean; onClose: () => void; onRequireAuth: (showtimeId: string, seatIds: string[]) => void; onHoldCreated: (hold: Hold, seatMap: SeatMap) => void; restoreFocusFallback: { current: HTMLElement | null };
 }) {
   const [seatMap, setSeatMap] = useState<SeatMap | null>(null); const [selected, setSelected] = useState<string[]>([]);
   const [loading, setLoading] = useState(true); const [busy, setBusy] = useState(false); const [error, setError] = useState("");
   const [limitNotice, setLimitNotice] = useState("");
   const dialogRef = useRef<HTMLElement | null>(null);
-  useModalKeyboard(dialogRef, onClose);
+  useModalKeyboard(dialogRef, onClose, restoreFocusFallback, true);
   const refresh = async () => { setLoading(true); setError(""); setLimitNotice(""); try { const value = await api.seats(showtime.id); setSeatMap(value); setSelected([]); } catch (reason) { setError(humanError(reason)); } finally { setLoading(false); } };
   useEffect(() => { void refresh(); }, [showtime.id]);
   const rows = useMemo(() => {
@@ -526,7 +527,7 @@ export default function App() {
 
     <footer className="footer"><a href="#top" className="brand"><span className="brand-icon" aria-hidden="true">C</span><span>Cinema<span className="brand-light">Booking</span></span></a><p>Thêm một chút cảm xúc vào lịch trình của bạn.</p><span>© 2026 CINEMA BOOKING · VÉ DEMO</span></footer>
 
-    {seatShowtime && <SeatDialog showtime={seatShowtime} session={session} isTopModal={!authOpen} onClose={() => setSeatShowtime(null)} onRequireAuth={(showtimeId, seatIds) => { loginFocusReturnRef.current = null; setQueuedSelection({ showtimeId, seatIds }); setAuthMode("login"); setAuthOpen(true); }} onHoldCreated={(created, map) => { setSecondsLeft(Math.max(0, Math.ceil((new Date(created.expiresAt).getTime() - Date.now()) / 1000))); setHold(created); setHoldMap(map); setBookingStep("checkout"); setSeatShowtime(null); setError(""); }} />}
+    {seatShowtime && <SeatDialog showtime={seatShowtime} session={session} isTopModal={!authOpen} restoreFocusFallback={seatShowtimeOpenerRef} onClose={() => setSeatShowtime(null)} onRequireAuth={(showtimeId, seatIds) => { loginFocusReturnRef.current = null; setQueuedSelection({ showtimeId, seatIds }); setAuthMode("login"); setAuthOpen(true); }} onHoldCreated={(created, map) => { setSecondsLeft(Math.max(0, Math.ceil((new Date(created.expiresAt).getTime() - Date.now()) / 1000))); setHold(created); setHoldMap(map); setBookingStep("checkout"); setSeatShowtime(null); setError(""); }} />}
     {authOpen && <AuthDialog mode={authMode} setMode={setAuthMode} restoreFocusFallback={loginFocusReturnRef} onClose={() => { setAuthOpen(false); setQueuedSelection(null); }} onSuccess={saveSession} />}
 
     {hold && <div className="overlay booking-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && bookingStep !== "success") return; }}>
