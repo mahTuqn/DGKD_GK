@@ -206,6 +206,41 @@ function contrastRatioOver(foregroundColor: string, backgroundColor: string, for
   return (Math.max(foregroundLuminance, backgroundLuminance) + 0.05) / (Math.min(foregroundLuminance, backgroundLuminance) + 0.05);
 }
 
+async function expectAlertTextContrast(alert: import("@playwright/test").Locator) {
+  const colors = await alert.evaluate((element) => {
+    const alertStyle = getComputedStyle(element);
+    let ancestor = element.parentElement;
+    let backdrop: string | null = null;
+    const unmodeledLayers: string[] = [];
+    if (Number(alertStyle.opacity) < 1) unmodeledLayers.push(`alert opacity=${alertStyle.opacity}`);
+    while (ancestor) {
+      const style = getComputedStyle(ancestor);
+      const backgroundColor = style.backgroundColor;
+      const channels = backgroundColor.match(/-?(?:\d+\.?\d*|\.\d+)/g)?.map(Number);
+      if (channels && (channels[3] ?? 1) >= 1) {
+        backdrop = backgroundColor;
+        break;
+      }
+      if (channels && (channels[3] ?? 0) > 0) unmodeledLayers.push(`ancestor background=${backgroundColor}`);
+      if (Number(style.opacity) < 1) unmodeledLayers.push(`ancestor opacity=${style.opacity}`);
+      ancestor = ancestor.parentElement;
+    }
+    return {
+      text: alertStyle.color,
+      alertBackground: alertStyle.backgroundColor,
+      backdrop,
+      unmodeledLayers,
+    };
+  });
+  expect(colors.unmodeledLayers, "contrast check requires unsupported alpha layers to be reviewed").toEqual([]);
+  if (!colors.backdrop) throw new Error("Contrast check requires an opaque ancestor background.");
+  const renderedBackground = composite(parseCssRgb(colors.alertBackground), parseCssRgb(colors.backdrop));
+  const textLuminance = relativeLuminance(parseCssRgb(colors.text));
+  const backgroundLuminance = relativeLuminance(renderedBackground);
+  const ratio = (Math.max(textLuminance, backgroundLuminance) + 0.05) / (Math.min(textLuminance, backgroundLuminance) + 0.05);
+  expect(ratio, `alert text contrast should be at least 4.5:1 (measured ${ratio.toFixed(2)}:1)`).toBeGreaterThanOrEqual(4.5);
+}
+
 test("[TC-E2E-27] mobile shows every movie title without clipping and keeps targets large enough", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 800 });
   const movieTitles = [
@@ -430,6 +465,7 @@ test("[TC-E2E-16] dialog đăng ký có tên trường và trạng thái validat
   const alert = dialog.getByRole("alert");
   await expect(alert).toBeVisible();
   await expect(alert).toHaveText("Email này đã được đăng ký.");
+  await expectAlertTextContrast(alert);
   expect(requests.registration).toBe(1);
   await expectNoWcagAxeViolations(page, ".auth-dialog");
 });
@@ -449,6 +485,7 @@ test("[TC-E2E-17] lỗi đăng nhập được đưa vào live alert trong dialo
   await expect(alert).toBeVisible();
   await expect(alert).toHaveText("Email hoặc mật khẩu không chính xác.");
   await expect(alert).toHaveAttribute("role", "alert");
+  await expectAlertTextContrast(alert);
   await expectNoWcagAxeViolations(page, ".auth-dialog");
 });
 

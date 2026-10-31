@@ -1,0 +1,42 @@
+# Used only by the manual HTTP performance workflow. This project gets its own
+# internal network and Compose-scoped database volume; no service port is
+# published to the runner host.
+services:
+  postgres:
+    ports: !reset []
+
+  web:
+    ports: !reset []
+
+  api:
+    # The k6 setup creates up to 50 per-run accounts. Match the repository's
+    # isolated test compose profile while production keeps its strict limit.
+    environment:
+      NODE_ENV: test
+      E2E_REGISTRATION_RATE_LIMIT: "100"
+
+  k6:
+    image: grafana/k6:1.8.2
+    profiles: ["performance"]
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      API_BASE: http://api:4000/api
+      VUS: ${K6_VUS:?K6_VUS must be set by the workflow}
+      DURATION: ${K6_DURATION:?K6_DURATION must be set by the workflow}
+      # Empty during compose up/seed; the k6 script rejects it unless the seed
+      # step supplies this run's date.
+      SHOWTIME_DATE: ${SHOWTIME_DATE:-}
+      RUN_ID: ${K6_RUN_ID:?K6_RUN_ID must be unique to this workflow run}
+    volumes:
+      - ./tests/non-functional/k6/cinema-booking.js:/scripts/cinema-booking.js:ro
+      - ${K6_ARTIFACT_DIR:?K6_ARTIFACT_DIR must be set}:/reports
+    command:
+      - run
+      - --summary-export=/reports/summary.json
+      - /scripts/cinema-booking.js
+
+networks:
+  default:
+    internal: true

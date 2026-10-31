@@ -1,0 +1,121 @@
+name: Manual HTTP Performance (k6)
+
+on:
+  workflow_dispatch:
+    inputs:
+      vus:
+        description: Virtual users (bounded to the existing script's 50 VU maximum)
+        type: choice
+        required: true
+        default: "50"
+        options:
+          - "10"
+          - "25"
+          - "50"
+      duration:
+        description: Load duration (bounded to the existing script's 5 minute maximum)
+        type: choice
+        required: true
+        default: "5m"
+        options:
+          - "1m"
+          - "3m"
+          - "5m"
+
+permissions:
+  contents: read
+
+jobs:
+  http-performance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      COMPOSE_PROJECT_NAME: cinema-k6-${{ github.run_id }}-${{ github.run_attempt }}
+      K6_RUN_ID: ci-${{ github.run_id }}-${{ github.run_attempt }}
+      K6_VUS: ${{ inputs.vus }}
+      K6_DURATION: ${{ inputs.duration }}
+      K6_ARTIFACT_DIR: ${{ runner.temp }}/cinema-k6-${{ github.run_id }}-${{ github.run_attempt }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Validate bounds and initialize disposable credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$K6_VUS" in 10|25|50) ;; *) echo "Unsupported VU count" >&2; exit 1 ;; esac
+          case "$K6_DURATION" in 1m|3m|5m) ;; *) echo "Unsupported duration" >&2; exit 1 ;; esac
+          mkdir -p "$K6_ARTIFACT_DIR"
+          chmod 0777 "$K6_ARTIFACT_DIR"
+
+          postgres_password="$(openssl rand -hex 32)"
+          jwt_secret="$(openssl rand -hex 32)"
+          payment_secret="$(openssl rand -hex 32)"
+          echo "::add-mask::$postgres_password"
+          echo "::add-mask::$jwt_secret"
+          echo "::add-mask::$payment_secret"
+          {
+            printf 'POSTGRES_PASSWORD=%s\n' "$postgres_password"
+            printf 'JWT_SECRET=%s\n' "$jwt_secret"
+            printf 'MOCK_PAYMENT_SECRET=%s\n' "$payment_secret"
+          } >> "$GITHUB_ENV"
+
+      - name: Start isolated API and disposable database
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose \
+            --project-name "$COMPOSE_PROJECT_NAME" \
+            -f docker-compose.yml \
+            -f .github/compose-performance.override.yml \
+            up --detach --build --wait --wait-timeout 240 api
+        timeout-minutes: 25
+
+      - name: Seed and capture deterministic showtime date
+        id: seed
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose \
+            --project-name "$COMPOSE_PROJECT_NAME" \
+            -f docker-compose.yml \
+            -f .github/compose-performance.override.yml \
+            --profile seed run --rm --build seed 2>&1 | tee "$K6_ARTIFACT_DIR/seed.log"
+          showtime_date="$(sed -nE 's/.*showtimes for ([0-9]{4}-[0-9]{2}-[0-9]{2})\..*/\1/p' "$K6_ARTIFACT_DIR/seed.log" | tail -n 1)"
+          if [[ ! "$showtime_date" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+            echo "Could not read seeded business date; refusing to run load" >&2
+            exit 1
+          fi
+          printf 'showtime_date=%s\n' "$showtime_date" >> "$GITHUB_OUTPUT"
+
+      - name: Run bounded k6 HTTP performance test
+        shell: bash
+        env:
+          SHOWTIME_DATE: ${{ steps.seed.outputs.showtime_date }}
+        run: |
+          set -euo pipefail
+          docker compose \
+            --project-name "$COMPOSE_PROJECT_NAME" \
+            -f docker-compose.yml \
+            -f .github/compose-performance.override.yml \
+            --profile performance run --rm k6 2>&1 | tee "$K6_ARTIFACT_DIR/k6.log"
+        timeout-minutes: 20
+
+      - name: Tear down only this run's Compose project and database volume
+        if: always()
+        shell: bash
+        run: |
+          docker compose \
+            --project-name "$COMPOSE_PROJECT_NAME" \
+            -f docker-compose.yml \
+            -f .github/compose-performance.override.yml \
+            down --volumes --remove-orphans || true
+
+      - name: Upload k6 evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: http-performance-k6-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/cinema-k6-${{ github.run_id }}-${{ github.run_attempt }}/
+          if-no-files-found: warn
+          retention-days: 14

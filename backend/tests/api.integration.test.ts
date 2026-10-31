@@ -277,7 +277,7 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
     }
   }, 30_000);
 
-  it("[TC-API-01][TC-SEC-15][TC-SEC-16][TC-SEC-19][TC-SEC-34][TC-PLAN-01][TC-PLAN-02][TC-PLAN-03][TC-PLAN-04][TC-PLAN-05][TC-PLAN-09] enforces auth, booking boundaries, payment/report rules, concurrency, and one-use staff check-in", async () => {
+  it("[TC-API-01][TC-SEC-07][TC-SEC-15][TC-SEC-16][TC-SEC-19][TC-SEC-34][TC-PLAN-01][TC-PLAN-02][TC-PLAN-03][TC-PLAN-04][TC-PLAN-05][TC-PLAN-09] enforces auth, booking boundaries, payment/report rules, concurrency, and one-use staff check-in", async () => {
     const guestHold = await request(app).post("/api/holds").send({ showtimeId, seatIds: ["missing"] });
     expect(guestHold.status).toBe(401);
     expectSafeError(guestHold);
@@ -385,9 +385,23 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
     const holdResponse = await request(app).post("/api/holds").set(authA).send({ showtimeId, seatIds: [seatIds[0]] });
     expect(holdResponse.status).toBe(201);
     expect(holdResponse.body.status).toBe(HoldStatus.HELD);
-    const ownerAttempt = await request(app).post("/api/orders").set(authB).send({ holdId: holdResponse.body.id });
+    const foreignHoldId = holdResponse.body.id as string;
+    const foreignHoldStateBeforeAttempt = {
+      hold: await prisma.seatHold.findUniqueOrThrow({ where: { id: foreignHoldId } }),
+      claims: await prisma.seatClaim.findMany({ where: { holdId: foreignHoldId }, orderBy: { seatId: "asc" } }),
+      orders: await prisma.cinemaOrder.findMany({ where: { holdId: foreignHoldId }, orderBy: { id: "asc" } }),
+      requesterOrderAuditCount: await prisma.auditLog.count({ where: { actorId: customerBId, action: "ORDER_CREATED" } })
+    };
+    const ownerAttempt = await request(app).post("/api/orders").set(authB).send({ holdId: foreignHoldId });
     expect(ownerAttempt.status).toBe(404);
+    expect(ownerAttempt.body.error).toBe("HOLD_NOT_FOUND");
     expectSafeError(ownerAttempt);
+    expect({
+      hold: await prisma.seatHold.findUniqueOrThrow({ where: { id: foreignHoldId } }),
+      claims: await prisma.seatClaim.findMany({ where: { holdId: foreignHoldId }, orderBy: { seatId: "asc" } }),
+      orders: await prisma.cinemaOrder.findMany({ where: { holdId: foreignHoldId }, orderBy: { id: "asc" } }),
+      requesterOrderAuditCount: await prisma.auditLog.count({ where: { actorId: customerBId, action: "ORDER_CREATED" } })
+    }).toEqual(foreignHoldStateBeforeAttempt);
     const summaryBeforeOrder = (await request(app).get("/api/admin/summary").set(adminAuth)).body as { orders: number; tickets: number; confirmedRevenueVnd: number };
     const orderResponse = await request(app).post("/api/orders").set(authA).send({ holdId: holdResponse.body.id });
     expect(orderResponse.status).toBe(201);

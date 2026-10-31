@@ -1,0 +1,49 @@
+{
+  "recordedAt": "2026-10-31",
+  "baseCommit": "fe1ff4f4dc3717c5410b0c959c42e03b6d9e6f9a",
+  "codeStatusAtRun": "Working-tree edits; the tested change was not yet committed.",
+  "browserRun": {
+    "setupCommand": "$env:VITE_PORT = '5175'; npm run dev --workspace frontend",
+    "testCommand": "$env:GITHUB_ACTIONS = 'true'; $env:E2E_BASE_URL = 'http://127.0.0.1:5175'; npm run test:browser -- --project=chromium-desktop --grep 'TC-E2E-16|TC-E2E-17'",
+    "browserProject": "chromium-desktop",
+    "target": "Local Vite frontend on 127.0.0.1:5175",
+    "apiMode": "Playwright routes mocked; no live backend or database",
+    "result": {
+      "passed": 2,
+      "failed": 0,
+      "durationMs": 7478
+    },
+    "cases": [
+      {
+        "id": "TC-E2E-16",
+        "status": "passed",
+        "durationMs": 4451,
+        "newAssertion": "Translucent registration-error text contrast >= 4.5:1"
+      },
+      {
+        "id": "TC-E2E-17",
+        "status": "passed",
+        "durationMs": 1872,
+        "newAssertion": "Translucent login-error text contrast >= 4.5:1"
+      }
+    ],
+    "playwrightJsonReport": "reports/generated/playwright-results.json (local generated report; ignored by Git)"
+  },
+  "bolaRegression": {
+    "testId": "TC-SEC-07",
+    "change": "Compare foreign HELD hold, seat claims, orders, and requester ORDER_CREATED audit count before/after a request to create an order from that hold.",
+    "typecheck": "passed",
+    "databaseBackedTestRun": "not run locally; DATABASE_URL_TEST was not configured",
+    "exactSourceCi": "pending"
+  },
+  "traceability": {
+    "status": "passed",
+    "cases": 136,
+    "requirements": 29
+  },
+  "limitations": [
+    "The local contrast run is a focused mocked-API browser regression, not a complete manual WCAG review.",
+    "Real screen-reader speech, physical-device touch, and full manual keyboard/contrast/zoom review remain open.",
+    "The new TC-SEC-07 state-delta assertion awaits an isolated database-backed CI run."
+  ]
+}
