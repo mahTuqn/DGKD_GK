@@ -489,6 +489,46 @@ test("[TC-E2E-17] lỗi đăng nhập được đưa vào live alert trong dialo
   await expectNoWcagAxeViolations(page, ".auth-dialog");
 });
 
+test("[TC-E2E-44] login dialog traps keyboard focus and restores its responsive opener", async ({ page }) => {
+  await mockApi(page);
+
+  for (const viewport of [{ width: 1280, height: 800 }, { width: 320, height: 800 }]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/");
+    await expect(page.getByTestId("movie-card").first()).toBeVisible();
+
+    const opener = viewport.width < 600
+      ? page.getByRole("button", { name: "Mở tài khoản", exact: true })
+      : page.getByRole("button", { name: "Đăng nhập", exact: true });
+    await expect(opener).toBeVisible();
+    await opener.focus();
+    await page.keyboard.press("Enter");
+
+    const dialog = page.getByRole("dialog", { name: "Chào bạn, mình vào rạp nhé." });
+    const email = dialog.getByLabel("Email");
+    const closeButton = dialog.getByRole("button", { name: "Đóng" });
+    const lastControl = dialog.getByRole("button", { name: "Tạo tài khoản mới" });
+    await expect(dialog).toHaveAttribute("aria-modal", "true");
+    await expect(email).toBeFocused();
+
+    await lastControl.focus();
+    await page.keyboard.press("Tab");
+    await expect(closeButton).toBeFocused();
+    await page.keyboard.press("Shift+Tab");
+    await expect(lastControl).toBeFocused();
+
+    const outsideLink = page.getByRole("banner").getByRole("link", { name: "CinemaBooking", exact: true });
+    await outsideLink.focus();
+    await expect(outsideLink).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(closeButton).toBeFocused();
+
+    await page.keyboard.press("Escape");
+    await expect(dialog).toHaveCount(0);
+    await expect(opener).toBeFocused();
+  }
+});
+
 test("[TC-E2E-18] Admin details mở rộng có thể truy cập bằng tên summary và axe", async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem("cinemabooking.session", JSON.stringify({
