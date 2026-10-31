@@ -693,7 +693,7 @@ test("[TC-E2E-08] Axe không báo lỗi serious hoặc critical ở sơ đồ gh
   expect(axeViolations((await wcagAxe(page).analyze()).violations)).toEqual([]);
 });
 
-test("[TC-E2E-39] Checkout reflows and keeps keyboard focus visible at narrow portrait and landscape sizes", async ({ page }) => {
+test("[TC-E2E-39] Checkout reflows and keeps keyboard focus visible and unoccluded at narrow portrait and landscape sizes", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 800 });
   await page.goto("/");
   await signIn(page, "customer@cinema.local", "CinemaCustomer123!");
@@ -721,6 +721,36 @@ test("[TC-E2E-39] Checkout reflows and keeps keyboard focus visible at narrow po
   const closeButton = checkoutDialog.getByRole("button", { name: "Đóng" });
   const checkoutButton = checkoutDialog.getByTestId("checkout-submit");
   const summary = checkoutDialog.locator(".checkout-summary");
+
+  const expectFocusedControlNotObscuredByTopbar = async (target: Locator) => {
+    const result = await target.evaluate((element) => {
+      const topbar = document.querySelector<HTMLElement>(".topbar");
+      if (!topbar) throw new Error("Expected the sticky topbar to be present.");
+
+      const control = element.getBoundingClientRect();
+      const header = topbar.getBoundingClientRect();
+      const left = Math.max(control.left, header.left);
+      const right = Math.min(control.right, header.right);
+      const top = Math.max(control.top, header.top);
+      const bottom = Math.min(control.bottom, header.bottom);
+
+      if (right <= left || bottom <= top) return { overlap: false, obscuredPoints: [] as Array<[number, number]> };
+
+      const fractions = [0.25, 0.5, 0.75];
+      const points = fractions.flatMap((xFraction) =>
+        fractions.map((yFraction) => [left + (right - left) * xFraction, top + (bottom - top) * yFraction] as [number, number]),
+      );
+      const obscuredPoints = points.filter(([x, y]) => {
+        const hit = document.elementFromPoint(x, y);
+        return hit !== null && (hit === topbar || topbar.contains(hit));
+      });
+
+      return { overlap: true, obscuredPoints };
+    });
+
+    expect(result.obscuredPoints, `sticky topbar must not cover focused ${await target.getAttribute("aria-label") || "control"}`).toEqual([]);
+  };
+
   await expect(checkoutDialog).toBeVisible();
   await expect(summary).toContainText("Ghế:");
   await expect(summary).toContainText("Tạm tính");
@@ -743,24 +773,30 @@ test("[TC-E2E-39] Checkout reflows and keeps keyboard focus visible at narrow po
   };
 
   await expect(closeButton).toBeFocused();
+  await expectFocusedControlNotObscuredByTopbar(closeButton);
   await page.keyboard.press("Tab");
   await expectVisibleKeyboardFocus(checkoutButton);
   await expect(checkoutButton).toBeInViewport({ ratio: 1 });
+  await expectFocusedControlNotObscuredByTopbar(checkoutButton);
   await page.keyboard.press("Shift+Tab");
   await expectVisibleKeyboardFocus(closeButton);
   await expect(closeButton).toBeInViewport({ ratio: 1 });
+  await expectFocusedControlNotObscuredByTopbar(closeButton);
   await page.keyboard.press("Tab");
   await expectVisibleKeyboardFocus(checkoutButton);
   await expect(checkoutButton).toBeInViewport({ ratio: 1 });
+  await expectFocusedControlNotObscuredByTopbar(checkoutButton);
   await expectNoHorizontalOverflow();
 
   await page.setViewportSize({ width: 800, height: 320 });
   await page.keyboard.press("Shift+Tab");
   await expectVisibleKeyboardFocus(closeButton);
   await expect(closeButton).toBeInViewport({ ratio: 1 });
+  await expectFocusedControlNotObscuredByTopbar(closeButton);
   await page.keyboard.press("Tab");
   await expectVisibleKeyboardFocus(checkoutButton);
   await expect(checkoutButton).toBeInViewport({ ratio: 1 });
+  await expectFocusedControlNotObscuredByTopbar(checkoutButton);
   await expectNoHorizontalOverflow();
 
   // Stop before order creation or payment; this regression is limited to checkout reflow and focus.
