@@ -1,0 +1,139 @@
+{
+  "sourceCommit": "a3e494a08637e09f39c7c2a2753e327aca80df81",
+  "branch": "codex/cross-browser-smoke",
+  "verifiedAtUtc": "2026-10-31T06:08:43Z",
+  "quality": {
+    "runNumber": 128,
+    "runId": "41174310218",
+    "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41174310218",
+    "status": "success",
+    "duration": "15m22s",
+    "apiSuite": "passed; public check page does not expose result count",
+    "chromiumPlaywright": {
+      "testsPassed": 76,
+      "duration": "2.8m",
+      "projects": ["chromium-desktop", "chromium-mobile"]
+    },
+    "traceability": {
+      "workflowStep": "passed",
+      "local": {
+        "testCases": 136,
+        "requirements": 29,
+        "status": "passed"
+      }
+    },
+    "k6ResponseAccountingTests": {
+      "testsPassed": 3,
+      "status": "passed locally and in CI"
+    },
+    "holdExpiryAndWorker": {
+      "liveFiveMinuteHoldExpiry": "passed",
+      "twoWorkerFiveMinuteSoakAndRestart": "passed"
+    },
+    "dast": {
+      "currentRunSummaryGate": "passed",
+      "requiredReportsParsed": "3/3",
+      "artifactAlertDetailsReviewed": false,
+      "rule40014Disposition": "open"
+    },
+    "domainMutation": "passed configured thresholds",
+    "composeRuntimeBrowserSmoke": "passed",
+    "otherGates": ["test typecheck", "production build", "dependency audit", "secret scan"]
+  },
+  "crossBrowser": {
+    "runNumber": 107,
+    "runId": "41174310226",
+    "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41174310226",
+    "status": "success",
+    "testsPassed": "54/54",
+    "duration": "3.8m",
+    "browsers": ["Firefox", "WebKit"],
+    "artifact": {
+      "id": "13032378577",
+      "name": "cinema-booking-cross-browser-results-a3e494a08637e09f39c7c2a2753e327aca80df81",
+      "size": "423 KB",
+      "sha256": "c9e0ccf2627be6549f70036990d027579548236a95b3b6e6cf8c4c03fa5ab4f4"
+    }
+  },
+  "workerSoak": {
+    "runNumber": 105,
+    "runId": "41174310227",
+    "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41174310227",
+    "status": "success",
+    "stepDuration": "15m15s"
+  },
+  "performance": {
+    "runNumber": 5,
+    "runId": "41174310240",
+    "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41174310240",
+    "status": "success",
+    "virtualUsers": 50,
+    "duration": "5m",
+    "thresholds": {
+      "showtimesP95": "<500ms",
+      "holdP95": "<800ms",
+      "unexpectedErrorRate": "<1%",
+      "holdSuccessRate": ">99%",
+      "result": "passed"
+    },
+    "artifact": {
+      "id": "13032557911",
+      "name": "http-performance-k6-41174310240-1",
+      "size": "10.9 KB",
+      "sha256": "6b0078ed692d96c6ae7742e0b9d65d8e3f503fe48d01bf8a9320fdd6c6eb68bc"
+    },
+    "individualLatencyAndThroughputValuesReviewed": false
+  },
+  "qualityArtifacts": [
+    {
+      "id": "13031789444",
+      "name": "cinema-booking-browser-results-a3e494a08637e09f39c7c2a2753e327aca80df81",
+      "size": "467 KB",
+      "sha256": "11ae39b61b6998f57741d505c76f3fa55985838853d77a5c8d1bc94b4d410a4b"
+    },
+    {
+      "id": "13031959257",
+      "name": "cinema-booking-compose-browser-results-a3e494a08637e09f39c7c2a2753e327aca80df81",
+      "size": "195 KB",
+      "sha256": "0c385a6b2e785fdd9132adf5666a404b6000704d646cc293b26055a0998dba97"
+    },
+    {
+      "id": "13032309281",
+      "name": "cinema-booking-dast-reports-a3e494a08637e09f39c7c2a2753e327aca80df81",
+      "size": "6.49 KB",
+      "sha256": "05ea233f452b37002468825c6e1658b899b1fa5a64f79d8f93f47e5bfaad2e8c"
+    },
+    {
+      "id": "13032512621",
+      "name": "cinema-booking-domain-quality-a3e494a08637e09f39c7c2a2753e327aca80df81",
+      "size": "141 KB",
+      "sha256": "4ecfe3977805777307a6a1e2a4e28c609d41138fe256abcc5c9a89dd60f43f57"
+    }
+  ],
+  "localVerification": {
+    "dastSummaryAndK6ResponseOutcome": "9/9 passed",
+    "typecheckTests": "passed",
+    "openapiLint": "passed",
+    "diffCheck": "passed",
+    "browserMockSuite": "20/20 passed in 49.2s",
+    "databaseBackedBrowserSuite": "local run was interrupted at 48/76 without failure output; remote Quality #128 completed the full 76/76 suite",
+    "dockerEngine": "unavailable on workstation; remote CI used isolated services"
+  },
+  "accessibility": {
+    "manualChecklist": {
+      "fail": 8,
+      "pass": 5,
+      "notTested": 77
+    },
+    "manualSignoff": "open",
+    "screenReaderRealZoomAndPhysicalDeviceChecks": "not verified",
+    "computerUse": "Windows UI helper initialization failed with OS error 3"
+  },
+  "remainingGaps": [
+    "Review current DAST artifact alert details and disposition",
+    "Complete manual WCAG checklist, including screen reader, real zoom/text resize and physical-device touch",
+    "No named staging performance test",
+    "Production backup/PITR/RPO/RTO/restore rehearsal",
+    "Comprehensive ASVS/API Top 10 and adversarial BOLA review"
+  ]
+}

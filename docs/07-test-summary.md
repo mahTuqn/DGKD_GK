@@ -1,6 +1,14 @@
 # Báo cáo tổng hợp kiểm thử
 
-## Current exact-source CI evidence — a104ad8 — 31/10/2026
+## Current exact-source CI evidence — a3e494a — 31/10/2026
+
+All four workflows passed against application/test source a3e494a08637e09f39c7c2a2753e327aca80df81. Quality [#128](https://github.com/mahTuqn/DGKD_GK/actions/runs/41174310218) completed in **15m22s**: API suite, the new k6 response-accounting gate, typecheck, traceability, live five-minute hold expiry, two-worker five-minute soak/restart, build, **76 Chromium Playwright tests in 2.8m**, isolated Compose DAST, domain/mutation and Compose/browser smoke passed. The API check page does not expose its result count. Cross-browser [#107](https://github.com/mahTuqn/DGKD_GK/actions/runs/41174310226) passed **54/54** Firefox/WebKit tests; worker long soak [#105](https://github.com/mahTuqn/DGKD_GK/actions/runs/41174310227) passed the **15m15s** two-worker test.
+
+HTTP Performance [run #5](https://github.com/mahTuqn/DGKD_GK/actions/runs/41174310240) passed **50 VU / 5 minutes** with all thresholds: showtime p95 <500ms, hold p95 <800ms, unexpected errors <1%, hold success >99%. Exact latency and throughput values were not independently read. The corrected k6 accounting fixes BUG-030: only a hold 409 SEAT_CONFLICT is expected, and every hold attempt including an expected conflict counts as a failed hold-success sample. Regression tests passed 3/3; local DAST/k6 tooling tests passed 9/9.
+
+The DAST summary gate parsed all required current-run reports, but artifact-level alert details and rule 40014 disposition remain open. Manual WCAG remains **8 Fail / 5 Pass / 77 Not tested**; the Windows browser-control helper failed to initialize, so no screen-reader, actual zoom/text-resize or physical-device sign-off is claimed. No staging is available. Production PITR/RPO/RTO/restore and comprehensive ASVS/BOLA review remain open. Local traceability passed **136 test cases / 29 requirements**; typecheck, OpenAPI lint and diff check passed. Artifact IDs and hashes are recorded in the [a3e494a evidence manifest](evidence/followup/2026-10-31-github-actions-a3e494a.json).
+
+## Previous exact-source CI evidence — a104ad8 — 31/10/2026
 
 All four latest checks passed against application/test source `a104ad840e32e01fcafa2ea9777c633e5bd7cf67`. Quality [#126](https://github.com/mahTuqn/DGKD_GK/actions/runs/41169149132) completed in **16m38s**: **82/82 API tests across 21 files**, **76/76 Chromium Playwright tests in 3.7m**, `qa:trace`, typecheck, build, disposable PostgreSQL backup/restore, secret scan, and Compose/browser smoke all passed. Domain/mutation passed at **82.89%** (155 killed / 32 survived; 70% threshold). Cross-browser [#105](https://github.com/mahTuqn/DGKD_GK/actions/runs/41169149198) passed **54/54** selected Firefox/WebKit tests; the two-worker 15-minute soak [#103](https://github.com/mahTuqn/DGKD_GK/actions/runs/41169149125) passed **1/1** in **15m50s**. Local `npm run qa:trace` passed **136 cases / 29 requirements**.
 
