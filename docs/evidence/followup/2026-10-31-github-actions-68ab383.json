@@ -29,7 +29,10 @@
       "fullChromiumSuite": {
         "conclusion": "success",
         "passed": 86,
-        "projects": ["Chromium desktop", "Chromium mobile"]
+        "projects": [
+          "Chromium desktop",
+          "Chromium mobile"
+        ]
       },
       "TC-E2E-04": "passed in the full Chromium desktop/mobile suite"
     }
@@ -44,7 +47,10 @@
       "conclusion": "success",
       "passed": 64,
       "duration": "4m30s",
-      "projects": ["Firefox desktop", "WebKit desktop"],
+      "projects": [
+        "Firefox desktop",
+        "WebKit desktop"
+      ],
       "TC-E2E-04": "included by the workflow grep selection"
     }
   },
@@ -65,9 +71,17 @@
   "localChecks": {
     "typecheckTests": "passed",
     "frontendBuild": "passed",
-    "traceability": {"conclusion": "passed", "cases": 142, "requirements": 29},
+    "traceability": {
+      "conclusion": "passed",
+      "cases": 142,
+      "requirements": 29
+    },
     "gitDiffCheck": "passed",
-    "playwrightDiscovery": {"conclusion": "passed", "testsListed": 86, "files": 11},
+    "playwrightDiscovery": {
+      "conclusion": "passed",
+      "testsListed": 86,
+      "files": 11
+    },
     "focusedTC-E2E-04Execution": {
       "result": null,
       "status": "stopped before outcome",
@@ -83,13 +97,57 @@
     "id": "13038123239",
     "size": "6.49 KB",
     "sha256": "8e1fb8cf55e270cf9fd262bd7bf6b49c72a9efe9b88f22b06ee1f5c2d7429b75",
-    "contentsRetrieved": false,
-    "alertCounts": null,
-    "instanceCounts": null,
-    "findingDispositions": "unknown; report contents were unavailable in the signed-out public run view"
+    "contentsRetrieved": true,
+    "alertCounts": {
+      "High": 0,
+      "Medium": 0,
+      "Low": 1,
+      "Informational": 5,
+      "Unknown": 0
+    },
+    "instanceCounts": {
+      "High": 0,
+      "Medium": 0,
+      "Low": 3,
+      "Informational": 11,
+      "Unknown": 0
+    },
+    "findingDispositions": "Low rule 40014-2: pending verification; no unsafe HTML sink found in reviewed React consumers; risk for other JSON consumers remains. Informational rules 10104, 10109, 10111 recorded; no exploitability conclusion inferred.",
+    "retrievedAt": "2026-10-31",
+    "downloadMethod": "Authenticated gh run download; extracted reports inspected locally. ZIP digest is GitHub metadata, not independently recomputed.",
+    "reportsParsed": 3,
+    "rules": [
+      {
+        "pluginId": 40014,
+        "subtype": "40014-2",
+        "severity": "Low",
+        "records": 1,
+        "instances": 3,
+        "confidenceCode": 1
+      },
+      {
+        "pluginId": 10104,
+        "severity": "Informational",
+        "records": 2,
+        "instances": 6
+      },
+      {
+        "pluginId": 10109,
+        "severity": "Informational",
+        "records": 1,
+        "instances": 3
+      },
+      {
+        "pluginId": 10111,
+        "severity": "Informational",
+        "records": 2,
+        "instances": 2
+      }
+    ]
   },
   "limits": [
-    "Artifact metadata and job-step conclusions were publicly visible; DAST report contents and finding counts/dispositions were not.",
-    "A successful DAST summary step does not establish zero findings or replace review of the report contents."
+    "All three current-run report contents were retrieved and parsed after CLI authentication. Raw reports remain Git-ignored; URLs, request payloads and credentials are omitted from this evidence.",
+    "GitHub artifact digest is recorded from metadata; gh extracted the download directly, so the ZIP hash was not independently recomputed.",
+    "Low 40014-2 remains pending verification. Source review and existing browser regressions do not prove safety for every JSON consumer. Scan scope is not exhaustive security coverage."
   ]
 }
