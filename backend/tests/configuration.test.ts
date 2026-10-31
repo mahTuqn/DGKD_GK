@@ -234,7 +234,7 @@ describe("TC-SEC-51 JWT signature and issuer validation", () => {
 
   it("rejects a forged signature or unexpected issuer before looking up a user", async () => {
     process.env.NODE_ENV = "test";
-    process.env.JWT_SECRET = "tc-sec-51-signature-policy-test-secret-32chars";
+    process.env.JWT_SECRET = "test".repeat(8);
     const userLookup = vi.spyOn(prisma.user, "findUnique").mockResolvedValue({
       id: "00000000-0000-4000-8000-000000000051",
       name: "JWT signature test",
