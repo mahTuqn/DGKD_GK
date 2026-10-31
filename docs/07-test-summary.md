@@ -1,6 +1,12 @@
 # Báo cáo tổng hợp kiểm thử
 
-## Exact-source CI follow-up — `af0a0e8` — 31/10/2026
+## Exact-source CI follow-up — `d7aec7e` — 31/10/2026
+
+All three workflows passed on exact source `d7aec7e6806c2821890f21cf59c974cc1bb5f36a`: quality/API/DAST/domain/Compose [#110](https://github.com/mahTuqn/DGKD_GK/actions/runs/41149556038) finished in **16m31s**; Firefox/WebKit [#89](https://github.com/mahTuqn/DGKD_GK/actions/runs/41149556126) passed **52/52** in 4m (6m53s workflow); and worker soak [#87](https://github.com/mahTuqn/DGKD_GK/actions/runs/41149556060) passed **1/1** in 15m50s (15m53s workflow). Quality passed the API suite (1m26s), including TC-CAT-08's latest-100 showtime check, and **74 Chromium Playwright tests** in 3m36s. `npm run qa:trace` passed (**134 cases / 29 requirements**). The domain mutation gate measured **82.89%** (155 killed / 32 survived; 70% threshold); Compose runtime and browser smoke passed.
+
+The #110 DAST summary parsed **3/3 reports**: **0 High, 0 Medium, 1 Low (rule 40014; 3 instances), 5 Informational (11 instances), 0 Unknown**. The DAST report artifact is available, but its detailed alert context and Low disposition are still unreviewed. The manual accessibility checklist remains **8 Fail / 5 Pass / 77 Not tested**. Screen-reader speech, real browser zoom/text resizing, and physical-device touch remain unverified. Staging performance, production backup/PITR/RPO/RTO/restore, and exhaustive ASVS/API Top 10/BOLA review remain open. The 15-minute worker soak is reliability evidence, not HTTP throughput evidence. Artifact IDs and hashes are in the [d7aec7e manifest](evidence/followup/2026-10-31-github-actions-d7aec7e.json).
+
+## Historical exact-source CI follow-up — `af0a0e8` — 31/10/2026
 
 All three workflows passed on exact source `af0a0e8adb840b486c0c99352bae3e915b491299`: quality/API/DAST/domain/Compose [run #107](https://github.com/mahTuqn/DGKD_GK/actions/runs/41146218412) completed in **16m 15s** with **80 API tests across 21 files**, **74 Chromium Playwright tests in 3.2m**, mutation **82.89%** (155 killed / 32 survived; 70% threshold), and a passing Compose browser smoke. Firefox/WebKit [run #86](https://github.com/mahTuqn/DGKD_GK/actions/runs/41146218395) passed **50/50** in 3.7m; the two-worker soak [run #84](https://github.com/mahTuqn/DGKD_GK/actions/runs/41146218268) passed **1/1** in 15m52. Artifact IDs and SHA-256 values are recorded in the [af0a0e8 evidence manifest](evidence/followup/2026-10-31-github-actions-af0a0e8.json).
 

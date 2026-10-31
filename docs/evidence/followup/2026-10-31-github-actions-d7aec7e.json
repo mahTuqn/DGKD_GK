@@ -1,0 +1,133 @@
+{
+  "recordedAt": "2026-10-31",
+  "commit": "d7aec7e6806c2821890f21cf59c974cc1bb5f36a",
+  "branch": "codex/cross-browser-smoke",
+  "workflows": {
+    "quality": {
+      "runId": "41149556038",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41149556038",
+      "conclusion": "success",
+      "workflowDuration": "16m 31s",
+      "jobDuration": "16m 29s",
+      "api": {
+        "conclusion": "success",
+        "duration": "1m 26s",
+        "regression": "TC-CAT-08 passed; GET /api/admin/showtimes returned HTTP 200 for the global latest-100 case."
+      },
+      "traceability": {
+        "conclusion": "success",
+        "cases": 134,
+        "requirements": 29
+      },
+      "playwright": {
+        "conclusion": "success",
+        "testsPassed": 74,
+        "duration": "3m 36s",
+        "projects": [
+          "Chromium desktop",
+          "Chromium mobile"
+        ]
+      },
+      "mutation": {
+        "scorePercent": 82.89,
+        "killed": 155,
+        "survived": 32,
+        "thresholdPercent": 70
+      },
+      "composeBrowserSmoke": "success",
+      "dast": {
+        "jobDuration": "8m 11s",
+        "reportsParsed": "3/3",
+        "alertRecords": {
+          "high": 0,
+          "medium": 0,
+          "low": 1,
+          "informational": 5,
+          "unknown": 0
+        },
+        "alertInstances": {
+          "high": 0,
+          "medium": 0,
+          "low": 3,
+          "informational": 11,
+          "unknown": 0
+        },
+        "lowRuleIds": [
+          "40014"
+        ],
+        "triage": "The detailed report artifact is available but its alert context and Low disposition remain unreviewed.",
+        "artifact": {
+          "id": "13022776427",
+          "size": "6.34 KB",
+          "sha256": "0936066bd74c8861fb1816fde2cb296fe7cfdc5bff1f0457e480f650d1e98ba7",
+          "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41149556038/artifacts/13022776427"
+        }
+      },
+      "artifacts": [
+        {
+          "name": "browser results",
+          "id": "13022509381",
+          "size": "458 KB",
+          "sha256": "baa1508543ac61976a7ccd6eef0e8d2bf518933bba9125ac77a779a9533fe531",
+          "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41149556038/artifacts/13022509381"
+        },
+        {
+          "name": "Compose browser results",
+          "id": "13022362766",
+          "size": "195 KB",
+          "sha256": "9f948bf7a94609ce52dfec77535f20c6c352c0f9f0a15fc5b6d82d21afe1a067",
+          "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41149556038/artifacts/13022362766"
+        },
+        {
+          "name": "domain quality and mutation results",
+          "id": "13022292652",
+          "size": "141 KB",
+          "sha256": "8c2f67a50cce7ff7df3af32d41d2d5f287330bb2b675de97c6905c40839efa77",
+          "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41149556038/artifacts/13022292652"
+        }
+      ]
+    },
+    "crossBrowser": {
+      "runId": "41149556126",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41149556126",
+      "conclusion": "success",
+      "workflowDuration": "6m 53s",
+      "jobDuration": "6m 50s",
+      "testsPassed": 52,
+      "testDuration": "4m 0s",
+      "engines": [
+        "Firefox desktop",
+        "WebKit desktop"
+      ],
+      "includedCases": [
+        "TC-E2E-23",
+        "TC-E2E-32"
+      ],
+      "tcE2E23Scope": "Two pages in the same browser context/session, synchronized by a route barrier; not independent browser contexts or physical scanners.",
+      "artifact": {
+        "id": "13022995853",
+        "size": "415 KB",
+        "sha256": "0f4493007a4aabb5f65ed55d2dae080c0038dbf997c5530df050946b0dc25af6",
+        "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41149556126/artifacts/13022995853"
+      }
+    },
+    "workerSoak": {
+      "runId": "41149556060",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41149556060",
+      "conclusion": "success",
+      "workflowDuration": "15m 53s",
+      "jobDuration": "15m 50s",
+      "testsPassed": 1,
+      "testsTotal": 1,
+      "scope": "Two-worker 15-minute reliability soak and graceful restart; not an HTTP load or throughput benchmark."
+    }
+  },
+  "limitations": [
+    "DAST reported one Low alert (rule 40014); detailed artifact context and disposition remain unreviewed.",
+    "The manual 90-item accessibility checklist remains 8 Fail / 5 Pass / 77 Not tested.",
+    "NVDA/VoiceOver speech, real browser zoom/text resizing, and physical-device touch remain unverified.",
+    "No staging environment is available; named-staging performance has not been measured.",
+    "Production backup/PITR/RPO/RTO/restore and exhaustive ASVS/API Top 10/adversarial BOLA review remain open.",
+    "The 15-minute worker soak is reliability evidence and does not establish HTTP throughput."
+  ]
+}
