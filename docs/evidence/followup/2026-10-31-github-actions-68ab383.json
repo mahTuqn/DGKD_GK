@@ -143,6 +143,26 @@
         "records": 2,
         "instances": 2
       }
+    ],
+    "lowInstanceReview": [
+      {
+        "field": "address",
+        "routeTemplate": "GET /api/admin/cinemas",
+        "consumer": "Admin cinema list/edit UI",
+        "evidence": "TC-E2E-11 covers literal text rendering and absence of injected DOM nodes"
+      },
+      {
+        "field": "name",
+        "routeTemplate": "GET /api/admin/cinemas",
+        "consumer": "Admin cinema list/edit UI",
+        "evidence": "TC-E2E-11 covers literal text rendering and absence of injected DOM nodes"
+      },
+      {
+        "field": "city",
+        "routeTemplate": "GET /api/cinemas",
+        "consumer": "No direct public-cinemas API consumer found in current frontend; cinema filter derives from showtimes",
+        "evidence": "TC-E2E-11 tests city in the admin UI only; public-route consumer rendering remains unverified"
+      }
     ]
   },
   "limits": [
