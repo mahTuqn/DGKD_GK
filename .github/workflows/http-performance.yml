@@ -40,8 +40,8 @@ jobs:
     env:
       COMPOSE_PROJECT_NAME: cinema-k6-${{ github.run_id }}-${{ github.run_attempt }}
       K6_RUN_ID: ci-${{ github.run_id }}-${{ github.run_attempt }}
-      K6_VUS: ${{ inputs.vus }}
-      K6_DURATION: ${{ inputs.duration }}
+      K6_VUS: ${{ inputs.vus || '50' }}
+      K6_DURATION: ${{ inputs.duration || '5m' }}
 
     steps:
       - uses: actions/checkout@v7
