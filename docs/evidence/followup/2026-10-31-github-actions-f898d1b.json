@@ -1,0 +1,95 @@
+{
+  "recordedAt": "2026-10-31",
+  "repository": "https://github.com/mahTuqn/DGKD_GK",
+  "branch": "codex/cross-browser-smoke",
+  "sourceCommit": "f898d1b5875e2b82ff8aad45bc7896bd73401fe5",
+  "runs": {
+    "quality": {
+      "runNumber": 133,
+      "runId": "41181986183",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41181986183",
+      "conclusion": "success",
+      "workflowDuration": "16m51s",
+      "jobs": {
+        "quality": "success",
+        "dast": { "conclusion": "success", "duration": "6m57s" },
+        "domainCoverageAndMutation": "success",
+        "composeRuntimeAndBrowserSmoke": "success"
+      },
+      "tests": {
+        "apiSuite": "success; disposable PostgreSQL 17 service",
+        "apiResultCount": null,
+        "ticketHistoryTC-E2E-43": "included in the Chromium browser suite",
+        "adminRoleRevocationRaceTC-SEC-53": "included in the API suite; assertions and fixture cleanup passed",
+        "chromiumPlaywright": { "passed": 82, "failed": 0, "skipped": 0 },
+        "traceability": "141 test cases / 29 requirements",
+        "gitleaks": "success",
+        "dependencyAudit": "success",
+        "backupRestoreSmoke": "success",
+        "build": "success",
+        "openApi": "success"
+      },
+      "dastArtifact": {
+        "name": "cinema-booking-dast-reports-f898d1b5875e2b82ff8aad45bc7896bd73401fe5",
+        "size": "6.49 KB",
+        "sha256": "4396436187b34da662c89da4e5d54b7f3301318208332c337de40676631326b2",
+        "summaryGate": "passed",
+        "alertCounts": null,
+        "findingDispositions": "not inspected; artifact contents unavailable in signed-out view"
+      }
+    },
+    "crossBrowser": {
+      "runNumber": 112,
+      "runId": "41181986237",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41181986237",
+      "conclusion": "success",
+      "workflowDuration": "5m35s",
+      "browserTests": { "passed": 60, "failed": 0, "skipped": 0 },
+      "testsPerBrowser": 30,
+      "includedCases": ["TC-E2E-43"],
+      "browsers": ["Firefox", "WebKit"]
+    },
+    "httpPerformance": {
+      "runNumber": 6,
+      "runId": "41181986162",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41181986162",
+      "conclusion": "success",
+      "workflowDuration": "6m11s",
+      "virtualUsers": 50,
+      "loadDuration": "5m",
+      "thresholds": {
+        "showtimesP95": "<500ms passed",
+        "holdP95": "<800ms passed",
+        "unexpectedErrorRate": "<1% passed",
+        "holdSuccessRate": ">99% passed"
+      },
+      "observedLatencyAndThroughput": null,
+      "artifactSize": "10.9 KB",
+      "artifactSha256": "b096321af0287792a26fda511ac7ead4c0bbc730d3db79bc1bbd84ba8359a059"
+    },
+    "workerSoak": {
+      "runNumber": 110,
+      "runId": "41181986253",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41181986253",
+      "conclusion": "success",
+      "soakDuration": "15m",
+      "workflowDuration": "15m51s"
+    }
+  },
+  "localValidation": {
+    "productionBuild": "passed",
+    "testTypecheck": "passed",
+    "traceability": "141 test cases / 29 requirements",
+    "openApiLint": "passed",
+    "dependencyAudit": "passed; one reviewed moderate dev-only minimatch advisory is explicitly allowed",
+    "focusedAccessibilityPlaywright": "48/48 passed across Chromium desktop/mobile, Firefox, and WebKit with mocked APIs",
+    "databaseBackedLocalTest": "not run; DATABASE_URL_TEST and Docker daemon unavailable",
+    "containerSecretScanLocal": "not run; Docker daemon unavailable; exact-source CI Gitleaks passed"
+  },
+  "openGaps": [
+    "DAST artifact summary gate passed, but current alert counts and finding dispositions remain unknown because report contents could not be inspected.",
+    "Manual 90-row accessibility checklist remains 8 Fail / 5 Pass / 77 Not tested; screen-reader speech, actual zoom/text resizing, and physical-device touch are unverified.",
+    "No staging environment is available; named-staging validation and production PITR/RPO/RTO/restore rehearsal remain open.",
+    "Comprehensive ASVS/API Top 10 and adversarial BOLA/IDOR review remain open."
+  ]
+}
