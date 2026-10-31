@@ -1,0 +1,74 @@
+{
+  "recordedAt": "2026-10-31",
+  "repository": "https://github.com/mahTuqn/DGKD_GK",
+  "sourceCommit": "91126def663cf83bd493bdb0a090810e87b831b9",
+  "branch": "codex/cross-browser-smoke",
+  "runs": {
+    "quality": {
+      "runNumber": 131,
+      "runId": "41179566215",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41179566215",
+      "conclusion": "success",
+      "duration": "15m29s",
+      "jobs": {
+        "quality": "success",
+        "dast": { "conclusion": "success", "duration": "7m56s" },
+        "domainCoverageAndMutation": "success",
+        "composeRuntimeAndBrowserSmoke": { "conclusion": "success", "duration": "1m44s" }
+      },
+      "tests": {
+        "apiSuite": "success; executed against isolated PostgreSQL CI service",
+        "apiResultCount": null,
+        "ticketCheckinRaceTCSEC52": "included in the default API suite; suite and afterAll cleanup passed",
+        "chromiumPlaywright": { "passed": 80, "failed": 0, "skipped": 0 },
+        "traceability": "139 test cases / 29 requirements",
+        "secretScan": "success",
+        "dependencyAudit": "success",
+        "backupRestoreSmoke": "success",
+        "liveHoldExpiry": "success",
+        "integratedWorkerCheck": "success",
+        "build": "success",
+        "openApi": "success",
+        "k6ResponseAccounting": "success"
+      },
+      "dastArtifact": {
+        "artifactId": "13034472737",
+        "name": "cinema-booking-dast-reports-91126def663cf83bd493bdb0a090810e87b831b9",
+        "size": "6.5 KB",
+        "sha256": "3bc8f5e3acce9eddcb86fcfd9b6c6f72acb74354e9bfc5ba5f005fdac030629b",
+        "reportSummaryGate": "passed",
+        "alertCounts": null,
+        "rule40014Disposition": "open; artifact details not inspected"
+      }
+    },
+    "crossBrowser": {
+      "runNumber": 110,
+      "runId": "41179566289",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41179566289",
+      "conclusion": "success",
+      "workflowDuration": "4m58s",
+      "testDuration": "3m36s",
+      "browserTests": { "passed": 58, "failed": 0, "skipped": 0 },
+      "includedCases": ["TC-E2E-41", "TC-E2E-42"],
+      "browsers": ["Firefox", "WebKit"]
+    },
+    "workerSoak": {
+      "runNumber": 108,
+      "runId": "41179566274",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41179566274",
+      "conclusion": "success",
+      "testDuration": "15m52s",
+      "workflowDuration": "15m54s"
+    }
+  },
+  "priorFailuresResolved": {
+    "qualityRun130": "TC-SEC-52 fixture teardown P2003; fixed by deleting assigned Staff fixtures before their cinema. Quality #131 API suite passed with the case and cleanup.",
+    "crossBrowserRun109": "WebKit checkout axe ran during overlay fade-in; fixed by waiting for opacity 1. Cross-browser #110 passed 58/58, including TC-E2E-42."
+  },
+  "openGaps": [
+    "The DAST report artifact has not been inspected; the successful report-summary gate does not reveal alert counts or dispositions.",
+    "Manual 90-item accessibility checklist remains 8 Fail / 5 Pass / 77 Not tested; screen-reader speech, actual zoom/reflow and physical-device touch are not established by Playwright.",
+    "No staging environment is available; named-staging performance and production PITR/RPO/RTO/restore rehearsal remain open.",
+    "Comprehensive ASVS/API Top 10 and adversarial BOLA/IDOR review remain open."
+  ]
+}
