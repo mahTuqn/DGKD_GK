@@ -117,12 +117,16 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
   it("[TC-CAT-08] returns the latest 100 Admin showtimes across cinemas in descending startAt order", async () => {
     const admin = await prisma.user.findUniqueOrThrow({ where: { id: adminId! }, select: { authVersion: true } });
     const adminAuth = { Authorization: `Bearer ${createToken({ id: adminId!, authVersion: admin.authVersion })}` };
-    const otherCinema = await prisma.cinema.create({ data: { name: `Showtime cap ${fixture}`, city: "Test", address: "Second test cinema", status: RecordStatus.ACTIVE } });
-    const otherAuditorium = await prisma.auditorium.create({ data: { cinemaId: otherCinema.id, name: `Showtime cap room ${fixture}`, screenType: "TEST" } });
+    let otherCinemaId: string | undefined;
+    let otherAuditoriumId: string | undefined;
     const firstStartAt = new Date("2099-01-01T00:00:00.000Z");
     const fixtureStartAt = new Date(firstStartAt.getTime() + 101 * 2 * 60 * 60_000);
     const fixtureEndAt = new Date(fixtureStartAt.getTime() + 90 * 60_000);
     try {
+      const otherCinema = await prisma.cinema.create({ data: { name: `Showtime cap ${fixture}`, city: "Test", address: "Second test cinema", status: RecordStatus.ACTIVE } });
+      otherCinemaId = otherCinema.id;
+      const otherAuditorium = await prisma.auditorium.create({ data: { cinemaId: otherCinema.id, name: `Showtime cap room ${fixture}`, screenType: "TEST" } });
+      otherAuditoriumId = otherAuditorium.id;
       await prisma.showtime.createMany({
         data: Array.from({ length: 101 }, (_, index) => {
           const startAt = new Date(firstStartAt.getTime() + index * 2 * 60 * 60_000);
@@ -161,8 +165,8 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
       expect(startTimes).toEqual([...startTimes].sort((left, right) => right - left));
     } finally {
       await prisma.showtime.deleteMany({ where: { movieId: movieId!, startAt: { gte: firstStartAt, lt: fixtureEndAt } } });
-      await prisma.auditorium.deleteMany({ where: { id: otherAuditorium.id } });
-      await prisma.cinema.deleteMany({ where: { id: otherCinema.id } });
+      if (otherAuditoriumId) await prisma.auditorium.deleteMany({ where: { id: otherAuditoriumId } });
+      if (otherCinemaId) await prisma.cinema.deleteMany({ where: { id: otherCinemaId } });
     }
   });
 
