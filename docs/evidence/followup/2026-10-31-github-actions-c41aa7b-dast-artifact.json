@@ -1,0 +1,23 @@
+{
+  "recordedAt": "2026-10-31",
+  "repository": "https://github.com/mahTuqn/DGKD_GK",
+  "sourceCommit": "c41aa7b6e82ab46cd4c05cfe0b60946511142582",
+  "workflow": {
+    "name": "CinemaBooking quality",
+    "runId": "41175704863",
+    "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41175704863",
+    "conclusion": "success"
+  },
+  "artifact": {
+    "name": "cinema-booking-dast-reports-c41aa7b6e82ab46cd4c05cfe0b60946511142582",
+    "sizeBytes": 6646,
+    "sha256": "af2e4f0d2847cc236b69bdb6438919b6cdb38a65358be463c3ebee3629948326"
+  },
+  "review": {
+    "reportContentsRead": false,
+    "alertCounts": null,
+    "rule40014Disposition": "open",
+    "reason": "GitHub's public run HTML exposed artifact metadata but not a download link; the REST API was rate limited and gh had no authenticated session in this environment. The successful summary gate proves the configured scan reports were produced and parsed, not that findings are absent or accepted."
+  },
+  "handling": "Do not infer this run's finding count or classify a historical rule 40014 as a false positive without the current report contents."
+}

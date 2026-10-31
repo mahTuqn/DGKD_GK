@@ -1,0 +1,27 @@
+{
+  "recordedAt": "2026-10-31",
+  "baseCommit": "c41aa7b",
+  "testedWorkingTreeChanges": [
+    "tests/e2e/a11y-booking-flows.spec.ts (untracked during this run; later tagged TC-E2E-41 and TC-E2E-42)"
+  ],
+  "command": "GITHUB_ACTIONS=true E2E_BASE_URL=http://127.0.0.1:5175 npm run test:browser -- --reporter=line --project=chromium-desktop --project=chromium-mobile tests/e2e/a11y-states.spec.ts tests/e2e/a11y-booking-flows.spec.ts",
+  "result": {
+    "passed": 22,
+    "failed": 0,
+    "skipped": 0,
+    "durationSeconds": 49.4
+  },
+  "browsers": ["Playwright Chromium desktop", "Playwright Chromium mobile emulation"],
+  "frontend": "Local Vite on 127.0.0.1:5175",
+  "api": "Page-level mocked API routes; no backend or database",
+  "coverage": [
+    "Existing nine tests in a11y-states.spec.ts on both Chromium projects",
+    "TC-E2E-41: seat-dialog keyboard boundary, seat state, axe, and focus restoration",
+    "TC-E2E-42: hold/status announcement, quiet timer, checkout focus, payment error, and axe"
+  ],
+  "limitations": [
+    "The new spec was not committed at test time; exact-source CI must rerun it after integration.",
+    "Mocked API results do not establish backend or database behavior.",
+    "This run does not establish screen-reader speech, physical-device touch, actual browser zoom, or full manual WCAG conformance."
+  ]
+}

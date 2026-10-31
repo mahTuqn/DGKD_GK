@@ -52,8 +52,8 @@ jobs:
       - run: npm run db:seed
       - run: npm run build
       - run: npx playwright install --with-deps firefox webkit
-      - name: Run booking, admin, pagination, payment recovery, Staff scan, and accessibility regressions in Firefox and WebKit
-        run: npm run test:browser -- --add-reporter=github --grep 'TC-E2E-01|TC-E2E-02|TC-E2E-03|TC-E2E-04|TC-E2E-09|TC-E2E-12|TC-E2E-13|TC-E2E-14|TC-E2E-15|TC-E2E-16|TC-E2E-17|TC-E2E-18|TC-E2E-19|TC-E2E-23|TC-E2E-27|TC-E2E-28|TC-E2E-30|TC-E2E-31|TC-E2E-32|TC-E2E-33|TC-E2E-34|TC-E2E-35|TC-E2E-36|TC-E2E-37|TC-E2E-38|TC-E2E-39|TC-E2E-40'
+      - name: Run booking, admin, payment recovery, Staff scan, and keyboard accessibility regressions in Firefox and WebKit
+        run: npm run test:browser -- --add-reporter=github --grep 'TC-E2E-01|TC-E2E-02|TC-E2E-03|TC-E2E-04|TC-E2E-09|TC-E2E-12|TC-E2E-13|TC-E2E-14|TC-E2E-15|TC-E2E-16|TC-E2E-17|TC-E2E-18|TC-E2E-19|TC-E2E-23|TC-E2E-27|TC-E2E-28|TC-E2E-30|TC-E2E-31|TC-E2E-32|TC-E2E-33|TC-E2E-34|TC-E2E-35|TC-E2E-36|TC-E2E-37|TC-E2E-38|TC-E2E-39|TC-E2E-40|TC-E2E-41|TC-E2E-42'
       - uses: actions/upload-artifact@v6
         if: always()
         with:

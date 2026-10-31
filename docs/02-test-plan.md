@@ -1,5 +1,13 @@
 # Kế hoạch kiểm thử CinemaBooking
 
+## Current working-tree follow-up — exact-source CI pending — 31/10/2026
+
+Two new browser cases, **TC-E2E-41/42**, cover seat-dialog keyboard/focus behavior, seat semantics, hold and payment status announcements, checkout focus, and axe scans. The existing `a11y-states.spec.ts` plus the new booking-flow spec passed **22/22** on Chromium desktop/mobile emulation against local Vite with mocked API routes. The cross-browser workflow now selects these cases for Firefox/WebKit; that updated workflow has not run yet. The test results and constraints are in the [local browser evidence](evidence/followup/2026-10-31-local-a11y-browser-followup.json).
+
+Added database-backed **TC-SEC-52** for a simultaneous ID/QR check-in race. Backend test typecheck passed, but its focused database run was skipped because `DATABASE_URL_TEST` is not set and the Docker service is stopped; the new exact-source Quality CI run must execute it. Traceability now passes at **139 test cases / 29 requirements**; frontend production build and `git diff --check` passed. See the [TC-SEC-52 evidence](evidence/followup/2026-10-31-tc-sec-52.json).
+
+The latest completed baseline remains [Quality #129](https://github.com/mahTuqn/DGKD_GK/actions/runs/41175704863), [Cross-browser #107](https://github.com/mahTuqn/DGKD_GK/actions/runs/41175704858), and [worker soak #106](https://github.com/mahTuqn/DGKD_GK/actions/runs/41175704918) on the prior code source. DAST report contents for #129 remain unavailable for detailed triage; see the [artifact metadata and limitation record](evidence/followup/2026-10-31-github-actions-c41aa7b-dast-artifact.json). Manual accessibility remains **8 Fail / 5 Pass / 77 Not tested**. No staging environment exists; production PITR/RPO/RTO/restore and comprehensive ASVS/BOLA review remain open.
+
 ## Current exact-source CI evidence — a3e494a — 31/10/2026
 
 All four workflows passed against application/test source a3e494a08637e09f39c7c2a2753e327aca80df81. Quality [#128](https://github.com/mahTuqn/DGKD_GK/actions/runs/41174310218) completed in **15m22s**: API suite, the new k6 response-accounting gate, typecheck, traceability, live five-minute hold expiry, two-worker five-minute soak/restart, build, **76/76 Chromium Playwright tests in 2.8m**, isolated Compose DAST, domain/mutation and Compose/browser smoke all passed. The API check page does not expose its result count. Cross-browser [#107](https://github.com/mahTuqn/DGKD_GK/actions/runs/41174310226) passed **54/54** Firefox/WebKit tests in **3.8m**; worker long soak [#105](https://github.com/mahTuqn/DGKD_GK/actions/runs/41174310227) passed the two-worker test in **15m15s**.

@@ -1,0 +1,29 @@
+{
+  "recordedAt": "2026-10-31",
+  "baseCommit": "c41aa7b",
+  "workingTreeAtRun": "clean",
+  "command": "GITHUB_ACTIONS=true E2E_BASE_URL=http://127.0.0.1:5175 npm run test:browser -- --project=chromium-desktop tests/e2e/a11y-states.spec.ts",
+  "result": {
+    "passed": 9,
+    "failed": 0,
+    "skipped": 0,
+    "durationSeconds": 21.7
+  },
+  "browser": "Playwright Chromium desktop",
+  "frontend": "Local Vite on 127.0.0.1:5175",
+  "api": "Page-level mocked API routes; no backend or database",
+  "coverage": [
+    "Mobile catalog title reflow and target size",
+    "Registration and login field names, validation, and alert announcements",
+    "Admin expandable details and axe checks",
+    "Seat-limit status feedback and selection changes",
+    "Seat availability and type in accessible names",
+    "Discovery text-spacing override and keyboard-operable filters",
+    "Keyboard date/cinema filter updates at 320 CSS px",
+    "Stale showtime response ordering"
+  ],
+  "limitations": [
+    "This run does not establish live API/database behavior.",
+    "It does not establish screen-reader speech, physical-device touch, real browser zoom, or full manual WCAG conformance."
+  ]
+}

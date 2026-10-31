@@ -1,5 +1,13 @@
 # Báo cáo tổng hợp kiểm thử
 
+## Current working-tree follow-up — exact-source CI pending — 31/10/2026
+
+Added Playwright **TC-E2E-41/42** for seat-dialog keyboard/focus semantics, hold and payment status messaging, checkout focus, and axe scans. The existing a11y state tests plus the new booking-flow tests passed **22/22** on Chromium desktop/mobile emulation with mocked API routes. Firefox/WebKit selection has been updated but still needs a CI run. See the [local browser evidence](evidence/followup/2026-10-31-local-a11y-browser-followup.json).
+
+Added database-backed **TC-SEC-52** for racing ID and QR check-in routes against one ticket; `npm run typecheck:tests` passed, while local DB execution was skipped because `DATABASE_URL_TEST` is unset and Docker is stopped. `qa:trace` passes at **139 cases / 29 requirements**, the frontend build passes, and `git diff --check` is clean. Exact-source Quality CI is pending for the new API case and browser changes.
+
+The 90-row manual checklist remains **8 Fail / 5 Pass / 77 Not tested**. These automated runs do not claim screen-reader, actual browser zoom, or physical-device verification. The latest DAST artifact details are still unreviewed, staging is unavailable, and production recovery plus comprehensive ASVS/BOLA checks remain open.
+
 ## Current exact-source CI evidence — a3e494a — 31/10/2026
 
 All four workflows passed against application/test source a3e494a08637e09f39c7c2a2753e327aca80df81. Quality [#128](https://github.com/mahTuqn/DGKD_GK/actions/runs/41174310218) completed in **15m22s**: API suite, the new k6 response-accounting gate, typecheck, traceability, live five-minute hold expiry, two-worker five-minute soak/restart, build, **76 Chromium Playwright tests in 2.8m**, isolated Compose DAST, domain/mutation and Compose/browser smoke passed. The API check page does not expose its result count. Cross-browser [#107](https://github.com/mahTuqn/DGKD_GK/actions/runs/41174310226) passed **54/54** Firefox/WebKit tests; worker long soak [#105](https://github.com/mahTuqn/DGKD_GK/actions/runs/41174310227) passed the **15m15s** two-worker test.

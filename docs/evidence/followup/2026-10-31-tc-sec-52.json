@@ -1,0 +1,18 @@
+{
+  "recordedAt": "2026-10-31",
+  "testId": "TC-SEC-52",
+  "source": "backend/tests/ticket-checkin-race.integration.test.ts",
+  "scenario": "Race ID-based and QR-based check-in requests against the same confirmed ticket using one assigned Staff session.",
+  "expected": {
+    "statuses": [200, 409],
+    "losingResponse": "TICKET_ALREADY_USED",
+    "persistedCheckInTimestamps": 1,
+    "persistedCheckInAuditRows": 1
+  },
+  "sourceReview": "Both check-in handlers lock the ticket row and check its used state. No confirmed defect was found in the source review; the new case guards against mixed-route concurrency regressions.",
+  "checks": {
+    "typecheck": "npm run typecheck:tests passed.",
+    "focusedDatabaseRun": "Skipped because DATABASE_URL_TEST is unset. Docker service is stopped; no existing application database was used.",
+    "exactSourceCi": "pending"
+  }
+}
