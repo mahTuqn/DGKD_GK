@@ -1,0 +1,37 @@
+{
+  "sourceCommit": "a104ad840e32e01fcafa2ea9777c633e5bd7cf67",
+  "workflow": {
+    "name": "Manual HTTP Performance (k6)",
+    "runNumber": 3,
+    "runId": "41169149145",
+    "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41169149145",
+    "status": "success",
+    "trigger": "push",
+    "configuration": {
+      "virtualUsers": 50,
+      "duration": "5m",
+      "target": "Isolated CI Docker Compose API and disposable PostgreSQL database",
+      "k6StepDuration": "5m18s",
+      "workflowDuration": "6m10s"
+    }
+  },
+  "thresholds": {
+    "showtimesLatencyP95": "<500ms",
+    "holdLatencyP95": "<800ms",
+    "unexpectedErrorRate": "<1%",
+    "holdSuccessRate": ">99%",
+    "result": "passed; k6 process and workflow exited successfully",
+    "individualMeasuredValuesReviewed": false
+  },
+  "artifact": {
+    "name": "http-performance-k6-41169149145-1",
+    "id": "13030383605",
+    "size": "10.9 KB",
+    "sha256": "193761d459b3b597f80ba7e650876c893e4a0504c21edb7af1e250dcd2512a72",
+    "retentionDays": 14
+  },
+  "limitations": [
+    "The isolated CI result is not a staging or production performance benchmark.",
+    "Exact latency and throughput values have not been independently read from the artifact."
+  ]
+}

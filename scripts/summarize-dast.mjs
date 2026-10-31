@@ -2,7 +2,7 @@ import { appendFileSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 const reportDirectory = path.resolve(process.env.DAST_REPORT_DIRECTORY || "reports/generated/dast");
-const reportPattern = /^(unauthenticated-api|authenticated-api|preview)-\d{14}-[a-f0-9]{8}\.json$/;
+const reportPattern = /^(unauthenticated-api|authenticated-api|preview)-(\d{14}-[a-f0-9]{8})\.json$/;
 const reportKinds = ["unauthenticated-api", "authenticated-api", "preview"];
 const severityNames = ["High", "Medium", "Low", "Informational", "Unknown"];
 const severityByCode = new Map([["3", "High"], ["2", "Medium"], ["1", "Low"], ["0", "Informational"]]);
@@ -37,9 +37,15 @@ const reports = reportKinds.map((kind) => ({
 const errors = [];
 let files = [];
 try {
-  files = readdirSync(reportDirectory).filter((file) => reportPattern.test(file));
+  const manifest = JSON.parse(readFileSync(path.join(reportDirectory, "current-run.json"), "utf8"));
+  const runSuffix = String(manifest?.runSuffix ?? "");
+  if (!/^\d{14}-[a-f0-9]{8}$/.test(runSuffix)) throw new Error("current-run manifest is invalid");
+  files = readdirSync(reportDirectory).filter((file) => {
+    const match = reportPattern.exec(file);
+    return match?.[2] === runSuffix;
+  });
 } catch (error) {
-  errors.push(error instanceof Error ? error.message : "report directory unavailable");
+  errors.push("current-run manifest unavailable or invalid");
 }
 
 for (const file of files) {
@@ -48,7 +54,7 @@ for (const file of files) {
   if (!report) continue;
   try {
     const document = JSON.parse(readFileSync(path.join(reportDirectory, file), "utf8"));
-    if (!Array.isArray(document.site)) throw new Error("ZAP report has no site array");
+    if (!Array.isArray(document.site) || document.site.length === 0) throw new Error("ZAP report has no scanned sites");
     const alerts = document.site.flatMap((site) => Array.isArray(site.alerts) ? site.alerts : []);
     for (const alert of alerts) {
       const severity = classify(alert);

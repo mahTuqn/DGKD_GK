@@ -8,7 +8,13 @@ on:
     paths:
       - ".github/workflows/http-performance.yml"
       - ".github/compose-performance.override.yml"
-      - "tests/non-functional/k6/cinema-booking.js"
+      - "docker-compose.yml"
+      - "backend/Dockerfile"
+      - "backend/package.json"
+      - "backend/src/**"
+      - "backend/prisma/**"
+      - "package-lock.json"
+      - "tests/non-functional/k6/**"
   workflow_dispatch:
     inputs:
       vus:

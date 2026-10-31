@@ -15,6 +15,8 @@ const adminEmail = process.env.DAST_ADMIN_EMAIL || "admin@cinema.local";
 const adminPassword = process.env.DAST_ADMIN_PASSWORD || "CinemaAdmin123!";
 const timeoutMs = Number(process.env.DAST_COMMAND_TIMEOUT_MS || 1_500_000);
 const runSuffix = `${new Date().toISOString().replace(/\D/g, "").slice(0, 14)}-${randomBytes(4).toString("hex")}`;
+mkdirSync(reportDirectory, { recursive: true });
+writeFileSync(path.join(reportDirectory, "current-run.json"), JSON.stringify({ runSuffix }), { encoding: "utf8" });
 
 if (!existsSync(composeFile)) throw new Error(`Compose file not found: ${composeFile}`);
 if (!Number.isFinite(timeoutMs) || timeoutMs < 60_000) throw new Error("DAST_COMMAND_TIMEOUT_MS must be at least 60000.");
