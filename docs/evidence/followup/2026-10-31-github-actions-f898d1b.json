@@ -34,6 +34,7 @@
         "size": "6.49 KB",
         "sha256": "4396436187b34da662c89da4e5d54b7f3301318208332c337de40676631326b2",
         "summaryGate": "passed",
+        "severityGate": "All three scan plans set exitStatus.errorLevel=Medium. Given the DAST job passed, no Medium-or-higher alert was raised in the configured scan scopes; see https://www.zaproxy.org/docs/desktop/addons/automation-framework/job-exitstatus/ for the documented ZAP semantics.",
         "alertCounts": null,
         "findingDispositions": "not inspected; artifact contents unavailable in signed-out view"
       }

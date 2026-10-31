@@ -1,0 +1,101 @@
+{
+  "recordedAt": "2026-10-31",
+  "repository": "https://github.com/mahTuqn/DGKD_GK",
+  "branch": "codex/cross-browser-smoke",
+  "sourceCommit": "e1e8bc6011d8714b06f7931f4c6df3d545de8965",
+  "runs": {
+    "quality": {
+      "runNumber": 134,
+      "runId": "41184596050",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41184596050",
+      "conclusion": "success",
+      "workflowDuration": "17m1s",
+      "jobs": {
+        "quality": "success",
+        "dast": "success",
+        "domainCoverageAndMutation": "success",
+        "composeRuntimeAndBrowserSmoke": "success"
+      },
+      "tests": {
+        "apiSuite": "success; disposable PostgreSQL service",
+        "apiResultCount": null,
+        "adminRoleRevocationRaceTC-SEC-53": "passed with fixture cleanup",
+        "chromiumPlaywright": {
+          "passed": 84,
+          "failed": 0,
+          "skipped": 0
+        },
+        "loginDialogFocusContainmentTC-E2E-44": "included in the Chromium desktop/mobile suite",
+        "traceability": "142 test cases / 29 requirements",
+        "gitleaks": "success",
+        "dependencyAudit": "success",
+        "backupRestoreSmoke": "success",
+        "build": "success",
+        "openApi": "success"
+      },
+      "dast": {
+        "duration": "7m15s",
+        "reportSummaryGate": "passed",
+        "severityGate": "All three scan plans set exitStatus.errorLevel=Medium. Given the DAST job passed, no Medium-or-higher alert was raised in the configured scan scopes; see https://www.zaproxy.org/docs/desktop/addons/automation-framework/job-exitstatus/ for documented ZAP semantics.",
+        "alertCounts": null,
+        "findingDispositions": "current report contents and alert rows were not inspected; Low/Informational dispositions remain unknown"
+      }
+    },
+    "crossBrowser": {
+      "runNumber": 113,
+      "runId": "41184595935",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41184595935",
+      "conclusion": "success",
+      "workflowDuration": "5m40s",
+      "browserTests": {
+        "passed": 62,
+        "failed": 0,
+        "skipped": 0
+      },
+      "testsPerBrowser": 31,
+      "includedCases": ["TC-E2E-44"],
+      "browsers": ["Firefox", "WebKit"]
+    },
+    "workerSoak": {
+      "runNumber": 111,
+      "runId": "41184595998",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41184595998",
+      "conclusion": "success",
+      "soakDuration": "15m43s",
+      "workflowDuration": "15m45s"
+    },
+    "httpPerformance": {
+      "runNumber": 6,
+      "runId": "41181986162",
+      "sourceCommit": "f898d1b5875e2b82ff8aad45bc7896bd73401fe5",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41181986162",
+      "conclusion": "success",
+      "triggeredForE1e8bc6": false,
+      "reason": "No changed path in e1e8bc6 matches the HTTP Performance workflow filters; backend and k6 sources were unchanged.",
+      "virtualUsers": 50,
+      "loadDuration": "5m",
+      "thresholds": {
+        "showtimesP95": "<500ms passed",
+        "holdP95": "<800ms passed",
+        "unexpectedErrorRate": "<1% passed",
+        "holdSuccessRate": ">99% passed"
+      },
+      "observedLatencyAndThroughput": null
+    }
+  },
+  "localValidation": {
+    "traceability": "142 test cases / 29 requirements; passed",
+    "testTypecheck": "passed",
+    "openApiLint": "passed",
+    "composeConfig": "docker compose config --quiet passed",
+    "TC-E2E-44": "4/4 passed on a production preview: Chromium desktop/mobile and Firefox/WebKit; APIs mocked",
+    "dockerDaemon": "running; no containers running",
+    "localDatabaseBackedSuite": "not run because free physical memory was approximately 377 MiB; isolated PostgreSQL suite passed in Quality CI"
+  },
+  "openGaps": [
+    "The manual 90-row accessibility checklist remains 8 Fail / 5 Pass / 77 Not tested. Playwright does not establish actual screen-reader speech, real zoom/reflow behavior, or physical-device touch.",
+    "Current DAST alert/instance counts and Low/Informational finding dispositions were not inspected.",
+    "No staging environment is available; named-staging HTTP performance, production PITR/RPO/RTO/restore rehearsal, and production readiness remain open.",
+    "Comprehensive ASVS/API Top 10 and adversarial BOLA/IDOR review remain open."
+  ]
+}
