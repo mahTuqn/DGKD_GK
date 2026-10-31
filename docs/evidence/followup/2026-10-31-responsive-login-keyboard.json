@@ -1,0 +1,23 @@
+{
+  "recordedAt": "2026-10-31",
+  "applicationSourceCommit": "fcdd0fb6195fad2270e5ed8f062caf8c1e33fa2d",
+  "environment": {
+    "surface": "Codex in-app Chromium",
+    "url": "http://127.0.0.1:5174/",
+    "viewportCssPixels": { "width": 513, "height": 764 },
+    "devicePixelRatio": 1.5,
+    "api": "Offline; no form was submitted"
+  },
+  "observations": [
+    "Starting from the page, Tab reached the brand link, Explore navigation button, then the responsive account opener.",
+    "Enter opened login and placed initial focus in Email.",
+    "Tab order moved Email → Password → Login → Create account → Close → Email; Shift+Tab from Email moved to Close.",
+    "Escape closed the login dialog and restored focus to the responsive account opener.",
+    "Keyboard activation of Create account exposed Name, Email, Password, and Create account controls; focus indication remained visible on the return-to-login switch, and Escape restored focus to the opener."
+  ],
+  "limitations": [
+    "This observation covers responsive-width keyboard operation, not the full A11Y-03 workflow.",
+    "It does not establish screen-reader speech, background pointer inertness, field error announcements, actual 320 CSS px/200%/400% zoom behavior, or physical-device touch.",
+    "Manual checklist outcomes remain 8 Fail / 5 Pass / 77 Not tested."
+  ]
+}

@@ -472,19 +472,47 @@ test("[TC-E2E-16] dialog đăng ký có tên trường và trạng thái validat
 
 test("[TC-E2E-17] lỗi đăng nhập được đưa vào live alert trong dialog", async ({ page }) => {
   await mockApi(page, { loginError: { status: 401, error: "INVALID_CREDENTIALS", message: "Email hoặc mật khẩu không chính xác." } });
+  await page.setViewportSize({ width: 320, height: 800 });
   await page.goto("/");
   await expect(page.getByTestId("movie-card").first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "Mở tài khoản", exact: true })).toBeVisible();
   await openLogin(page);
 
   const dialog = page.locator(".auth-dialog");
-  await dialog.getByLabel("Email").fill("wrong@example.test");
-  await dialog.getByLabel("Mật khẩu").fill("wrong-password");
-  await dialog.getByRole("button", { name: "Đăng nhập", exact: true }).click();
+  const email = dialog.getByLabel("Email");
+  const password = dialog.getByLabel("Mật khẩu");
+  const submitButton = dialog.getByRole("button", { name: "Đăng nhập", exact: true });
+  await expect(dialog).toBeInViewport({ ratio: 1 });
+  await expect(email).toBeInViewport({ ratio: 1 });
+  await expect(password).toBeInViewport({ ratio: 1 });
+  await expect(submitButton).toBeInViewport({ ratio: 1 });
+
+  const beforeSubmitWidths = await dialog.evaluate((element) => ({
+    viewport: document.documentElement.clientWidth,
+    page: document.documentElement.scrollWidth,
+    dialogClient: element.clientWidth,
+    dialogScroll: element.scrollWidth,
+  }));
+  expect(beforeSubmitWidths.page).toBeLessThanOrEqual(beforeSubmitWidths.viewport);
+  expect(beforeSubmitWidths.dialogScroll).toBeLessThanOrEqual(beforeSubmitWidths.dialogClient);
+
+  await email.fill("wrong@example.test");
+  await password.fill("wrong-password");
+  await submitButton.click();
 
   const alert = dialog.getByRole("alert");
   await expect(alert).toBeVisible();
+  await expect(alert).toBeInViewport({ ratio: 1 });
   await expect(alert).toHaveText("Email hoặc mật khẩu không chính xác.");
   await expect(alert).toHaveAttribute("role", "alert");
+  const afterSubmitWidths = await dialog.evaluate((element) => ({
+    viewport: document.documentElement.clientWidth,
+    page: document.documentElement.scrollWidth,
+    dialogClient: element.clientWidth,
+    dialogScroll: element.scrollWidth,
+  }));
+  expect(afterSubmitWidths.page).toBeLessThanOrEqual(afterSubmitWidths.viewport);
+  expect(afterSubmitWidths.dialogScroll).toBeLessThanOrEqual(afterSubmitWidths.dialogClient);
   await expectAlertTextContrast(alert);
   await expectNoWcagAxeViolations(page, ".auth-dialog");
 });

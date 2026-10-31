@@ -1,0 +1,56 @@
+{
+  "recordedAt": "2026-10-31",
+  "testId": "TC-E2E-17",
+  "repositoryHeadAtTest": "327e45d5ceae251a49f667f8551da41c2ad09f61",
+  "testSource": "Working tree",
+  "applicationSourceCommit": "fcdd0fb6195fad2270e5ed8f062caf8c1e33fa2d",
+  "environment": {
+    "baseUrl": "http://127.0.0.1:5174/",
+    "browserProject": "Playwright Chromium desktop/mobile; Firefox/WebKit desktop",
+    "viewportCssPixels": { "width": 320, "height": 800 },
+    "apiMode": "All /api/** requests intercepted by Playwright routes; no backend or database"
+  },
+  "command": "$env:GITHUB_ACTIONS='true'; $env:E2E_BASE_URL='http://127.0.0.1:5174'; npm run test:browser -- --reporter=line --project=chromium-desktop --grep 'TC-E2E-17'",
+  "result": {
+    "passed": 1,
+    "failed": 0,
+    "duration": "5.2s"
+  },
+  "rechecks": [
+    {
+      "project": "chromium-desktop",
+      "command": "npm run test:browser -- --reporter=line --project=chromium-desktop --grep 'TC-E2E-17'",
+      "passed": 1,
+      "failed": 0,
+      "duration": "3.4s"
+    },
+    {
+      "project": "chromium-mobile",
+      "command": "npm run test:browser -- --reporter=line --project=chromium-mobile --grep 'TC-E2E-17'",
+      "passed": 1,
+      "failed": 0,
+      "duration": "3.4s"
+    },
+    {
+      "projects": ["firefox-desktop", "webkit-desktop"],
+      "command": "$env:GITHUB_ACTIONS='true'; $env:E2E_BASE_URL='http://127.0.0.1:5174'; $env:PLAYWRIGHT_CROSS_BROWSER_SMOKE='true'; npm run test:browser -- --reporter=line --grep 'TC-E2E-17'",
+      "passed": 2,
+      "failed": 0,
+      "duration": "14.2s"
+    }
+  ],
+  "assertions": [
+    "Mobile account opener is visible at 320×800",
+    "Login dialog, email, password, and submit button are fully in the viewport",
+    "Document and dialog have no horizontal overflow before or after the error appears",
+    "Invalid credentials are exposed as the expected role=alert text",
+    "Translucent alert text contrast is at least 4.5:1",
+    "Configured axe WCAG tags report no violations in the login dialog"
+  ],
+  "limitations": [
+    "This is automated browser evidence with mocked API responses, not backend or database integration evidence.",
+    "The Playwright viewport is 320 CSS px, not actual browser zoom or physical-device testing.",
+    "The result does not verify screen-reader speech or complete manual WCAG conformance; manual checklist outcomes remain unchanged.",
+    "The rechecks set the page viewport to 320×800 CSS px in both Chromium projects; they do not represent physical mobile hardware or actual browser zoom."
+  ]
+}
