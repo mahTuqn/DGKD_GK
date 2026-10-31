@@ -47,7 +47,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npm audit --audit-level=moderate
+      - name: Audit dependencies (allow one reviewed Stryker dev advisory)
+        run: npm run audit:dependencies
       - run: npm run db:generate
       - run: npm run db:deploy
       - name: Create isolated worker process database

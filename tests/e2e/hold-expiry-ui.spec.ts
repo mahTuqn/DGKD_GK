@@ -55,7 +55,7 @@ test("[TC-E2E-14] countdown hết hạn đóng checkout và thông báo ghế đ
   await expect(countdown).toHaveAttribute("role", "timer");
   await expect(countdown).toHaveAttribute("aria-live", "off");
   await expect(countdown).toHaveAccessibleName(/Thời gian giữ ghế còn lại \d{2} phút \d{2} giây/);
-  await expect(page.getByTestId("hold-created-announcement")).toHaveText("Ghế đang được giữ. Vui lòng hoàn tất thanh toán trước khi hết giờ.");
+  await expect(page.getByRole("status")).toHaveText("Ghế đang được giữ. Vui lòng hoàn tất thanh toán trước khi hết giờ.");
   await expect(countdown.locator("b")).toHaveText(/^\d{2}:\d{2}$/);
   await expect(page.getByTestId("checkout-submit")).toBeEnabled();
 
@@ -65,4 +65,5 @@ test("[TC-E2E-14] countdown hết hạn đóng checkout và thông báo ghế đ
   await expect(page.getByRole("dialog", { name: "Một bước nữa thôi." })).toHaveCount(0);
   await expect(page.getByRole("alert")).toContainText("Thời gian giữ ghế đã hết");
   await expect(page.getByRole("alert")).toContainText("Ghế được trả lại");
+  await expect(page.getByTestId("showtime-option").first()).toBeFocused();
 });

@@ -75,6 +75,51 @@ test("[TC-E2E-32] nội dung QR có thể được chọn bằng bàn phím và 
   await page.keyboard.press("Enter");
   await expect(disclosures.nth(1).getByRole("textbox", { name: /^Nội dung mã QR vé 2/ })).toBeVisible();
   await expect(disclosures.first().getByRole("textbox")).toHaveCount(1);
+  await expect(card.locator("textarea")).toHaveCount(2);
+
+  for (const viewport of [{ width: 320, height: 800 }, { width: 800, height: 320 }]) {
+    await page.setViewportSize(viewport);
+    const layout = await card.evaluate((element) => {
+      const bounds = element.getBoundingClientRect();
+      return {
+        cardLeft: bounds.left,
+        cardRight: bounds.right,
+        viewportWidth: window.innerWidth,
+        pageWidth: document.documentElement.scrollWidth,
+        clientWidth: document.documentElement.clientWidth,
+      };
+    });
+    expect(layout.pageWidth).toBeLessThanOrEqual(layout.clientWidth);
+    expect(layout.cardLeft).toBeGreaterThanOrEqual(0);
+    expect(layout.cardRight).toBeLessThanOrEqual(layout.viewportWidth);
+    const ticketContentSelector = [
+      ".ticket-main",
+      ".ticket-meta",
+      ".ticket-main h3",
+      ".ticket-details",
+      ".ticket-bottom",
+      ".ticket-codes",
+      ".ticket-code",
+      ".ticket-code svg",
+      ".ticket-manual-code",
+      "textarea",
+    ].join(", ");
+    const nestedContent = await card.locator(ticketContentSelector).evaluateAll((elements) =>
+      elements.map((element) => {
+        const bounds = element.getBoundingClientRect();
+        return {
+          left: bounds.left,
+          right: bounds.right,
+          scrollWidth: element.scrollWidth,
+          clientWidth: element.clientWidth,
+        };
+      }),
+    );
+    expect(nestedContent.length).toBeGreaterThan(0);
+    expect(nestedContent.every(({ left, right, scrollWidth, clientWidth }) =>
+      left >= layout.cardLeft - 1 && right <= layout.cardRight + 1 && scrollWidth <= clientWidth + 1,
+    )).toBe(true);
+  }
 
   await page.getByRole("button", { name: "Đăng xuất", exact: true }).click();
   await page.getByRole("button", { name: /Mở tài khoản/ }).click();

@@ -26,6 +26,7 @@
     "test:browser": "playwright test",
     "test:browser:isolated": "node scripts/run-isolated-browser-tests.mjs",
     "test:browser:ui": "playwright test --ui",
+    "audit:dependencies": "node scripts/check-npm-audit.mjs",
     "build": "npm run build --workspace backend && npm run build --workspace frontend",
     "typecheck:tests": "npm run typecheck:tests --workspace backend",
     "lint:openapi": "node scripts/lint-openapi.mjs",

@@ -504,6 +504,34 @@ test("[TC-E2E-33] Seat limit provides feedback and allows changing selection", a
   await expect(seats.nth(8)).toHaveAttribute("aria-pressed", "true");
 });
 
+test("[TC-E2E-40] Seat availability and type are exposed in accessible names", async ({ page }) => {
+  await mockApi(page);
+  await page.goto("/");
+  await page.getByTestId("movie-card").first().getByRole("button", { name: "Xem suất chiếu" }).click();
+  await page.getByTestId("showtime-option").first().click();
+
+  const dialog = page.getByRole("dialog", { name: movie.title });
+  const availableStandard = dialog.getByRole("button", { name: "Ghế A 1 — trống — ghế tiêu chuẩn" });
+  const availableAccessible = dialog.getByRole("button", { name: "Ghế A 2 — trống — ghế hỗ trợ tiếp cận" });
+  const heldPremium = dialog.getByRole("button", { name: "Ghế A 3 — đang giữ — ghế cao cấp" });
+  const soldAccessible = dialog.getByRole("button", { name: "Ghế A 4 — đã bán — ghế hỗ trợ tiếp cận" });
+
+  await expect(availableStandard).toBeEnabled();
+  await expect(availableAccessible).toBeEnabled();
+  await expect(heldPremium).toBeDisabled();
+  await expect(soldAccessible).toBeDisabled();
+  await expect(availableStandard).toHaveAttribute("aria-pressed", "false");
+  await expect(heldPremium).toHaveAttribute("aria-pressed", "false");
+  await expect(soldAccessible).toHaveAttribute("aria-pressed", "false");
+
+  await availableStandard.focus();
+  await page.keyboard.press("Space");
+  await expect(availableStandard).toHaveAttribute("aria-pressed", "true");
+  await expect(dialog.locator(".seat-footer")).toContainText("1 ghế đã chọn");
+  await expect(heldPremium).toBeDisabled();
+  await expect(soldAccessible).toBeDisabled();
+});
+
 test("[TC-E2E-35] discovery text reflows under WCAG text-spacing overrides and filters remain keyboard operable", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 800 });
   await mockApi(page, { movieTitles: [movie.title, "SupercalifragilisticexpialidociousCinema"] });
