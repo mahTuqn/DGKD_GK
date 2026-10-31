@@ -968,18 +968,23 @@ export function createApp() {
   app.get("/api/admin/users", requireAuth, requireRole(Role.ADMIN), asyncRoute(async (req, res) => {
     const query = collectionPageQuerySchema.parse(req.query);
     const cursor = decodeCollectionCursor(query.cursor);
-    const rows = await prisma.user.findMany({
-      where: cursor ? { OR: [{ createdAt: { gt: cursor.createdAt } }, { createdAt: cursor.createdAt, id: { gt: cursor.id } }] } : {},
-      select: { id: true, name: true, email: true, role: true, assignedCinemaId: true, assignedCinema: { select: { id: true, name: true } }, createdAt: true },
-      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
-      take: query.limit + 1
-    });
-    const hasMore = rows.length > query.limit;
-    const page = rows.slice(0, query.limit);
-    res.json({
-      items: page,
-      nextCursor: hasMore && page.length ? encodeCollectionCursor({ createdAt: page.at(-1)!.createdAt, id: page.at(-1)!.id }) : null
-    });
+    const page = await prisma.$transaction(async (tx) => {
+      // Keep role/authVersion valid until the Admin-only PII read completes.
+      await lockCurrentActor(tx, { id: req.user!.id, authVersion: req.authVersion }, [Role.ADMIN]);
+      const rows = await tx.user.findMany({
+        where: cursor ? { OR: [{ createdAt: { gt: cursor.createdAt } }, { createdAt: cursor.createdAt, id: { gt: cursor.id } }] } : {},
+        select: { id: true, name: true, email: true, role: true, assignedCinemaId: true, assignedCinema: { select: { id: true, name: true } }, createdAt: true },
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+        take: query.limit + 1
+      });
+      const hasMore = rows.length > query.limit;
+      const items = rows.slice(0, query.limit);
+      return {
+        items,
+        nextCursor: hasMore && items.length ? encodeCollectionCursor({ createdAt: items.at(-1)!.createdAt, id: items.at(-1)!.id }) : null
+      };
+    }, { timeout: 30_000 });
+    res.json(page);
   }));
 
   app.patch("/api/admin/users/:id/role", requireAuth, requireRole(Role.ADMIN), asyncRoute(async (req, res) => {
@@ -991,7 +996,7 @@ export function createApp() {
       const user = await tx.user.update({ where: { id: targetUserId }, data: { role: input.role, authVersion: { increment: 1 }, ...(input.role !== Role.STAFF ? { assignedCinemaId: null } : {}) }, select: { id: true, name: true, email: true, role: true, assignedCinemaId: true } });
       await audit(tx, req.user!.id, "USER_ROLE_CHANGED", "User", user.id, { role: user.role });
       return user;
-    });
+    }, { timeout: 30_000 });
     res.json(updated);
   }));
 
