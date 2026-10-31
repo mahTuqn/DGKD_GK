@@ -1,0 +1,95 @@
+{
+  "recordedAt": "2026-10-31",
+  "repository": "https://github.com/mahTuqn/DGKD_GK",
+  "branch": "codex/cross-browser-smoke",
+  "sourceCommit": "68ab383dd0a8e333ac96530e30724f6d7947f212",
+  "applicationSourceCommit": "e1e8bc6011d8714b06f7931f4c6df3d545de8965",
+  "sourceScope": "Application backend/frontend source matches e1e8bc6; 68ab383 changes Playwright test/runner/docs source.",
+  "qualityRun": {
+    "runNumber": 136,
+    "runId": "41189449071",
+    "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41189449071",
+    "conclusion": "success",
+    "workflowDuration": "16m44s",
+    "jobs": {
+      "quality": "success",
+      "dast": {
+        "conclusion": "success",
+        "duration": "8m02s",
+        "steps": {
+          "scan": "success",
+          "currentRunSeveritySummary": "success",
+          "artifactUpload": "success"
+        }
+      },
+      "domainCoverageAndMutation": "success",
+      "composeRuntimeAndBrowserSmoke": "success"
+    },
+    "playwright": {
+      "fullChromiumSuite": {
+        "conclusion": "success",
+        "passed": 86,
+        "projects": ["Chromium desktop", "Chromium mobile"]
+      },
+      "TC-E2E-04": "passed in the full Chromium desktop/mobile suite"
+    }
+  },
+  "crossBrowserRun": {
+    "runNumber": 115,
+    "runId": "41189449090",
+    "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41189449090",
+    "conclusion": "success",
+    "workflowDuration": "6m57s",
+    "playwrightStep": {
+      "conclusion": "success",
+      "passed": 64,
+      "duration": "4m30s",
+      "projects": ["Firefox desktop", "WebKit desktop"],
+      "TC-E2E-04": "included by the workflow grep selection"
+    }
+  },
+  "workerSoakRun": {
+    "runNumber": 113,
+    "runId": "41189449061",
+    "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41189449061",
+    "conclusion": "success",
+    "workflowDuration": "15m48s",
+    "soakStep": {
+      "conclusion": "success",
+      "duration": "15m15s",
+      "startedAtUtc": "2026-10-31T09:37:55Z",
+      "completedAtUtc": "2026-10-31T09:53:10Z",
+      "description": "Two-worker 15-minute reliability soak with graceful restart and catch-up assertions."
+    }
+  },
+  "localChecks": {
+    "typecheckTests": "passed",
+    "frontendBuild": "passed",
+    "traceability": {"conclusion": "passed", "cases": 142, "requirements": 29},
+    "gitDiffCheck": "passed",
+    "playwrightDiscovery": {"conclusion": "passed", "testsListed": 86, "files": 11},
+    "focusedTC-E2E-04Execution": {
+      "result": null,
+      "status": "stopped before outcome",
+      "reason": "The isolated Playwright attempt reached test startup but was stopped under host resource pressure; its owned disposable database container/volume were removed. No local pass/fail is claimed. Exact-source CI above executed the test."
+    },
+    "localDast": {
+      "result": "not run",
+      "reason": "Docker WSL data is on the system drive, which had approximately 6 MiB free and approximately 0.44 GiB RAM free; CI DAST ran successfully on this source."
+    }
+  },
+  "dastArtifact": {
+    "name": "cinema-booking-dast-reports-68ab383dd0a8e333ac96530e30724f6d7947f212",
+    "id": "13038123239",
+    "size": "6.49 KB",
+    "sha256": "8e1fb8cf55e270cf9fd262bd7bf6b49c72a9efe9b88f22b06ee1f5c2d7429b75",
+    "contentsRetrieved": false,
+    "alertCounts": null,
+    "instanceCounts": null,
+    "findingDispositions": "unknown; report contents were unavailable in the signed-out public run view"
+  },
+  "limits": [
+    "Artifact metadata and job-step conclusions were publicly visible; DAST report contents and finding counts/dispositions were not.",
+    "A successful DAST summary step does not establish zero findings or replace review of the report contents."
+  ]
+}
