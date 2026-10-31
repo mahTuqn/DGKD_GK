@@ -114,6 +114,58 @@ apiDescribe("REQ-AUTH/BOOK/PAY/TICKET: isolated PostgreSQL HTTP flow", () => {
     await prisma.$disconnect();
   }, 30_000);
 
+  it("[TC-CAT-08] returns the latest 100 Admin showtimes across cinemas in descending startAt order", async () => {
+    const admin = await prisma.user.findUniqueOrThrow({ where: { id: adminId! }, select: { authVersion: true } });
+    const adminAuth = { Authorization: `Bearer ${createToken({ id: adminId!, authVersion: admin.authVersion })}` };
+    const otherCinema = await prisma.cinema.create({ data: { name: `Showtime cap ${fixture}`, city: "Test", address: "Second test cinema", status: RecordStatus.ACTIVE } });
+    const otherAuditorium = await prisma.auditorium.create({ data: { cinemaId: otherCinema.id, name: `Showtime cap room ${fixture}`, screenType: "TEST" } });
+    const firstStartAt = new Date("2099-01-01T00:00:00.000Z");
+    const fixtureStartAt = new Date(firstStartAt.getTime() + 101 * 2 * 60 * 60_000);
+    const fixtureEndAt = new Date(fixtureStartAt.getTime() + 90 * 60_000);
+    try {
+      await prisma.showtime.createMany({
+        data: Array.from({ length: 101 }, (_, index) => {
+          const startAt = new Date(firstStartAt.getTime() + index * 2 * 60 * 60_000);
+          return {
+            movieId: movieId!,
+            auditoriumId: index % 2 === 0 ? auditoriumId! : otherAuditorium.id,
+            startAt,
+            endAt: new Date(startAt.getTime() + 90 * 60_000),
+            priceVnd: 90_000
+          };
+        })
+      });
+
+      const fixtureShowtimes = await prisma.showtime.findMany({
+        where: { startAt: { gte: firstStartAt, lt: fixtureEndAt } },
+        orderBy: { startAt: "desc" },
+        select: { id: true, auditoriumId: true }
+      });
+      const showtimeIds = fixtureShowtimes.map(({ id }) => id);
+      expect(showtimeIds).toHaveLength(101);
+
+      const expectedLatest = await prisma.showtime.findMany({
+        orderBy: { startAt: "desc" },
+        take: 100,
+        select: { id: true, auditoriumId: true }
+      });
+      expect(expectedLatest).toHaveLength(100);
+      expect(expectedLatest.every(({ id }) => showtimeIds.includes(id))).toBe(true);
+      expect(new Set(expectedLatest.map(({ auditoriumId: id }) => id))).toEqual(new Set([auditoriumId!, otherAuditorium.id]));
+
+      const response = await request(app).get("/api/admin/showtimes").set(adminAuth);
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveLength(100);
+      expect(response.body.map((showtime: { id: string }) => showtime.id)).toEqual(expectedLatest.map(({ id }) => id));
+      const startTimes = response.body.map((showtime: { startAt: string }) => Date.parse(showtime.startAt));
+      expect(startTimes).toEqual([...startTimes].sort((left, right) => right - left));
+    } finally {
+      await prisma.showtime.deleteMany({ where: { movieId: movieId!, startAt: { gte: firstStartAt, lt: fixtureEndAt } } });
+      await prisma.auditorium.deleteMany({ where: { id: otherAuditorium.id } });
+      await prisma.cinema.deleteMany({ where: { id: otherCinema.id } });
+    }
+  });
+
   it("[TC-PLAN-10] converges concurrent order requests for the same held booking", async () => {
     const customer = await prisma.user.create({
       data: {
