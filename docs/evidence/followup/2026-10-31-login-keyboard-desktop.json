@@ -25,5 +25,19 @@
     "Partial desktop dialog review only; no whole checklist row is marked Pass.",
     "Mobile header, signup transition, login errors, actual screen-reader speech, zoom and physical touch remain unverified.",
     "API port4000 inactive; background discovery shows fetch error."
-  ]
+  ],
+  "registration": {
+    "openedBy": "Tab to Create account, then Return",
+    "fieldsTraversed": [
+      "Name",
+      "Email",
+      "Password",
+      "Create account",
+      "Switch to sign in",
+      "Close"
+    ],
+    "submitted": false,
+    "escape": "Closed the registration dialog and restored focus to the header Login opener",
+    "screenshot": "2026-10-31-register-keyboard-desktop.png"
+  }
 }

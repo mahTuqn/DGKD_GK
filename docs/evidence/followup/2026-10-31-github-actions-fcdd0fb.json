@@ -1,0 +1,129 @@
+{
+  "recordedAt": "2026-10-31",
+  "repository": "https://github.com/mahTuqn/DGKD_GK",
+  "branch": "codex/cross-browser-smoke",
+  "testAndApplicationSourceCommit": "fcdd0fb6195fad2270e5ed8f062caf8c1e33fa2d",
+  "crossBrowserWorkflowCommit": "3bc71af59a9ffc4709fec89d77b6571aee353ec5",
+  "crossBrowserWorkflowScope": "Only the selector changed on 3bc71af; application and tests remain fcdd0fb.",
+  "quality": {
+    "runNumber": 137,
+    "runId": "41206809126",
+    "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41206809126",
+    "conclusion": "success",
+    "jobs": {
+      "quality": "success",
+      "dast": "success",
+      "domainCoverageAndMutation": "success",
+      "composeRuntimeAndBrowserSmoke": "success"
+    },
+    "apiTests": {
+      "testFiles": 23,
+      "passed": 85,
+      "conclusion": "passed",
+      "includes": "[TC-SEC-54][TC-PLAN-07] keeps public cinema city markup as a literal JSON value"
+    },
+    "workerProcessTestFiles": 1,
+    "apiProcessTestFiles": 1,
+    "chromiumPlaywright": {
+      "passed": 88,
+      "projects": [
+        "Chromium desktop",
+        "Chromium mobile"
+      ],
+      "TC-E2E-45": "passed in both projects"
+    },
+    "liveExpiryTest": "passed (5m)",
+    "workerSoakTest": "passed (5m)",
+    "dast": {
+      "reportsParsed": "3/3",
+      "alertRecords": {
+        "High": 0,
+        "Medium": 0,
+        "Low": 1,
+        "Informational": 5,
+        "Unknown": 0
+      },
+      "instances": {
+        "High": 0,
+        "Medium": 0,
+        "Low": 3,
+        "Informational": 12,
+        "Unknown": 0
+      },
+      "rules": [
+        {
+          "pluginId": 40014,
+          "subtype": "40014-2",
+          "severity": "Low",
+          "records": 1,
+          "instances": 3
+        },
+        {
+          "pluginId": 10104,
+          "severity": "Informational",
+          "records": 2,
+          "instances": 6
+        },
+        {
+          "pluginId": 10109,
+          "severity": "Informational",
+          "records": 1,
+          "instances": 4
+        },
+        {
+          "pluginId": 10111,
+          "severity": "Informational",
+          "records": 2,
+          "instances": 2
+        }
+      ],
+      "artifact": {
+        "id": "13044936767",
+        "name": "cinema-booking-dast-reports-fcdd0fb6195fad2270e5ed8f062caf8c1e33fa2d",
+        "sizeBytes": 6670,
+        "sha256Metadata": "f84dc338414ffde1fd0a91304e310f48eb5978972dad21d9fe90d77df8f95a7c",
+        "zipHashIndependentlyRecomputed": false,
+        "localReports": "reports/generated/dast/quality-137-fcdd0fb-review/cinema-booking-dast-reports-fcdd0fb6195fad2270e5ed8f062caf8c1e33fa2d"
+      },
+      "findingDisposition": "40014-2 remains pending downstream-consumer verification; TC-SEC-54 verifies the public city JSON field contract, TC-E2E-11 checks Admin name/address DOM rendering."
+    }
+  },
+  "crossBrowser": {
+    "runNumber": 117,
+    "runId": "41207467422",
+    "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41207467422",
+    "conclusion": "success",
+    "passed": 66,
+    "projects": [
+      "Firefox desktop",
+      "WebKit desktop"
+    ],
+    "TC-E2E-45": {
+      "firefox": "passed",
+      "webkit": "passed"
+    }
+  },
+  "workerLongSoak": {
+    "runNumber": 114,
+    "runId": "41206809025",
+    "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41206809025",
+    "conclusion": "success",
+    "duration": "15m14s",
+    "description": "Two-worker soak with graceful restart and catch-up assertions."
+  },
+  "localChecks": {
+    "npm run typecheck:tests": "passed",
+    "npm run build --workspace frontend": "passed",
+    "npm run qa:trace": "passed: 144 cases / 29 requirements",
+    "git diff --check": "passed",
+    "manualDesktopKeyboardReview": {
+      "loginAndRegistration": "passed for the specifically observed keyboard paths; not a complete WCAG workflow review",
+      "networkError": "rendered localized role=alert in running built preview; screenshot evidence linked separately"
+    }
+  },
+  "limits": [
+    "Manual accessibility checklist remains 8 Fail / 5 Pass / 77 Not tested; the historical outcomes were not overwritten by targeted retests.",
+    "Low ZAP plugin 40014-2 remains pending verification for other JSON consumers; reviewed React UI does not expose a direct city endpoint consumer.",
+    "No screen-reader speech, real zoom/text resize, physical-device touch, named staging or production recovery review is established by these runs."
+  ]
+}

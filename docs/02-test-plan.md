@@ -1,6 +1,14 @@
 # Kế hoạch kiểm thử CinemaBooking
 
-## Current exact-source CI evidence — application baseline e1e8bc6; test/runner source 68ab383 — 31/10/2026
+## Latest follow-up — source `fcdd0fb` — 31/10/2026
+
+The local frontend fix maps network `TypeError` messages to a Vietnamese retry message. Manual browser observation with the API offline confirmed “Kết nối chưa ổn định. Vui lòng thử lại.” appears in the error alert and `Failed to fetch` is not shown; screenshot and observation are linked in the accessibility checklist. Added **TC-E2E-45** to assert this using failed-request mocks and **TC-SEC-54** to preserve the public cinema city JSON value when it contains markup. Local `npm run typecheck:tests`, frontend build, traceability (**144 cases / 29 requirements**), and `git diff --check` passed.
+
+Quality [#137](https://github.com/mahTuqn/DGKD_GK/actions/runs/41206809126) passed all four jobs on `fcdd0fb`: API **85/85 across 23 files** (including TC-SEC-54), worker-process 1/1 and API-process 1/1; Chromium **88/88** (including TC-E2E-45 on desktop/mobile); live expiry and five-minute worker restart checks; DAST, domain/mutation, and Compose/browser smoke. Cross-browser [#117](https://github.com/mahTuqn/DGKD_GK/actions/runs/41207467422) passed **66/66** Firefox/WebKit tests including TC-E2E-45 in both engines; the workflow-selector update is `3bc71af`, with test/application source unchanged from `fcdd0fb`. Worker Soak [#114](https://github.com/mahTuqn/DGKD_GK/actions/runs/41206809025) passed the two-worker 15-minute soak and graceful restart in **15m14s**.
+
+Quality #137 parsed all **3/3 DAST reports**: **0 High / 0 Medium / 1 Low / 5 Informational / 0 Unknown** alert records, with **3 Low / 12 Informational** instances. Low rule **40014-2** maps to cinema `name`, `address`, and public `city` JSON values; Admin output encoding is covered by TC-E2E-11 and public city JSON preservation by TC-SEC-54. The rule remains pending for other downstream JSON consumers; these tests do not establish their rendering safety. The manual 90-row accessibility checklist remains **8 Fail / 5 Pass / 77 Not tested**; direct keyboard observations cover only the described desktop login/registration paths and do not replace screen-reader, real zoom/reflow, physical-device or whole-workflow review. See the [source-specific evidence manifest](evidence/followup/2026-10-31-github-actions-fcdd0fb.json).
+
+## Previous exact-source CI evidence — application baseline e1e8bc6; test/runner source 68ab383 — 31/10/2026
 
 Application code is unchanged from e1e8bc6; current test and Playwright runner source is exact HEAD 68ab383dd0a8e333ac96530e30724f6d7947f212. TC-E2E-04 now checks six Admin dashboard metric label/value pairs and native progress-bar value/max semantics at 320×800 and 800×320. Its local browser attempt reached Playwright startup but was interrupted under the host memory/disk constraint; **no local pass/fail result is recorded**. Exact-source Quality and Cross-browser runs below verify the case remotely.
 
