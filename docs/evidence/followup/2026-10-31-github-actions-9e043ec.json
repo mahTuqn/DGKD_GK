@@ -1,0 +1,155 @@
+{
+  "recordedAt": "2026-10-31",
+  "commit": "9e043eceb7f65ccf5f40b053019c54d4ed908208",
+  "branch": "codex/cross-browser-smoke",
+  "workflows": {
+    "quality": {
+      "runId": "41165798727",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41165798727",
+      "conclusion": "success",
+      "workflowDuration": "17m 06s",
+      "jobDuration": "17m 02s",
+      "api": {
+        "conclusion": "success",
+        "testFiles": 21,
+        "testsPassed": 82
+      },
+      "traceability": {
+        "conclusion": "success",
+        "cases": 136,
+        "requirements": 29
+      },
+      "checks": {
+        "dependencyAudit": "success",
+        "secretScan": "success (no leaks detected)",
+        "databaseBackupRestore": "success (disposable PostgreSQL custom-format restore and row-count comparison)",
+        "openApiLint": "success",
+        "backendAndTestTypecheck": "success",
+        "productionBuild": "success",
+        "liveFiveMinuteHoldExpiry": "success",
+        "integratedTwoWorkerFiveMinuteSoakAndGracefulRestart": "success",
+        "domainCoverageAndMutation": "success",
+        "composeRuntimeAndBrowserSmoke": "success"
+      },
+      "playwright": {
+        "conclusion": "success",
+        "testsPassed": 76,
+        "duration": "3.8m",
+        "projects": [
+          "Chromium desktop",
+          "Chromium mobile (Pixel 7)"
+        ],
+        "tcE2E27Viewports": [
+          "320x800",
+          "800x800",
+          "800x320"
+        ],
+        "highlightedCases": [
+          "TC-E2E-22",
+          "TC-E2E-27",
+          "TC-E2E-39"
+        ],
+        "caseListScope": "Representative changed or important test IDs; this is not a complete list of tests run."
+      },
+      "mutation": {
+        "scorePercent": 82.89,
+        "killed": 155,
+        "survived": 32,
+        "thresholdPercent": 70
+      },
+      "dast": {
+        "conclusion": "success",
+        "reportsParsed": "3/3",
+        "alertRecords": {
+          "high": 0,
+          "medium": 0,
+          "low": 1,
+          "informational": 5,
+          "unknown": 0
+        },
+        "alertInstances": {
+          "high": 0,
+          "medium": 0,
+          "low": 3,
+          "informational": 12,
+          "unknown": 0
+        },
+        "rules": [
+          {
+            "scan": "authenticated API",
+            "pluginId": "40014",
+            "severity": "Low",
+            "records": 1,
+            "instances": 3
+          }
+        ],
+        "triage": "Detailed artifact context and Low finding disposition remain open; do not treat rule ID/counts alone as false-positive evidence.",
+        "artifact": {
+          "id": "13028687854",
+          "name": "cinema-booking-dast-reports-9e043eceb7f65ccf5f40b053019c54d4ed908208",
+          "size": "6.35 KB",
+          "sha256": "f2edc4830f963ea8cf58c368a90822bbdfec74bc2cbf549eb445fdb9878938f3",
+          "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41165798727/artifacts/13028687854"
+        }
+      },
+      "artifacts": [
+        {
+          "name": "cinema-booking-browser-results-9e043eceb7f65ccf5f40b053019c54d4ed908208",
+          "size": "468 KB",
+          "sha256": "b342b8959221020a5e24fd7d348b25e62aa8b73904602054efc457e4a99ac61c",
+          "runUrl": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41165798727"
+        },
+        {
+          "name": "cinema-booking-compose-browser-results-9e043eceb7f65ccf5f40b053019c54d4ed908208",
+          "size": "195 KB",
+          "sha256": "1b95419a3dca4acb27558df32ee8fda0f897e2e0c6799a5b522a2200ea658648",
+          "runUrl": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41165798727"
+        },
+        {
+          "name": "cinema-booking-domain-quality-9e043eceb7f65ccf5f40b053019c54d4ed908208",
+          "size": "141 KB",
+          "sha256": "f7a483628fa97300d58e22c848b470d238a10aa428225479d65dbaf2e09b03d1",
+          "runUrl": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41165798727"
+        }
+      ]
+    },
+    "crossBrowser": {
+      "runId": "41165798753",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41165798753",
+      "conclusion": "success",
+      "workflowDuration": "5m 33s",
+      "jobDuration": "5m 29s",
+      "testsPassed": 54,
+      "testsTotal": 54,
+      "testDuration": "4.0m",
+      "engines": [
+        "Firefox desktop",
+        "WebKit desktop"
+      ],
+      "annotation": "54 passed (4.0m)",
+      "highlightedCases": [
+        "TC-E2E-27",
+        "TC-E2E-39"
+      ],
+      "caseListScope": "Representative changed or important test IDs; this is not a complete list of tests run."
+    },
+    "workerSoak": {
+      "runId": "41165798732",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41165798732",
+      "conclusion": "success",
+      "workflowDuration": "15m 55s",
+      "jobDuration": "15m 51s",
+      "testsPassed": 1,
+      "testsTotal": 1,
+      "scope": "Two-worker 15-minute reliability soak and graceful restart; not an HTTP load or throughput benchmark."
+    }
+  },
+  "limitations": [
+    "The DAST artifact records one Low ZAP rule 40014 with three instances; detailed context and disposition remain open.",
+    "The manual 90-item accessibility checklist remains 8 Fail / 5 Pass / 77 Not tested.",
+    "NVDA/VoiceOver speech, real browser zoom/text resizing, and physical-device touch remain unverified.",
+    "No staging environment is available; named-staging performance has not been measured.",
+    "Production backup schedules/PITR/RPO/RTO/restore rehearsal and exhaustive ASVS/API Top 10/adversarial BOLA review remain open.",
+    "The worker soak demonstrates worker reliability, not HTTP throughput or latency."
+  ]
+}
