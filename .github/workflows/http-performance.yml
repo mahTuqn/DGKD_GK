@@ -34,7 +34,6 @@ jobs:
       K6_RUN_ID: ci-${{ github.run_id }}-${{ github.run_attempt }}
       K6_VUS: ${{ inputs.vus }}
       K6_DURATION: ${{ inputs.duration }}
-      K6_ARTIFACT_DIR: ${{ runner.temp }}/cinema-k6-${{ github.run_id }}-${{ github.run_attempt }}
 
     steps:
       - uses: actions/checkout@v7
@@ -43,10 +42,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          artifact_dir="$RUNNER_TEMP/cinema-k6-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          echo "K6_ARTIFACT_DIR=$artifact_dir" >> "$GITHUB_ENV"
+          mkdir -p "$artifact_dir"
+          chmod 0777 "$artifact_dir"
+
           case "$K6_VUS" in 10|25|50) ;; *) echo "Unsupported VU count" >&2; exit 1 ;; esac
           case "$K6_DURATION" in 1m|3m|5m) ;; *) echo "Unsupported duration" >&2; exit 1 ;; esac
-          mkdir -p "$K6_ARTIFACT_DIR"
-          chmod 0777 "$K6_ARTIFACT_DIR"
 
           postgres_password="$(openssl rand -hex 32)"
           jwt_secret="$(openssl rand -hex 32)"
