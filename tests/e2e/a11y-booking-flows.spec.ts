@@ -53,7 +53,7 @@ async function fulfillJson(route: Route, status: number, body: unknown) {
   await route.fulfill({ status, contentType: "application/json", body: JSON.stringify(body) });
 }
 
-async function mockBookingApi(page: Page) {
+async function mockBookingApi(page: Page, bookingSeats: typeof seats = seats) {
   let currentShowtime = makeShowtime(new Date(Date.now() + 24 * 60 * 60_000).toISOString().slice(0, 10));
   let paymentAttempts = 0;
 
@@ -76,7 +76,7 @@ async function mockBookingApi(page: Page) {
       currentShowtime = makeShowtime(requestedDate);
       await fulfillJson(route, 200, [currentShowtime]);
     } else if (request.method() === "GET" && pathname === `/api/showtimes/${showtimeId}/seats`) {
-      await fulfillJson(route, 200, { showtime: currentShowtime, seats });
+      await fulfillJson(route, 200, { showtime: currentShowtime, seats: bookingSeats });
     } else if (request.method() === "POST" && pathname === "/api/holds") {
       const input = request.postDataJSON() as { showtimeId: string; seatIds: string[] };
       await fulfillJson(route, 201, {
@@ -190,6 +190,86 @@ test("[TC-E2E-41] seat dialog keyboard boundaries and focus restoration", async 
   await page.keyboard.press("Escape");
   await expect(pointerOpenedDialog).toBeHidden();
   await expect(opener).toBeFocused();
+});
+
+test("[TC-E2E-41] narrow landscape seat map scrolls keyboard focus into view", async ({ page }) => {
+  await page.setViewportSize({ width: 800, height: 320 });
+  const rows = ["A", "B", "C", "D", "E", "F"];
+  const seatsPerRow = 24;
+  const landscapeSeats = rows.flatMap((row) =>
+    Array.from({ length: seatsPerRow }, (_, seatIndex) => {
+      const column = seatIndex + 1;
+      return {
+        id: `a11y-landscape-seat-${row}-${column}`,
+        label: `${row}${column}`,
+        row,
+        column,
+        type: "STANDARD",
+        isAccessible: false,
+        status: "AVAILABLE",
+        priceVnd: 85_000,
+      };
+    }),
+  );
+  await mockBookingApi(page, landscapeSeats);
+  await page.goto("/");
+  await expect(page.getByTestId("movie-card").first()).toBeVisible();
+
+  const dialog = await openSeatDialog(page);
+  const seatMap = dialog.locator(".seat-map");
+  const seatButtons = dialog.getByTestId("seat");
+  await expect(seatButtons).toHaveCount(rows.length * seatsPerRow);
+
+  await page.keyboard.press("Tab");
+  // Firefox may expose the overflowing scrollport itself in the Tab order.
+  if (await seatMap.evaluate((element) => element === document.activeElement)) {
+    await page.keyboard.press("Tab");
+  }
+  await expect(seatButtons.first()).toBeFocused();
+  for (let index = 1; index < rows.length * seatsPerRow; index += 1) {
+    await page.keyboard.press("Tab");
+  }
+  const lastSeat = seatButtons.last();
+  await expect(lastSeat).toBeFocused();
+
+  const focusGeometry = await lastSeat.evaluate((element) => {
+    const scrollport = element.closest(".seat-map") as HTMLElement | null;
+    if (!scrollport) throw new Error("Expected focused seat to be inside the seat-map scrollport.");
+    const seatRect = element.getBoundingClientRect();
+    const mapRect = scrollport.getBoundingClientRect();
+    const contentTop = mapRect.top + scrollport.clientTop;
+    const contentLeft = mapRect.left + scrollport.clientLeft;
+    const contentBottom = contentTop + scrollport.clientHeight;
+    const contentRight = contentLeft + scrollport.clientWidth;
+    return {
+      isFocused: element === document.activeElement,
+      scrollTop: scrollport.scrollTop,
+      scrollLeft: scrollport.scrollLeft,
+      seatTop: seatRect.top,
+      seatBottom: seatRect.bottom,
+      seatLeft: seatRect.left,
+      seatRight: seatRect.right,
+      mapContentTop: contentTop,
+      mapContentBottom: contentBottom,
+      mapContentLeft: contentLeft,
+      mapContentRight: contentRight,
+      viewportHeight: window.innerHeight,
+      viewportWidth: window.innerWidth,
+    };
+  });
+
+  expect(focusGeometry.isFocused).toBe(true);
+  expect(focusGeometry.scrollTop).toBeGreaterThan(0);
+  expect(focusGeometry.scrollLeft).toBeGreaterThan(0);
+  expect(focusGeometry.seatTop).toBeGreaterThanOrEqual(focusGeometry.mapContentTop);
+  expect(focusGeometry.seatBottom).toBeLessThanOrEqual(focusGeometry.mapContentBottom);
+  expect(focusGeometry.seatLeft).toBeGreaterThanOrEqual(focusGeometry.mapContentLeft);
+  expect(focusGeometry.seatRight).toBeLessThanOrEqual(focusGeometry.mapContentRight);
+  expect(focusGeometry.seatTop).toBeGreaterThanOrEqual(0);
+  expect(focusGeometry.seatBottom).toBeLessThanOrEqual(focusGeometry.viewportHeight);
+  expect(focusGeometry.seatLeft).toBeGreaterThanOrEqual(0);
+  expect(focusGeometry.seatRight).toBeLessThanOrEqual(focusGeometry.viewportWidth);
+  await expect(seatMap).toBeVisible();
 });
 
 test("[TC-E2E-42] hold announcement, quiet timer, checkout focus and payment error", async ({ page }) => {

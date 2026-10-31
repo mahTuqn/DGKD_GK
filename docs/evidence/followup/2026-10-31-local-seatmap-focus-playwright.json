@@ -1,0 +1,46 @@
+{
+  "recordedAt": "2026-10-31",
+  "baseSourceCommit": "e1e8bc6011d8714b06f7931f4c6df3d545de8965",
+  "workingTreeChanges": [
+    "tests/e2e/a11y-booking-flows.spec.ts",
+    "docs/04-test-cases.csv"
+  ],
+  "traceabilityDocumentationUpdatedAfterRun": "docs/03-rtm.csv cites this local result in the final recorded evidence.",
+  "testCase": "TC-E2E-41 narrow landscape seat-map keyboard focus visibility",
+  "testTitle": "narrow landscape seat map scrolls keyboard focus into view",
+  "viewport": "800x320 CSS pixels",
+  "fixture": "6 seat rows by 24 columns (144 available seats), which overflows horizontally and vertically",
+  "environment": {
+    "application": "Vite production preview built from source e1e8bc6 at http://127.0.0.1:5190",
+    "api": "Playwright mocked API routes",
+    "browserProjects": ["Chromium desktop", "Chromium mobile", "Firefox", "WebKit"]
+  },
+  "assertions": [
+    "Keyboard Tab moves focus through the seat buttons to the last seat.",
+    "The seat-map scrollport scrolls on both axes (scrollTop > 0 and scrollLeft > 0).",
+    "The focused seat border box stays within all four scrollport content edges and all four viewport edges."
+  ],
+  "results": {
+    "chromiumDesktop": { "passed": 1, "failed": 0 },
+    "chromiumMobile": { "passed": 1, "failed": 0 },
+    "firefox": { "passed": 1, "failed": 0 },
+    "webkit": { "passed": 1, "failed": 0 },
+    "total": { "passed": 4, "failed": 0 }
+  },
+  "commands": {
+    "chromium": "$env:GITHUB_ACTIONS='true'; $env:E2E_BASE_URL='http://127.0.0.1:5190'; npm run test:browser -- --grep 'narrow landscape seat map scrolls keyboard focus into view'",
+    "firefoxWebkit": "$env:GITHUB_ACTIONS='true'; $env:E2E_BASE_URL='http://127.0.0.1:5190'; $env:PLAYWRIGHT_CROSS_BROWSER_SMOKE='true'; npm run test:browser -- --grep 'narrow landscape seat map scrolls keyboard focus into view'",
+    "otherValidation": [
+      "npm run typecheck:tests",
+      "npm run qa:trace (142 cases / 29 requirements)",
+      "git diff --check"
+    ]
+  },
+  "limitations": [
+    "The production preview is from the unchanged e1e8bc6 application source; this follow-up changed only browser test coverage and evidence.",
+    "Mocked API routes do not verify backend behavior.",
+    "axe was run in the existing 320x800 seat-dialog test, not in the new 800x320 overflow geometry test.",
+    "The geometry assertions do not measure focus-indicator contrast or prove the indicator is not occluded.",
+    "This automated result does not establish manual WCAG conformance, actual screen-reader announcements, zoom/text-resize behavior, or physical-device touch."
+  ]
+}

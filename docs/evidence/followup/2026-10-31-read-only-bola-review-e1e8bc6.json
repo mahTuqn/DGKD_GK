@@ -1,0 +1,47 @@
+{
+  "reviewId": "2026-10-31-read-only-bola-review-e1e8bc6",
+  "reviewedAt": "2026-10-31",
+  "sourceCommit": "e1e8bc6011d8714b06f7931f4c6df3d545de8965",
+  "reviewType": "Read-only source and existing-test review; no tests or runtime probes were run",
+  "scope": [
+    "docs/security/authorization-route-matrix.csv",
+    "backend/src/app.ts and backend/src/auth.ts at sourceCommit",
+    "docs/01-srs.md, including REQ-TICKET-03",
+    "Existing authorization, Staff-scope, and object-authorization test sources"
+  ],
+  "routeMatrix": {
+    "routeRows": 35,
+    "sourceLineReferencesMatched": 35,
+    "mismatches": 0,
+    "routerReview": "All API route declarations are in backend/src/app.ts; no additional Express Router creation or router mount was found under backend/src."
+  },
+  "verifiedBoundaries": [
+    {
+      "boundary": "Customer ownership",
+      "evidence": "Customer holds, orders, payment completion, and order reads are scoped to the authenticated user ID; customer-only routes also enforce the CUSTOMER role. The route matrix maps these controls to existing authorization regression tests."
+    },
+    {
+      "boundary": "Staff cinema scope",
+      "evidence": "Both ticket-ID and QR check-in resolve the linked ticket cinema and compare it with the current Staff assignment; unassigned or wrong-cinema Staff receives 403. Admin check-in remains global. Existing Staff-scope and authorization tests cover denials and side effects."
+    },
+    {
+      "boundary": "Authentication version and current permissions",
+      "evidence": "requireAuth reloads role, assignedCinemaId, and authVersion from the user record and rejects stale token versions. Mutating and check-in transactions revalidate/lock the current actor; existing tests cover role revocation and cinema reassignment behavior."
+    }
+  ],
+  "qrStatusBehavior": {
+    "requirement": "REQ-TICKET-03 requires 403 for Staff who are unassigned or assigned to a different cinema; Admin can check in at any cinema.",
+    "implementation": "An unknown QR returns 404 TICKET_NOT_FOUND. A valid QR resolves to its ticket, then wrong-cinema Staff receives 403 CINEMA_FORBIDDEN.",
+    "assessment": "Preserve the current distinction: SRS REQ-TICKET-03 requires 403 for unassigned or wrong-cinema Staff, while TC-SEC-26 and OpenAPI specify 404 for an unknown QR. The status difference can reveal whether a QR exists; this review did not perform exploitability testing."
+  },
+  "result": {
+    "confirmedP0": 0,
+    "confirmedP1": 0,
+    "summary": "No P0/P1 BOLA or IDOR issue was identified within the reviewed owner, cinema, and authentication-version boundaries."
+  },
+  "limitations": [
+    "No tests, DAST, database access, Docker actions, or runtime requests were performed for this review; existing test sources were inspected only.",
+    "This focused review is not exhaustive ASVS or OWASP API Top 10 coverage and is not an adversarial BOLA/IDOR assessment.",
+    "The review does not establish behavior for every object, state, field, unlisted consumer, or production configuration."
+  ]
+}
