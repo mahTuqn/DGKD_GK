@@ -23,6 +23,8 @@ For each check, select exactly one outcome: **Pass**, **Fail**, **Not applicable
 
 Desktop dialog follow-up on 31/10/2026: direct keyboard observation confirmed Email initial focus, forward/reverse focus containment, and restoration to header Login after Escape or keyboard activation of Close. This was an existing preview with API unavailable; mobile, signup/error states and exact bundle parity were not verified. Checklist outcomes remain unchanged. See [keyboard observation](evidence/followup/2026-10-31-login-keyboard-desktop.json) and [focus screenshot](evidence/followup/2026-10-31-login-keyboard-desktop.png).
 
+Discovery API failure follow-up on 31/10/2026: with the API offline, the prior browser `Failed to fetch` text was replaced by the localized message “Kết nối chưa ổn định. Vui lòng thử lại.” in the error alert. TC-E2E-45 automates both failed requests. This evidence covers one failure state only; checklist outcomes remain unchanged. See [network failure observation](evidence/followup/2026-10-31-discovery-offline-error.json) and [screenshot](evidence/followup/2026-10-31-discovery-offline-error.png).
+
 ## Suggested setup and review method
 
 1. Review the exact application build and commit intended for handoff. Record any role/seed account used without recording its password or session token.

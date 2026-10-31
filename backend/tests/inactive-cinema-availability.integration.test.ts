@@ -208,6 +208,23 @@ availabilityDescribe("TC-CAT-05 inactive catalog availability gate", () => {
     }
   }, 30_000);
 
+  it("[TC-SEC-54][TC-PLAN-07] keeps public cinema city markup as a literal JSON value", async () => {
+    const cityMarkup = `<svg data-qa="${fixture}">Public cinema city</svg>`;
+    await prisma.cinema.update({ where: { id: cinemaAId }, data: { city: cityMarkup } });
+
+    try {
+      const response = await request(app).get("/api/cinemas");
+      expect(response.status).toBe(200);
+      expect(response.headers["content-type"]).toMatch(/^application\/json(?:;|$)/i);
+      const cinema = response.body.find((item: { id: string }) => item.id === cinemaAId);
+      expect(cinema).toBeDefined();
+      expect(cinema.city).toBe(cityMarkup);
+      expect(response.text).toContain(JSON.stringify(cityMarkup));
+    } finally {
+      await prisma.cinema.update({ where: { id: cinemaAId }, data: { city: "Test" } });
+    }
+  }, 30_000);
+
   it("hides a deactivated cinema's showtime and rejects direct seat, hold, create, and patch attempts without side effects", async () => {
     const date = formatBusinessDate(showtimeStart);
     const publicCatalogBefore = await request(app).get(`/api/showtimes?date=${date}`);

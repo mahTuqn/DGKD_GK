@@ -612,6 +612,19 @@ test("[TC-E2E-11] dữ liệu quản trị có markup được hiển thị như
   await expect.poll(() => page.evaluate(() => (window as Window & { __cinemaXss?: number }).__cinemaXss)).toBe(0);
 });
 
+test("[TC-E2E-45][TC-PLAN-06] mất kết nối hiển thị thông báo dễ hiểu", async ({ page }) => {
+  await page.route((url) => {
+    const pathname = url.pathname;
+    return pathname === "/api/movies" || pathname === "/api/showtimes";
+  }, (route) => route.abort("failed"));
+
+  await page.goto("/");
+
+  const errorAlert = page.getByRole("alert");
+  await expect(errorAlert).toContainText("Kết nối chưa ổn định. Vui lòng thử lại.");
+  await expect(page.getByText("Failed to fetch", { exact: true })).toHaveCount(0);
+});
+
 test("[TC-E2E-06] Bộ lọc phim và rạp cập nhật đúng các suất đang hiển thị", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByTestId("movie-card").first()).toBeVisible();

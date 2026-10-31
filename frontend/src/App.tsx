@@ -25,7 +25,7 @@ function humanError(error: unknown) {
     if (error.status === 401) return "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
     return error.message;
   }
-  return error instanceof Error ? error.message : "Kết nối chưa ổn định. Vui lòng thử lại.";
+  return error instanceof TypeError && /failed to fetch|networkerror|load failed/i.test(error.message) ? "Kết nối chưa ổn định. Vui lòng thử lại." : error instanceof Error ? error.message : "Kết nối chưa ổn định. Vui lòng thử lại.";
 }
 
 function useModalKeyboard(

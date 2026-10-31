@@ -1,0 +1,23 @@
+{
+  "recordedAt": "2026-10-31",
+  "reviewer": "Codex direct browser interaction and DOM accessibility-tree observation",
+  "environment": {
+    "url": "http://127.0.0.1:5174/",
+    "frontend": "Fresh `npm run build --workspace frontend` preview for current working tree",
+    "api": "Stopped; public API calls intentionally failed; no authentication or writes performed."
+  },
+  "action": "Load discovery while GET /api/movies and GET /api/showtimes fail to connect.",
+  "observedBeforeFix": "Browser TypeError text `Failed to fetch` appeared in the discovery error alert.",
+  "changedBehavior": "`humanError` maps network TypeError to `Kết nối chưa ổn định. Vui lòng thử lại.`",
+  "observedAfterFix": {
+    "message": "Kết nối chưa ổn định. Vui lòng thử lại.",
+    "accessibilityTree": "The message is exposed within the discovery error container; source gives it role=alert.",
+    "rawBrowserErrorVisible": false
+  },
+  "screenshot": "2026-10-31-discovery-offline-error.png",
+  "automatedRegression": "TC-E2E-45 in tests/e2e/cinema.spec.ts aborts both discovery requests and asserts localized alert with no raw browser error. Awaiting exact-source CI.",
+  "limits": [
+    "This validates only the discovery API failure state.",
+    "It does not complete manual screen-reader or all-journey review."
+  ]
+}
