@@ -1,0 +1,29 @@
+{
+  "recordedAt": "2026-10-31",
+  "reviewer": "Codex operating IAB via keyboard",
+  "baseUrl": "http://127.0.0.1:5174/",
+  "repositoryHead": "1ec98cf",
+  "sourceScope": "Existing built frontend preview; application source unchanged from e1e8bc6. Dist was not rebuilt during this observation; exact bundle parity not independently established.",
+  "viewport": "1265x712 screenshot; desktop only",
+  "method": "Direct Return, Tab, Shift+Tab and Escape interaction with accessibility-state observation; no form submission and API unavailable.",
+  "observations": {
+    "open": "Three Tab presses reached header login; Return opened modal and focused Email.",
+    "forwardCycle": [
+      "Password",
+      "Login submit",
+      "Create account",
+      "Close",
+      "Email"
+    ],
+    "reverseBoundary": "Shift+Tab from Email focused Close.",
+    "escape": "Closed modal and restored header Login focus.",
+    "closeButton": "Reopened, Shift+Tab to Close then Return closed modal and restored header Login focus.",
+    "visual": "Screenshot shows Email focus indicator and modal content."
+  },
+  "screenshot": "2026-10-31-login-keyboard-desktop.png",
+  "limits": [
+    "Partial desktop dialog review only; no whole checklist row is marked Pass.",
+    "Mobile header, signup transition, login errors, actual screen-reader speech, zoom and physical touch remain unverified.",
+    "API port4000 inactive; background discovery shows fetch error."
+  ]
+}

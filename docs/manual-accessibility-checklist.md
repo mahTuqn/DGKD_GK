@@ -21,6 +21,8 @@
 
 For each check, select exactly one outcome: **Pass**, **Fail**, **Not applicable** (record the reason), or **Not tested**. A blank checkbox means no result has been recorded. Do not mark a check passed based only on axe, DOM inspection, or the existing Playwright assertions.
 
+Desktop dialog follow-up on 31/10/2026: direct keyboard observation confirmed Email initial focus, forward/reverse focus containment, and restoration to header Login after Escape or keyboard activation of Close. This was an existing preview with API unavailable; mobile, signup/error states and exact bundle parity were not verified. Checklist outcomes remain unchanged. See [keyboard observation](evidence/followup/2026-10-31-login-keyboard-desktop.json) and [focus screenshot](evidence/followup/2026-10-31-login-keyboard-desktop.png).
+
 ## Suggested setup and review method
 
 1. Review the exact application build and commit intended for handoff. Record any role/seed account used without recording its password or session token.
