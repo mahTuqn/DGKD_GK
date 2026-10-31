@@ -36,9 +36,15 @@
       "dast": {
         "duration": "7m15s",
         "reportSummaryGate": "passed",
+        "artifact": {
+          "id": "13036996182",
+          "size": "6.5 KB",
+          "sha256": "876adefdd79ee840401261011e59e128fb2d9395c4063407a8b84b298d1d98e0",
+          "contentsRetrieved": false
+        },
         "severityGate": "All three scan plans set exitStatus.errorLevel=Medium. Given the DAST job passed, no Medium-or-higher alert was raised in the configured scan scopes; see https://www.zaproxy.org/docs/desktop/addons/automation-framework/job-exitstatus/ for documented ZAP semantics.",
         "alertCounts": null,
-        "findingDispositions": "current report contents and alert rows were not inspected; Low/Informational dispositions remain unknown"
+        "findingDispositions": "artifact contents were not retrieved because the public row exposed no download link and the check-log page was signed out; alert counts and Low/Informational dispositions remain unknown"
       }
     },
     "crossBrowser": {
