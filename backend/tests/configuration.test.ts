@@ -225,3 +225,44 @@ describe("TC-SEC-49 JWT session lifetime enforcement", () => {
     expect(userLookup).toHaveBeenCalledOnce();
   });
 });
+
+describe("TC-SEC-51 JWT signature and issuer validation", () => {
+  afterEach(() => {
+    restoreEnvironment();
+    vi.restoreAllMocks();
+  });
+
+  it("rejects a forged signature or unexpected issuer before looking up a user", async () => {
+    process.env.NODE_ENV = "test";
+    process.env.JWT_SECRET = "tc-sec-51-signature-policy-test-secret-32chars";
+    const userLookup = vi.spyOn(prisma.user, "findUnique").mockResolvedValue({
+      id: "00000000-0000-4000-8000-000000000051",
+      name: "JWT signature test",
+      email: "jwt-signature@test.local",
+      role: "CUSTOMER",
+      assignedCinemaId: null,
+      authVersion: 0
+    } as never);
+    const app = createApp();
+    const subject = "00000000-0000-4000-8000-000000000051";
+    const now = Math.floor(Date.now() / 1000);
+    const forgedSignature = jwt.sign(
+      { authVersion: 0, iat: now },
+      "attacker-controlled-signing-secret-that-is-not-the-app-key",
+      { issuer: "cinema-booking", subject, expiresIn: "8h" }
+    );
+    const unexpectedIssuer = jwt.sign(
+      { authVersion: 0, iat: now },
+      process.env.JWT_SECRET,
+      { issuer: "attacker.example", subject, expiresIn: "8h" }
+    );
+
+    for (const token of [forgedSignature, unexpectedIssuer]) {
+      const response = await request(app).get("/api/auth/me").set("Authorization", `Bearer ${token}`);
+      expect(response.status).toBe(401);
+      expect(response.body.error).toBe("INVALID_TOKEN");
+      expect(JSON.stringify(response.body)).not.toMatch(/stack|JsonWebTokenError|node_modules/i);
+    }
+    expect(userLookup).not.toHaveBeenCalled();
+  });
+});

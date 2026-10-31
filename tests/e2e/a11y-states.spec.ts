@@ -245,12 +245,34 @@ test("[TC-E2E-27] mobile shows every movie title without clipping and keeps targ
   const tabletMovieTitleBoxes = await page.locator(".movie-info h3").evaluateAll((elements) => {
     return elements.map((element) => element.scrollWidth > element.clientWidth || element.scrollHeight > element.clientHeight);
   });
+  expect(tabletMovieTitleBoxes).toHaveLength(movieTitles.length);
   expect(tabletMovieTitleBoxes.every((clipped) => !clipped)).toBe(true);
   const tabletPageWidth = await page.evaluate(() => ({
     clientWidth: document.documentElement.clientWidth,
     scrollWidth: document.documentElement.scrollWidth,
   }));
   expect(tabletPageWidth.scrollWidth).toBeLessThanOrEqual(tabletPageWidth.clientWidth);
+  await page.setViewportSize({ width: 800, height: 320 });
+  await expect(movieCards).toHaveCount(movieTitles.length);
+  for (const title of movieTitles) await expect(page.getByRole("heading", { name: title, level: 3 })).toBeVisible();
+  const landscapeMovieTitleBoxes = await page.locator(".movie-info h3").evaluateAll((elements) => {
+    return elements.map((element) => element.scrollWidth > element.clientWidth || element.scrollHeight > element.clientHeight);
+  });
+  expect(landscapeMovieTitleBoxes).toHaveLength(movieTitles.length);
+  expect(landscapeMovieTitleBoxes.every((clipped) => !clipped)).toBe(true);
+  const landscapeActionTargets = await movieCards.getByRole("button", { name: "Xem suất chiếu" }).evaluateAll((elements) => {
+    return elements.map((element) => {
+      const bounds = element.getBoundingClientRect();
+      return { width: bounds.width, height: bounds.height };
+    });
+  });
+  expect(landscapeActionTargets).toHaveLength(movieTitles.length);
+  expect(landscapeActionTargets.every(({ width, height }) => width >= 24 && height >= 24)).toBe(true);
+  const landscapePageWidth = await page.evaluate(() => ({
+    clientWidth: document.documentElement.clientWidth,
+    scrollWidth: document.documentElement.scrollWidth,
+  }));
+  expect(landscapePageWidth.scrollWidth).toBeLessThanOrEqual(landscapePageWidth.clientWidth);
   await page.setViewportSize({ width: 320, height: 800 });
   await page.getByTestId("movie-card").first().getByRole("button", { name: "Xem suất chiếu" }).click();
   await page.getByTestId("showtime-option").first().click();
