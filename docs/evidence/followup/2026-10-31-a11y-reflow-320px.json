@@ -1,0 +1,45 @@
+{
+  "recordedAt": "2026-10-31",
+  "repositoryHead": "0c7065efe98860a0b0ff17f32ac6f8303aa54aca",
+  "applicationSourceCommit": "fcdd0fb6195fad2270e5ed8f062caf8c1e33fa2d",
+  "environment": {
+    "url": "http://127.0.0.1:5174/",
+    "browser": "Playwright Chromium 156.0.8078.4, headless",
+    "playwright": "1.64.1",
+    "viewportCssPixels": { "width": 320, "height": 800 },
+    "deviceScaleFactor": 1,
+    "api": "Offline; discovery error state rendered"
+  },
+  "states": {
+    "home": {
+      "documentScrollWidthCssPixels": 320,
+      "horizontalPageOverflow": false,
+      "screenshot": "2026-10-31-a11y-320px-home.png"
+    },
+    "loginDialog": {
+      "documentScrollWidthCssPixels": 320,
+      "horizontalPageOverflow": false,
+      "screenshot": "2026-10-31-a11y-320px-login.png"
+    },
+    "registrationDialog": {
+      "documentScrollWidthCssPixels": 320,
+      "horizontalPageOverflow": false,
+      "screenshot": "2026-10-31-a11y-320px-registration.png"
+    }
+  },
+  "elementOverflowReview": "The only element with scrollWidth greater than clientWidth was a 1px clipped .sr-only paragraph; it caused no document-level horizontal scrolling and is intentionally visually hidden.",
+  "observations": [
+    "At 320 CSS px, the page, login dialog and registration dialog fit without horizontal page overflow.",
+    "The login and registration controls were visible in the screenshots at this viewport.",
+    "The movie catalog showed the localized API-offline alert; movies and booking workflows could not be reviewed in this run."
+  ],
+  "zoomShortcutAttempt": {
+    "input": "CTRL+0 followed by eight CTRL+PLUS key presses in the in-app browser",
+    "result": "The measured viewport remained 1280×720 CSS px, devicePixelRatio 1.5 and visualViewport.scale 1. The shortcut did not apply browser zoom in this control surface."
+  },
+  "limitations": [
+    "This is a fixed 320 CSS-pixel viewport emulation, not actual 400% browser zoom or 200% text resizing.",
+    "No screen-reader speech, physical-device touch, movie-result rendering, booking workflow or complete WCAG review is established.",
+    "No manual checklist outcomes were changed."
+  ]
+}

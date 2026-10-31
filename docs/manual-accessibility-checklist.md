@@ -8,14 +8,14 @@
 |---|---|
 | Overall status | In progress |
 | Reviewer(s) | Codex agent operating the browser UI |
-| Review date and timezone | 2026-10-30; Asia/Saigon |
-| Application commit/build reviewed | Application source baseline `7adffff`; local working-tree CSS reflow fix and browser-test updates are recorded separately |
-| Environment/base URL | Dedicated disposable PostgreSQL database; http://127.0.0.1:5173; Codex in-app Chromium viewport override for 320×800 |
-| Desktop browser / OS | Google Chrome 156.0.8078.49 / Windows 11 Pro for keyboard observation |
+| Review date and timezone | Initial review 2026-10-30; targeted follow-ups through 2026-10-31; Asia/Saigon |
+| Application commit/build reviewed | Initial baseline `7adffff`; later targeted retests use frontend source `fcdd0fb` at repository HEAD `0c7065e`; see per-run evidence below |
+| Environment/base URL | Initial disposable PostgreSQL run at http://127.0.0.1:5173; latest narrow-viewport preview at http://127.0.0.1:5174 with API offline |
+| Desktop browser / OS | Google Chrome 156.0.8078.49 / Windows 11 Pro for direct keyboard observation; Playwright Chromium 156.0.8078.4 headless for the latest 320px viewport screenshots |
 | Desktop screen reader and version | — |
 | Mobile device / browser / screen reader | — |
-| Zoom, viewport, and display settings | 320×800, 640×800 and 800×320 CSS-pixel viewport emulation; actual 200%/400% zoom and text resizing not tested |
-| Evidence folder or links | [Agent accessibility evidence](evidence/followup/2026-10-30-agent-a11y-320px-reflow.json); [320px title retest](evidence/followup/2026-10-30-a11y-320px-after.png); [filter focus](evidence/followup/2026-10-30-a11y-320px-filter-keyboard.png); [empty filter state](evidence/followup/2026-10-30-a11y-320px-filter-empty.png); [landscape-size screenshot](evidence/followup/2026-10-30-a11y-800x320-landscape.png) |
+| Zoom, viewport, and display settings | 320×800, 640×800, and 800×320 CSS-pixel viewport emulation; latest preview also checked at 320×800; actual 200%/400% zoom and text resizing not tested |
+| Evidence folder or links | [Agent accessibility evidence](evidence/followup/2026-10-30-agent-a11y-320px-reflow.json); [320px title retest](evidence/followup/2026-10-30-a11y-320px-after.png); [filter focus](evidence/followup/2026-10-30-a11y-320px-filter-keyboard.png); [empty filter state](evidence/followup/2026-10-30-a11y-320px-filter-empty.png); [landscape-size screenshot](evidence/followup/2026-10-30-a11y-800x320-landscape.png); [latest 320px reflow evidence](evidence/followup/2026-10-31-a11y-reflow-320px.json) |
 | Findings / issue IDs | — |
 | Sign-off | — |
 
@@ -26,6 +26,8 @@ Desktop dialog follow-up on 31/10/2026: direct keyboard observation confirmed Em
 Desktop registration keyboard follow-up on 31/10/2026: from the login modal, keyboard activation of “Tạo tài khoản mới” exposed Name, Email and Password controls in a logical Tab order through Create account, sign-in switch and Close; Escape restored focus to the header Login button. The form was not submitted. See [registration screenshot](evidence/followup/2026-10-31-register-keyboard-desktop.png) and the [combined observation](evidence/followup/2026-10-31-login-keyboard-desktop.json). Full checklist outcomes remain unchanged.
 
 Discovery API failure follow-up on 31/10/2026: with the API offline, the prior browser `Failed to fetch` text was replaced by the localized message “Kết nối chưa ổn định. Vui lòng thử lại.” in the error alert. TC-E2E-45 automates both failed requests. This evidence covers one failure state only; checklist outcomes remain unchanged. See [network failure observation](evidence/followup/2026-10-31-discovery-offline-error.json) and [screenshot](evidence/followup/2026-10-31-discovery-offline-error.png).
+
+320 CSS-pixel reflow follow-up on 31/10/2026: Playwright Chromium 156.0.8078.4 rendered the current preview at 320×800 CSS px. The home, login dialog and registration dialog screenshots were visually reviewed; `document.documentElement.scrollWidth` remained 320 px in all three states, with no horizontal page overflow. The discovery API was offline, so movie results and booking workflows were not available. This was viewport emulation, not actual 400% browser zoom or 200% text resizing; the in-app browser zoom shortcut did not change its viewport. Checklist outcomes remain unchanged. See the [reflow evidence](evidence/followup/2026-10-31-a11y-reflow-320px.json) and screenshots for [home](evidence/followup/2026-10-31-a11y-320px-home.png), [login](evidence/followup/2026-10-31-a11y-320px-login.png), and [registration](evidence/followup/2026-10-31-a11y-320px-registration.png).
 
 ## Suggested setup and review method
 
