@@ -2,7 +2,7 @@ import { expect, test, type APIRequestContext, type Locator, type Page } from "@
 import AxeBuilder from "@axe-core/playwright";
 
 const API_URL = process.env.E2E_API_URL || "http://127.0.0.1:4000/api";
-const PREVIEW_URL = process.env.E2E_PREVIEW_URL || "http://127.0.0.1:5174/";
+const PREVIEW_URL = process.env.E2E_PREVIEW_URL || `http://127.0.0.1:${process.env.E2E_PREVIEW_PORT ?? 5174}/`;
 const uniqueEmail = () => `qa-${Date.now()}-${Math.random().toString(16).slice(2)}@example.test`;
 const amountFromCurrencyText = (text: string) => Number(text.replace(/\D/g, ""));
 const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
@@ -486,7 +486,14 @@ test("[TC-E2E-04] Admin xem báo cáo doanh thu và tỉ lệ lấp đầy ở c
   await page.getByRole("button", { name: "Quản trị" }).click();
   const summaryResponse = await summaryResponsePromise;
   expect(summaryResponse.ok()).toBeTruthy();
-  const summary = await summaryResponse.json() as { confirmedRevenueVnd: number };
+  const summary = await summaryResponse.json() as {
+    movies: number;
+    showtimes: number;
+    orders: number;
+    tickets: number;
+    confirmedRevenueVnd: number;
+    occupancy: { fillRatePercent: number };
+  };
 
   const revenue = page.locator(".metric-revenue");
   await expect(revenue).toContainText("Doanh thu xác nhận");
@@ -498,9 +505,19 @@ test("[TC-E2E-04] Admin xem báo cáo doanh thu và tỉ lệ lấp đầy ở c
   await expect(occupancy.getByText(/\d+ suất đang mở/)).toBeVisible();
   const occupancyProgress = occupancy.getByRole("progressbar", { name: "Tỉ lệ lấp đầy ghế" });
   await expect(occupancyProgress).toHaveAttribute("value", /\d/);
+  const expectedProgressValue = Math.max(0, Math.min(summary.occupancy.fillRatePercent, 100));
+  await expect.poll(() => occupancyProgress.evaluate((element) => (element as HTMLProgressElement).value)).toBe(expectedProgressValue);
+  await expect(occupancyProgress).toHaveJSProperty("max", 100);
   expect(axeViolations((await wcagAxe(page).include(".admin-view").analyze()).violations)).toEqual([]);
 
-  const metricLabels = ["Phim đang chiếu", "Suất chiếu", "Đơn đặt vé", "Vé đã phát", "Tỉ lệ lấp đầy", "Doanh thu xác nhận"];
+  const expectedMetrics: Array<{ label: string; value?: string }> = [
+    { label: "Phim đang chiếu", value: String(summary.movies) },
+    { label: "Suất chiếu", value: String(summary.showtimes) },
+    { label: "Đơn đặt vé", value: String(summary.orders) },
+    { label: "Vé đã phát", value: String(summary.tickets) },
+    { label: "Tỉ lệ lấp đầy", value: `${summary.occupancy.fillRatePercent.toFixed(1)}%` },
+    { label: "Doanh thu xác nhận" },
+  ];
   for (const viewport of [{ width: 320, height: 800 }, { width: 800, height: 320 }]) {
     await page.setViewportSize(viewport);
 
@@ -517,8 +534,14 @@ test("[TC-E2E-04] Admin xem báo cáo doanh thu và tỉ lệ lấp đầy ở c
     expect(widths.dashboardClient, "Admin dashboard should remain mounted").toBeGreaterThan(0);
     expect(widths.dashboardScroll, `Admin dashboard must not overflow horizontally at ${viewport.width}×${viewport.height}`).toBeLessThanOrEqual(widths.dashboardClient);
 
-    for (const label of metricLabels) {
-      await expect(page.locator(".admin-metrics").getByText(label, { exact: true }), `${label} remains available at ${viewport.width}×${viewport.height}`).toBeVisible();
+    for (const { label, value } of expectedMetrics) {
+      const metricCard = page.locator(".admin-metrics .metric-card").filter({ has: page.getByText(label, { exact: true }) });
+      await expect(metricCard.locator("span"), `${label} label remains available at ${viewport.width}×${viewport.height}`).toHaveText(label);
+      if (value === undefined) {
+        await expect.poll(async () => amountFromCurrencyText(await metricCard.locator("b").innerText())).toBe(summary.confirmedRevenueVnd);
+      } else {
+        await expect(metricCard.locator("b"), `${label} value matches the summary at ${viewport.width}×${viewport.height}`).toHaveText(value);
+      }
     }
     await expect(occupancy, `occupancy summary remains available at ${viewport.width}×${viewport.height}`).toBeVisible();
     await expect(occupancyProgress, `occupancy progressbar remains available at ${viewport.width}×${viewport.height}`).toBeVisible();
