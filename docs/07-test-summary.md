@@ -1,6 +1,15 @@
 # Báo cáo tổng hợp kiểm thử
 
-## Exact-source CI follow-up — `d7aec7e` — 31/10/2026
+## Exact-source CI follow-up — 5da3f71 — 31/10/2026
+
+All three GitHub Actions workflows passed against exact source 5da3f716f288e8348663bcc56cafc786c372b1a7: quality/API/DAST/domain/Compose [#113](https://github.com/mahTuqn/DGKD_GK/actions/runs/41154305864) completed in **16m22s**; Firefox/WebKit [#92](https://github.com/mahTuqn/DGKD_GK/actions/runs/41154305786) passed **54/54** selected tests in **4m12s** (5m54s workflow); and the two-worker soak [#90](https://github.com/mahTuqn/DGKD_GK/actions/runs/41154305791) passed **1/1** in **15m58s** (16m01s workflow). Quality passed **81 API test results across 21 files**, **76 Chromium Playwright tests** across desktop/mobile in 3m32, traceability (**135 cases / 29 requirements**), backend/test typecheck, production build, database backup/restore smoke, live five-minute HTTP expiry, integrated two-worker five-minute soak and graceful restart, dependency audit, and Compose runtime/browser smoke (1m40s). Mutation measured **82.89%** (155 killed / 32 survived; 70% threshold). Cross-browser #92 includes TC-E2E-14, TC-E2E-32 and TC-E2E-40.
+
+The #113 DAST job parsed **3/3 reports**: **0 High, 0 Medium, 1 Low (ZAP rule 40014; 3 instances), 5 Informational (11 instances), and 0 Unknown**. The Low is associated with the authenticated API scan; its detailed report context and disposition remain unreviewed. The artifact (ID **13024742697**, **6.33 KB**, SHA-256 594d15b82573e146a0ed091a9d07a0edd37f21f18017cd41b54a79e5b3ad67f3) and other run evidence are recorded in the [5da3f71 manifest](evidence/followup/2026-10-31-github-actions-5da3f71.json).
+
+The manual accessibility checklist remains **8 Fail / 5 Pass / 77 Not tested**; automated checks do not verify real NVDA/VoiceOver speech, browser zoom/text resizing, or touch on a physical device. Staging performance has not been measured because no staging environment is available. Production backup/PITR/RPO/RTO/restore and exhaustive ASVS/API Top 10/BOLA review remain open. The worker soak demonstrates worker reliability, not HTTP load or throughput.
+
+
+## Historical exact-source CI follow-up — `d7aec7e` — 31/10/2026
 
 All three workflows passed on exact source `d7aec7e6806c2821890f21cf59c974cc1bb5f36a`: quality/API/DAST/domain/Compose [#110](https://github.com/mahTuqn/DGKD_GK/actions/runs/41149556038) finished in **16m31s**; Firefox/WebKit [#89](https://github.com/mahTuqn/DGKD_GK/actions/runs/41149556126) passed **52/52** in 4m (6m53s workflow); and worker soak [#87](https://github.com/mahTuqn/DGKD_GK/actions/runs/41149556060) passed **1/1** in 15m50s (15m53s workflow). Quality passed the API suite (1m26s), including TC-CAT-08's latest-100 showtime check, and **74 Chromium Playwright tests** in 3m36s. `npm run qa:trace` passed (**134 cases / 29 requirements**). The domain mutation gate measured **82.89%** (155 killed / 32 survived; 70% threshold); Compose runtime and browser smoke passed.
 

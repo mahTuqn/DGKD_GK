@@ -1,0 +1,182 @@
+{
+  "recordedAt": "2026-10-31",
+  "commit": "5da3f716f288e8348663bcc56cafc786c372b1a7",
+  "branch": "codex/cross-browser-smoke",
+  "workflows": {
+    "quality": {
+      "runId": "41154305864",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41154305864",
+      "conclusion": "success",
+      "workflowDuration": "16m 22s",
+      "jobDuration": "16m 19s",
+      "api": {
+        "conclusion": "success",
+        "testFiles": 21,
+        "testsPassed": 81,
+        "duration": "1m 25s"
+      },
+      "traceability": {
+        "conclusion": "success",
+        "cases": 135,
+        "requirements": 29
+      },
+      "checks": {
+        "dependencyAudit": "success (one narrowly reviewed dev-only Stryker advisory allowlisted)",
+        "databaseBackupRestore": "success",
+        "openApiLint": "success",
+        "backendAndTestTypecheck": "success",
+        "productionBuild": "success",
+        "liveFiveMinuteHoldExpiry": "success",
+        "integratedTwoWorkerFiveMinuteSoakAndGracefulRestart": "success",
+        "composeRuntimeAndBrowserSmoke": "success (1m 40s)",
+        "secretScan": "success (no leaks detected)"
+      },
+      "playwright": {
+        "conclusion": "success",
+        "testsPassed": 76,
+        "duration": "3m 32s",
+        "projects": [
+          "Chromium desktop",
+          "Chromium mobile"
+        ],
+        "cases": [
+          "TC-E2E-14",
+          "TC-E2E-32",
+          "TC-E2E-40"
+        ]
+      },
+      "mutation": {
+        "scorePercent": 82.89,
+        "killed": 155,
+        "survived": 32,
+        "thresholdPercent": 70
+      },
+      "dast": {
+        "conclusion": "success",
+        "reportsParsed": "3/3",
+        "alertRecords": {
+          "high": 0,
+          "medium": 0,
+          "low": 1,
+          "informational": 5,
+          "unknown": 0
+        },
+        "alertInstances": {
+          "high": 0,
+          "medium": 0,
+          "low": 3,
+          "informational": 11,
+          "unknown": 0
+        },
+        "rules": [
+          {
+            "scan": "unauthenticated-api",
+            "pluginId": "10104",
+            "severity": "Informational",
+            "records": 1,
+            "instances": 3
+          },
+          {
+            "scan": "unauthenticated-api",
+            "pluginId": "10111",
+            "severity": "Informational",
+            "records": 1,
+            "instances": 1
+          },
+          {
+            "scan": "authenticated-api",
+            "pluginId": "10104",
+            "severity": "Informational",
+            "records": 1,
+            "instances": 3
+          },
+          {
+            "scan": "authenticated-api",
+            "pluginId": "10111",
+            "severity": "Informational",
+            "records": 1,
+            "instances": 1
+          },
+          {
+            "scan": "authenticated-api",
+            "pluginId": "40014",
+            "severity": "Low",
+            "records": 1,
+            "instances": 3
+          },
+          {
+            "scan": "preview",
+            "pluginId": "10109",
+            "severity": "Informational",
+            "records": 1,
+            "instances": 3
+          }
+        ],
+        "triage": "Low rule 40014 detailed alert context and disposition remain unreviewed.",
+        "artifact": {
+          "id": "13024742697",
+          "size": "6.33 KB",
+          "sha256": "594d15b82573e146a0ed091a9d07a0edd37f21f18017cd41b54a79e5b3ad67f3",
+          "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41154305864/artifacts/13024742697"
+        }
+      },
+      "artifacts": [
+        {
+          "name": "browser results",
+          "id": "13025012838",
+          "size": "463 KB",
+          "sha256": "a6a4a3d2e022e88d198a5af5a6f1ca4df677cb7add3f65236c9c430dc641d183"
+        },
+        {
+          "name": "Compose browser results",
+          "id": "13024507382",
+          "size": "195 KB",
+          "sha256": "c97412ebb296b2a723bdcc5f784e58d15b4497e1f395d636931a98780a8d3e62"
+        },
+        {
+          "name": "domain quality and mutation results",
+          "id": "13024467366",
+          "size": "141 KB",
+          "sha256": "1b50b074255cdfadbfa8e5c9a97a9e329228dcd6e280bea0006d8a81909a78f2"
+        }
+      ]
+    },
+    "crossBrowser": {
+      "runId": "41154305786",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41154305786",
+      "conclusion": "success",
+      "workflowDuration": "5m 54s",
+      "jobDuration": "5m 51s",
+      "testsPassed": 54,
+      "testDuration": "4m 12s",
+      "engines": [
+        "Firefox desktop",
+        "WebKit desktop"
+      ],
+      "includedCases": [
+        "TC-E2E-14",
+        "TC-E2E-32",
+        "TC-E2E-40"
+      ],
+      "annotation": "54 passed (4.2m)"
+    },
+    "workerSoak": {
+      "runId": "41154305791",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41154305791",
+      "conclusion": "success",
+      "workflowDuration": "16m 01s",
+      "jobDuration": "15m 58s",
+      "testsPassed": 1,
+      "testsTotal": 1,
+      "scope": "Two-worker 15-minute reliability soak and graceful restart; not an HTTP load or throughput benchmark."
+    }
+  },
+  "limitations": [
+    "DAST reported one Low alert (authenticated API, rule 40014; three instances); detailed artifact context and disposition remain unreviewed.",
+    "The manual 90-item accessibility checklist remains 8 Fail / 5 Pass / 77 Not tested.",
+    "NVDA/VoiceOver speech, real browser zoom/text resizing, and physical-device touch remain unverified.",
+    "No staging environment is available; named-staging performance has not been measured.",
+    "Production backup/PITR/RPO/RTO/restore and exhaustive ASVS/API Top 10/adversarial BOLA review remain open.",
+    "The 15-minute worker soak is reliability evidence and does not establish HTTP throughput."
+  ]
+}
