@@ -1,6 +1,19 @@
 import { expect, test, type Page } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 
 const API_URL = process.env.E2E_API_URL || "http://127.0.0.1:4000/api";
+const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
+
+async function expectAdminViewHasNoWcagAxeViolations(page: Page) {
+  const result = await new AxeBuilder({ page }).withTags(WCAG_TAGS).include(".admin-view").analyze();
+  const violations = result.violations.map(({ id, impact, nodes }) => ({
+    id,
+    impact,
+    targets: nodes.map((node) => node.target),
+    failureSummaries: nodes.map((node) => node.failureSummary),
+  }));
+  expect(violations).toEqual([]);
+}
 
 async function signInAsAdmin(page: Page) {
   await page.goto("/");
@@ -220,11 +233,13 @@ test("[TC-E2E-22] Admin nhận lỗi khi thiếu buffer lịch chiếu và tạo
   await expect(page.getByRole("alert")).toContainText("Suất chiếu bị chồng thời gian với lịch đang có.");
   await expect(createShowtimeButton).toBeFocused();
   await expect(createdShowtimes).toHaveCount(1);
+  await expectAdminViewHasNoWcagAxeViolations(page);
 
   await showtimePanel.getByLabel("Thời gian bắt đầu").fill(await atOffset(120));
   await showtimePanel.getByRole("button", { name: "Tạo suất chiếu" }).click();
   await expect(page.getByRole("status")).toContainText("Đã tạo suất chiếu.");
   await expect(createdShowtimes).toHaveCount(2);
+  await expectAdminViewHasNoWcagAxeViolations(page);
 });
 
 test("[TC-E2E-28] Admin cập nhật role, rạp Staff và phân trang danh sách người dùng bằng bàn phím", async ({ page, request }) => {
