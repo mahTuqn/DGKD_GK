@@ -1,0 +1,108 @@
+{
+  "recordedAt": "2026-10-31",
+  "commit": "af0a0e8adb840b486c0c99352bae3e915b491299",
+  "branch": "codex/cross-browser-smoke",
+  "workflows": {
+    "quality": {
+      "runId": "41146218412",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41146218412",
+      "conclusion": "success",
+      "workflowDuration": "16m 15s",
+      "api": {
+        "filesPassed": 21,
+        "testsPassed": 80
+      },
+      "playwright": {
+        "testsPassed": 74,
+        "duration": "3.2m",
+        "projects": ["Chromium desktop", "Chromium mobile"]
+      },
+      "mutation": {
+        "scorePercent": 82.89,
+        "killed": 155,
+        "survived": 32,
+        "thresholdPercent": 70
+      },
+      "dast": {
+        "reportsParsed": "3/3",
+        "alertRecords": {
+          "high": 0,
+          "medium": 0,
+          "low": 1,
+          "informational": 5,
+          "unknown": 0
+        },
+        "alertInstances": {
+          "high": 0,
+          "medium": 0,
+          "low": 3,
+          "informational": 11,
+          "unknown": 0
+        },
+        "lowRuleIds": ["40014"],
+        "triage": "The summary omits alert names, routes and payloads. Review the DAST artifact before determining the Low alert's context, exploitability or disposition.",
+        "artifact": {
+          "id": "13020474144",
+          "sha256": "1ab6fc053f882018fb74501c0ec0540f0e1f93a5ace8f6bc960bad538e3cc084",
+          "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41146218412/artifacts/13020474144"
+        }
+      },
+      "artifacts": [
+        {
+          "name": "browser results",
+          "id": "13021473812",
+          "sha256": "de85787009226aef6e757d173da762e742211366b6d6d0c1f332f4aae5a7b588",
+          "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41146218412/artifacts/13021473812"
+        },
+        {
+          "name": "Compose browser results",
+          "id": "13020827422",
+          "sha256": "c5f488901fdb7bf475a81114090f7e13bb63761ed537d6ce6dc7d50efb825356",
+          "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41146218412/artifacts/13020827422"
+        },
+        {
+          "name": "domain quality and mutation results",
+          "id": "13021336352",
+          "sha256": "5b3f2122873a767a66e22109005f864e78a6053d0d0cb177e3e3e83bc8ac8c4d",
+          "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41146218412/artifacts/13021336352"
+        }
+      ],
+      "composeBrowserSmoke": "success"
+    },
+    "crossBrowser": {
+      "runId": "41146218395",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41146218395",
+      "conclusion": "success",
+      "testsPassed": 50,
+      "testDuration": "3.7m",
+      "engines": ["Firefox desktop", "WebKit desktop"],
+      "artifact": {
+        "id": "13021656872",
+        "sha256": "06ad3d47af17529682675d38c31d1695a1c124daae676dad2c271047e1002d0f",
+        "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41146218395/artifacts/13021656872"
+      }
+    },
+    "workerSoak": {
+      "runId": "41146218268",
+      "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41146218268",
+      "conclusion": "success",
+      "duration": "15m 52s",
+      "testsPassed": 1,
+      "testsTotal": 1,
+      "scope": "The CI worker soak/restart test validates worker reliability; it is not HTTP load or throughput evidence."
+    }
+  },
+  "localEnvironment": {
+    "docker": "Docker Desktop open; no local containers running",
+    "freeMemory": "399 MiB",
+    "composeLocalRun": "not run; exact-source Compose browser smoke passed in quality workflow"
+  },
+  "limitations": [
+    "The DAST summary exposes Low rule 40014 and counts but omits alert names, routes and payloads; its detailed context and disposition remain unreviewed.",
+    "The manual 90-item accessibility checklist remains 8 Fail / 5 Pass / 77 Not tested.",
+    "Real screen-reader speech, actual browser zoom/text resizing and physical-device touch remain unverified.",
+    "No staging environment is available; named-staging performance is unmeasured.",
+    "Production backup/PITR/RPO/RTO and restore, exhaustive ASVS/API Top 10 and adversarial BOLA review remain open.",
+    "No local Compose test was performed with Docker Desktop open and about 399 MiB free; CI Compose smoke passed."
+  ]
+}
