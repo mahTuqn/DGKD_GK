@@ -73,6 +73,8 @@ jobs:
       - run: npm run qa:trace
       - name: Verify DAST summary accuracy and data minimization
         run: node --test tests/tooling/dast-summary.test.mjs
+      - name: Verify k6 response accounting
+        run: node --test tests/tooling/k6-response-outcome.test.mjs
       - name: Type-check backend source and test code
         run: npm run typecheck:tests
       - run: npm run test:api

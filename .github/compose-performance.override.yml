@@ -30,7 +30,7 @@ services:
       SHOWTIME_DATE: ${SHOWTIME_DATE:-}
       RUN_ID: ${K6_RUN_ID:?K6_RUN_ID must be unique to this workflow run}
     volumes:
-      - ./tests/non-functional/k6/cinema-booking.js:/scripts/cinema-booking.js:ro
+      - ./tests/non-functional/k6:/scripts:ro
       - ${K6_ARTIFACT_DIR:?K6_ARTIFACT_DIR must be set}:/reports
     command:
       - run

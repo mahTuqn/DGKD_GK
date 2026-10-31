@@ -1,6 +1,7 @@
 import http from "k6/http";
 import { check, fail, sleep } from "k6";
 import { Counter, Rate, Trend } from "k6/metrics";
+import { classifyK6Response, recordHoldMetrics } from "./response-outcome.js";
 
 const apiBase = (__ENV.API_BASE || "http://127.0.0.1:4001/api").replace(/\/$/, "");
 const vus = Number(__ENV.VUS || 50);
@@ -54,18 +55,16 @@ function responseError(response) {
   }
 }
 
-function recordExpectedResponse(response, expectedStatus, tags = {}) {
+function recordExpectedResponse(response, expectedStatus, tags = {}, options = {}) {
   // A race-induced SEAT_CONFLICT is expected behavior and is deliberately excluded
-  // from the unexpected-error denominator, as required by the project plan.
-  if (response.status === 409 && responseError(response) === "SEAT_CONFLICT") {
-    expectedSeatConflicts.add(1, tags);
-    return false;
-  }
-  const passed = response.status === expectedStatus;
-  unexpectedErrorRate.add(!passed, tags);
-  if (!passed) unexpectedErrors.add(1, tags);
-  check(response, { [`status ${expectedStatus}`]: () => passed }, tags);
-  return passed;
+  // from the unexpected-error denominator only for hold requests. Other 409s
+  // remain unexpected endpoint failures.
+  const outcome = classifyK6Response(response.status, responseError(response), expectedStatus, options);
+  if (outcome.expectedConflict) return outcome;
+  unexpectedErrorRate.add(outcome.unexpectedError, tags);
+  if (outcome.unexpectedError) unexpectedErrors.add(1, tags);
+  check(response, { [`status ${expectedStatus}`]: () => outcome.passed }, tags);
+  return outcome;
 }
 
 export function setup() {
@@ -120,18 +119,20 @@ export default function (data) {
 
   if (!user.holdAttempted) {
     user.holdAttempted = true;
-    holdAttempts.add(1);
     const holdResponse = http.post(
       `${apiBase}/holds`,
       JSON.stringify({ showtimeId: user.showtimeId, seatIds: [user.seatId] }),
       { headers: { Authorization: `Bearer ${user.token}`, "Content-Type": "application/json" }, tags: { operation: "hold" } },
     );
-    const passed = recordExpectedResponse(holdResponse, 201, { operation: "hold" });
-    if (holdResponse.status !== 409 || responseError(holdResponse) !== "SEAT_CONFLICT") {
-      holdLatency.add(holdResponse.timings.duration);
-      holdSuccessRate.add(passed);
-    }
-    if (passed) holdSuccesses.add(1);
+    const tags = { operation: "hold" };
+    const outcome = recordExpectedResponse(holdResponse, 201, tags, { allowExpectedSeatConflict: true });
+    recordHoldMetrics({
+      attempts: holdAttempts,
+      successRate: holdSuccessRate,
+      successes: holdSuccesses,
+      expectedConflicts: expectedSeatConflicts,
+      latency: holdLatency,
+    }, outcome, holdResponse.timings.duration, tags);
   }
 
   sleep(1);
