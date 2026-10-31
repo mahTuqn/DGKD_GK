@@ -120,6 +120,7 @@ test("[TC-E2E-32] nội dung QR có thể được chọn bằng bàn phím và 
       left >= layout.cardLeft - 1 && right <= layout.cardRight + 1 && scrollWidth <= clientWidth + 1,
     )).toBe(true);
   }
+  await page.setViewportSize({ width: 320, height: 800 });
 
   await page.getByRole("button", { name: "Đăng xuất", exact: true }).click();
   await page.getByRole("button", { name: /Mở tài khoản/ }).click();
