@@ -1,0 +1,26 @@
+{
+  "recordedAt": "2026-10-31",
+  "repositoryHead": "8b4245e12dc12660230ebf03dea1c21e0750aadc",
+  "applicationSourceCommit": "fcdd0fb6195fad2270e5ed8f062caf8c1e33fa2d",
+  "environment": {
+    "surface": "Codex in-app Chromium",
+    "url": "http://127.0.0.1:8081/",
+    "viewportCssPixels": "not measured",
+    "composeProject": "cinema-qa; postgres, api, web, and worker healthy after rebuilding images from this checkout",
+    "safety": "No credentials entered; no login or registration form submitted; no booking or payment action performed"
+  },
+  "observations": [
+    "Opening the account dialog with Enter placed initial focus on Email.",
+    "In the login dialog, Shift+Tab from Email focused Close; Tab from Close returned focus to Email.",
+    "Escape closed the login dialog and restored focus to the Mở tài khoản opener.",
+    "Keyboard navigation reached the registration form. Tab order observed: Name, Email, Password, Create account, Đăng nhập, Đóng.",
+    "Shift+Tab from the registration Name field focused Close.",
+    "Escape closed registration and restored focus to the Mở tài khoản opener."
+  ],
+  "limitations": [
+    "The CSS viewport was not measured.",
+    "This targeted pass does not cover field validation and error states, all application workflows, screen-reader speech, actual browser zoom/text resizing, or touch input.",
+    "No independent background click/inertness review was performed.",
+    "A11Y-03 × KBD-01 remains Not tested because broader keyboard and background-interaction coverage is incomplete."
+  ]
+}

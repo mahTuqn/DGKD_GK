@@ -1,0 +1,77 @@
+{
+  "recordedAt": "2026-10-31",
+  "repository": {
+    "branch": "codex/cross-browser-smoke",
+    "head": "8b4245e12dc12660230ebf03dea1c21e0750aadc",
+    "applicationSource": "fcdd0fb6195fad2270e5ed8f062caf8c1e33fa2d",
+    "testRunnerSource": "f4ce0e8d23c301c12a05c20c8cf565f8a65e173c"
+  },
+  "docker": {
+    "engineVersion": "29.7.2",
+    "qaComposeCommand": "npm run compose:qa:up -- --build",
+    "composeProject": "cinema-qa",
+    "services": {
+      "postgres": "healthy",
+      "api": "healthy",
+      "web": "healthy",
+      "worker": "healthy"
+    },
+    "apiHealth": {
+      "url": "http://127.0.0.1:8081/api/health",
+      "statusCode": 200,
+      "body": {
+        "status": "ok",
+        "service": "cinema-booking-api"
+      }
+    },
+    "dataHandling": "The existing QA volume was reused and kept. The isolated E2E runner used a disposable PostgreSQL container and removed it after the run."
+  },
+  "checks": [
+    {
+      "command": "npm run test:browser:isolated -- --grep 'TC-E2E-41|TC-E2E-42'",
+      "result": "6 passed",
+      "projects": [
+        "chromium-desktop",
+        "chromium-mobile"
+      ],
+      "scope": "Three seat-dialog/booking accessibility flows per project; migrations and seed applied only to the temporary test database."
+    },
+    {
+      "command": "npx playwright test --config=reports/generated/playwright-mock-only.config.ts tests/e2e/a11y-states.spec.ts tests/e2e/cinema.spec.ts --grep 'TC-E2E-17|TC-E2E-36|TC-E2E-45'",
+      "result": "12 passed in 27.8 seconds",
+      "projects": [
+        "chromium-desktop",
+        "chromium-mobile",
+        "firefox-desktop",
+        "webkit-desktop"
+      ],
+      "target": "The rebuilt QA Compose web image at 127.0.0.1:8081.",
+      "scope": "API requests were mocked by the selected tests; no database writes were performed."
+    },
+    {
+      "command": "npm run qa:trace",
+      "result": "Passed: 144 test cases and 29 requirements; all sources and links resolved."
+    },
+    {
+      "command": "npm run audit:dependencies",
+      "result": "Passed the repository gate with the one reviewed moderate dev-only advisory GHSA-g3hv-75wg-m249 (minimatch 10.2.6 through Stryker 10.1.1); no High or Critical advisories."
+    }
+  ],
+  "manualKeyboard": {
+    "result": "Observed login and registration focus order, Shift+Tab boundaries, and Escape focus restoration; no form was submitted.",
+    "evidence": "2026-10-31-docker-qa-auth-keyboard.json",
+    "limitations": [
+      "CSS viewport was not measured.",
+      "Independent background inertness, validation/error paths, screen-reader speech, zoom/text resizing and other workflows remain unreviewed.",
+      "The 90-row accessibility checklist remains 8 Fail / 5 Pass / 77 Not tested."
+    ]
+  },
+  "warnings": [
+    "The host build performed by the isolated runner emitted Vite's advisory that a minified JavaScript chunk was 564.64 kB, above its 500 kB recommendation. The Docker image build separately completed with a 299.54 kB frontend chunk.",
+    "The npm install audit notice during image build referred to the same reviewed moderate development dependency advisory accepted by the repository audit gate."
+  ],
+  "not_run": [
+    "A local DAST scan was not run; exact-source CI DAST evidence is recorded separately.",
+    "The full Playwright suite was not run locally."
+  ]
+}
