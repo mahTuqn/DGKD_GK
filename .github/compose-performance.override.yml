@@ -1,4 +1,4 @@
-# Used only by the manual HTTP performance workflow. This project gets its own
+# Used only by the HTTP performance workflow. This project gets its own
 # internal network and Compose-scoped database volume; no service port is
 # published to the runner host.
 services:

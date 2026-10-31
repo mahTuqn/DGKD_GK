@@ -1,6 +1,14 @@
 name: Manual HTTP Performance (k6)
 
 on:
+  push:
+    branches:
+      - main
+      - "codex/**"
+    paths:
+      - ".github/workflows/http-performance.yml"
+      - ".github/compose-performance.override.yml"
+      - "tests/non-functional/k6/cinema-booking.js"
   workflow_dispatch:
     inputs:
       vus:
