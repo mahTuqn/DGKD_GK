@@ -1,0 +1,107 @@
+{
+  "recordedAt": "2026-10-31",
+  "repository": "https://github.com/mahTuqn/DGKD_GK",
+  "branch": "codex/cross-browser-smoke",
+  "testRunnerSourceCommit": "f4ce0e8d23c301c12a05c20c8cf565f8a65e173c",
+  "applicationSourceCommit": "fcdd0fb6195fad2270e5ed8f062caf8c1e33fa2d",
+  "quality": {
+    "runNumber": 139,
+    "runId": "41212985872",
+    "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41212985872",
+    "conclusion": "success",
+    "jobs": {
+      "quality": "success",
+      "dast": "success",
+      "domainCoverageAndMutation": "success",
+      "composeRuntimeAndBrowserSmoke": "success"
+    },
+    "apiTests": {
+      "testFiles": 23,
+      "passed": 85,
+      "includes": "[TC-SEC-54][TC-PLAN-07] keeps public cinema city markup as a literal JSON value"
+    },
+    "workerProcessTestFiles": 1,
+    "apiProcessTestFiles": 1,
+    "chromiumPlaywright": {
+      "passed": 88,
+      "projects": ["Chromium desktop", "Chromium mobile"],
+      "includes": {
+        "TC-E2E-17": "passed on desktop and mobile at 320x800 CSS px",
+        "TC-E2E-45": "passed on desktop and mobile"
+      }
+    },
+    "liveHoldExpiry": "passed (5 minutes)",
+    "integratedWorkerSoakAndRestart": "passed (5 minutes)",
+    "dast": {
+      "reportsParsed": "3/3",
+      "alertRecords": {
+        "High": 0,
+        "Medium": 0,
+        "Low": 1,
+        "Informational": 5,
+        "Unknown": 0
+      },
+      "instances": {
+        "High": 0,
+        "Medium": 0,
+        "Low": 3,
+        "Informational": 11,
+        "Unknown": 0
+      },
+      "rules": [
+        { "pluginId": 40014, "subtype": "40014-2", "severity": "Low", "records": 1, "instances": 3 },
+        { "pluginId": 10104, "severity": "Informational", "records": 2, "instances": 6 },
+        { "pluginId": 10109, "severity": "Informational", "records": 1, "instances": 3 },
+        { "pluginId": 10111, "severity": "Informational", "records": 2, "instances": 2 }
+      ],
+      "artifact": {
+        "id": "13047357250",
+        "name": "cinema-booking-dast-reports-f4ce0e8d23c301c12a05c20c8cf565f8a65e173c",
+        "sizeBytes": 6659,
+        "sha256GitHubMetadata": "11ae067230a2e9fe324d38f3f8e3b421ece5bbb18a6f51d678f9309e30fb3790",
+        "zipHashIndependentlyRecomputed": false,
+        "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41212985872/artifacts/13047357250",
+        "localReports": "reports/generated/dast/quality-139-review"
+      },
+      "findingDisposition": "Plugin 40014-2 remains pending verification for downstream JSON consumers. TC-SEC-54 verifies the public city JSON contract; it does not establish safe rendering in every consumer."
+    }
+  },
+  "crossBrowser": {
+    "runNumber": 119,
+    "runId": "41212985842",
+    "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41212985842",
+    "conclusion": "success",
+    "passed": 66,
+    "projects": ["Firefox desktop", "WebKit desktop"],
+    "includes": {
+      "TC-E2E-17": "passed in Firefox and WebKit at 320x800 CSS px",
+      "TC-E2E-36": "passed in Firefox and WebKit with two mocked cinemas and keyboard filters"
+    }
+  },
+  "workerLongSoak": {
+    "runNumber": 116,
+    "runId": "41212985748",
+    "url": "https://github.com/mahTuqn/DGKD_GK/actions/runs/41212985748",
+    "conclusion": "success",
+    "workflowDuration": "15m42s",
+    "soakAndRestartStepDuration": "15m12s",
+    "description": "Two-worker 15-minute soak and graceful restart. This is worker reliability evidence, not an HTTP load test."
+  },
+  "localChecks": {
+    "traceability": "144 test cases / 29 requirements passed after this documentation refresh",
+    "manualAccessibility": {
+      "outcomes": { "Fail": 8, "Pass": 5, "Not tested": 77 },
+      "targetedFollowUps": [
+        "Responsive login and registration keyboard flow, focus loop and restoration observed directly in the in-app browser.",
+        "Date/cinema filter keyboard behavior partially observed; no alternate cinema was available while the API was offline, so A11Y-02 x KBD-01 remains Not tested."
+      ]
+    },
+    "localDockerCli": "docker info did not return within 35 seconds and was interrupted; no local Compose start is claimed for this follow-up."
+  },
+  "limits": [
+    "Manual accessibility checklist remains 8 Fail / 5 Pass / 77 Not tested; targeted keyboard observations do not change the recorded outcomes.",
+    "Actual screen-reader speech, real browser zoom/text resizing, physical-device touch and whole-workflow WCAG review remain unverified.",
+    "No staging environment is available. Named-staging performance and production PITR/RPO/RTO/restore evidence are not established.",
+    "The DAST Low finding remains pending review for downstream JSON consumers; CI success does not establish production readiness."
+  ]
+}

@@ -31,6 +31,10 @@ Discovery API failure follow-up on 31/10/2026: with the API offline, the prior b
 
 Responsive login/registration keyboard follow-up on 31/10/2026: direct keyboard operation in the in-app Chromium at 513×764 CSS px reached the mobile account opener, opened login with Email focused, and cycled Tab/Shift+Tab between dialog controls without escaping; Escape restored focus to the opener. Keyboard activation switched to registration, exposed Name/Email/Password and submit, and Escape again returned focus to the opener. Focus indication was visible on Email and the sign-in mode switch. This did not test screen-reader speech, actual 320px width/zoom, form submission, or independent background inertness. Checklist outcomes remain unchanged. See the [responsive dialog keyboard observation](evidence/followup/2026-10-31-responsive-login-keyboard.json).
 
+Reopened-preview keyboard follow-up on 31/10/2026: direct operation in the in-app Chromium at `http://127.0.0.1:5174/` confirmed the login focus loop (Email → Password → Login → Create account → Close → Email), Escape restoration to Login, registration field order, and Escape restoration from registration. The CSS viewport was not measured; the API was offline and no form was submitted. This targeted observation does not change checklist outcomes. See the [reopened-preview keyboard evidence](evidence/followup/2026-10-31-login-keyboard-reopened.json).
+
+Filter keyboard follow-up on 31/10/2026: in the in-app Chromium at 513×764 CSS px, Tab reached the date selector after header/account/error controls; Space opened it, ArrowDown changed the selected date, Enter closed it, and focus stayed on the selector. Tab reached the cinema selector; Space opened it and Enter/Escape closed it, with Shift+Tab returning to the date selector. The API was offline and the cinema filter offered only “Tất cả rạp”, so a change to another cinema could not be observed. `A11Y-02 × KBD-01` remains **Not tested** until the full available selection path is reviewed. See the [filter keyboard evidence](evidence/followup/2026-10-31-filter-keyboard.json).
+
 ## Suggested setup and review method
 
 1. Review the exact application build and commit intended for handoff. Record any role/seed account used without recording its password or session token.
@@ -53,7 +57,7 @@ Responsive login/registration keyboard follow-up on 31/10/2026: direct keyboard 
 
 ## Screen and workflow checklist
 
-Record granular results in the [manual accessibility results template](manual-accessibility-results-template.csv): **one CSV row records one workflow ID × shared check ID result**. Keep the outcome as **Not tested** until that specific check has been performed; for **Not applicable**, enter the reason in the finding/N/A reason column. The Status column below is only the summary for the whole workflow: mark Pass only when all applicable checks pass, Fail when any check fails, and Not tested while any applicable check is unresolved. The CSV template is pre-filled with all 90 workflow/check pairs and their outcome set to **Not tested**.
+Record granular results in the [manual accessibility results file](manual-accessibility-results-template.csv): **one CSV row records one workflow ID × shared check ID result**. Keep the outcome as **Not tested** until that specific check has been performed; for **Not applicable**, enter the reason in the finding/N/A reason column. The Status column below is only the summary for the whole workflow: mark Pass only when all applicable checks pass, Fail when any check fails, and Not tested while any applicable check is unresolved. The current CSV contains all 90 workflow/check pairs: **8 Fail / 5 Pass / 77 Not tested**. Update each row only when its specific check has been performed.
 
 | ID / screen or workflow | Manual checks to perform | Status | Reviewer / date | Evidence link(s) | Finding / issue ID or N/A reason |
 |---|---|---|---|---|---|

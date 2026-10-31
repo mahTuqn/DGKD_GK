@@ -8,7 +8,7 @@ A11Y-01,REFLOW-01,Fail,Codex agent,2026-10-30,docs/evidence/followup/2026-10-30-
 A11Y-01,TARGET-01,Fail,Codex agent,2026-10-30,docs/evidence/followup/2026-10-30-agent-a11y-320px-reflow.json,A11Y-F09 movie-card Xem suất chiếu buttons measured 78x11 at 320px; changed to 78x24 and manually retested; TC-E2E-27 passed in Chromium Firefox and WebKit; original Fail retained
 A11Y-01,SR-01,Not tested,,,,
 A11Y-01,SR-02,Not tested,,,,
-A11Y-02,KBD-01,Not tested,Codex agent,2026-10-30,docs/evidence/followup/2026-10-30-agent-a11y-320px-reflow.json,Arrow and Tab filter actions were exercised; Enter/Space native popup behavior could not be visually confirmed in the in-app browser; full criterion unresolved
+A11Y-02,KBD-01,Not tested,Codex agent,2026-10-31,docs/evidence/followup/2026-10-30-agent-a11y-320px-reflow.json; docs/evidence/followup/2026-10-31-filter-keyboard.json,Direct keyboard follow-up confirmed Space opens and Enter/Escape closes the date and cinema popups; ArrowDown changed the date and focus remained on each control. The API was offline and the cinema filter only offered Tất cả rạp, so changing to a distinct cinema could not be checked; keep outcome Not tested.
 A11Y-02,FOCUS-01,Pass,Codex agent,2026-10-30,docs/evidence/followup/2026-10-30-agent-a11y-320px-reflow.json,Date and cinema selection retained focus after result updates; Tab and Shift+Tab order was observed
 A11Y-02,FOCUS-02,Pass,Codex agent,2026-10-30,docs/evidence/followup/2026-10-30-agent-a11y-320px-reflow.json,Focused date/cinema selects and orange outline remained visible at 320 CSS px without overlay
 A11Y-02,NAME-01,Fail,Codex agent,2026-10-30,docs/evidence/followup/2026-10-29-agent-a11y-review.json; docs/evidence/followup/2026-10-30-agent-a11y-320px-reflow.json,A11Y-F05 original names differed; current visible labels and accessibility-tree names/selected values match on retest; original Fail retained
@@ -17,7 +17,7 @@ A11Y-02,REFLOW-01,Not tested,Codex agent,2026-10-30,docs/evidence/followup/2026-
 A11Y-02,TARGET-01,Pass,Codex agent,2026-10-30,docs/evidence/followup/2026-10-30-agent-a11y-320px-reflow.json,Date and cinema select targets each measured 117x38 CSS px with a 9px gap
 A11Y-02,SR-01,Not tested,,,,
 A11Y-02,SR-02,Not tested,,,,
-A11Y-03,KBD-01,Not tested,,,,
+A11Y-03,KBD-01,Not tested,Codex agent,2026-10-31,docs/evidence/followup/2026-10-31-responsive-login-keyboard.json; docs/evidence/followup/2026-10-31-login-keyboard-reopened.json,"Targeted login/registration keyboard paths observed; full Shift+Tab/Tab coverage in registration and background interaction behavior remain unresolved, so outcome stays Not tested."
 A11Y-03,FOCUS-01,Fail,Codex agent,2026-10-29,docs/evidence/followup/2026-10-29-agent-a11y-review.json,A11Y-F01 ordinary sign-in replaces opener and leaves focus on body; focus fix retested 2026-10-30; full criterion review pending
 A11Y-03,FOCUS-02,Not tested,,,,
 A11Y-03,NAME-01,Not tested,,,,

@@ -1,0 +1,21 @@
+{
+  "recordedAt": "2026-10-31",
+  "applicationSourceCommit": "fcdd0fb6195fad2270e5ed8f062caf8c1e33fa2d",
+  "environment": {
+    "surface": "Codex in-app Chromium",
+    "url": "http://127.0.0.1:5174/",
+    "viewportCssPixels": { "width": 513, "height": 764 },
+    "devicePixelRatio": 1.5,
+    "api": "Offline; discovery error state rendered"
+  },
+  "observations": [
+    "Tab order reached the date selector after the header/account/error controls, then the cinema selector; Shift+Tab from cinema returned to date.",
+    "On date, Space expanded the popup, ArrowDown changed Sunday 01/11 to Monday 02/11, Enter collapsed it, and focus remained on the selector.",
+    "On cinema, Space expanded the popup; ArrowDown left the only available value Tất cả rạp unchanged; Enter and Escape collapsed it while focus remained on the selector."
+  ],
+  "limitations": [
+    "The offline API left only Tất cả rạp in the cinema filter, so changing to a distinct cinema and observing the resulting showtime update were not possible.",
+    "Screen-reader speech, result announcements, actual 320 CSS px/zoom behavior and physical-device operation are not established.",
+    "A11Y-02 × KBD-01 remains Not tested; no manual checklist outcome was changed by this partial observation."
+  ]
+}

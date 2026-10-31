@@ -1,0 +1,21 @@
+{
+  "recordedAt": "2026-10-31",
+  "applicationSourceCommit": "fcdd0fb6195fad2270e5ed8f062caf8c1e33fa2d",
+  "environment": {
+    "surface": "Codex in-app Chromium",
+    "url": "http://127.0.0.1:5174/",
+    "viewportCssPixels": "not measured",
+    "api": "Offline; no credentials entered and no form submitted"
+  },
+  "observations": [
+    "From the page, keyboard focus moved through the brand link, Explore button and Login opener; Enter opened the dialog with initial focus in Email.",
+    "Forward Tab moved Email → Password → Login → Create account → Close → Email; focus stayed within the modal. Escape closed the dialog and restored focus to the Login opener.",
+    "Keyboard activation of Create account switched to the registration form. Focus was on the Login mode switch; Tab moved to Close and then Name, followed by Email, Password and Create account in order.",
+    "Escape closed registration and restored focus to the Login opener."
+  ],
+  "limitations": [
+    "The CSS viewport was not measured in this reopened-browser observation.",
+    "No form was submitted; field validation, screen-reader speech, actual browser zoom/text resizing, mobile hardware and other workflows were not evaluated here.",
+    "This is targeted keyboard evidence only and does not change manual checklist outcomes."
+  ]
+}
